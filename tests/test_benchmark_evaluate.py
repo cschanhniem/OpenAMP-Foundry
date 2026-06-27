@@ -1,14 +1,12 @@
 """Tests for benchmark evaluation: recall@k, enrichment factor, and summary."""
 from __future__ import annotations
 
-import pytest
 
 from openamp_foundry.benchmark.evaluate import (
     benchmark_summary,
     enrichment_factor,
     random_recall_at_k,
     recall_at_k,
-    top_k_ids,
 )
 from openamp_foundry.features.physchem import compute_features
 from openamp_foundry.types import PeptideCandidate, ScoredCandidate
