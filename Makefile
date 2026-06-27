@@ -1,4 +1,4 @@
-.PHONY: demo test lint clean bench-leakage bench-baseline bench-hidden-active generate phase3 pilot validate-scoring validate-scoring-strict external-predict pilot-confident presynth-qc gold-standard
+.PHONY: demo test lint clean bench-leakage bench-baseline bench-hidden-active generate phase3 pilot validate-scoring validate-scoring-strict external-predict pilot-confident presynth-qc gold-standard diversity
 
 PYTHON := $(shell [ -f .venv/bin/python ] && echo .venv/bin/python || echo python3)
 PYTEST  := $(shell [ -f .venv/bin/pytest ] && echo .venv/bin/pytest || echo pytest)
@@ -108,6 +108,11 @@ gold-standard:
 		--panel-csv outputs/confident_panel.csv \
 		--out outputs/gold_standard_calibration.md \
 		--config configs/pipeline.yaml
+
+diversity:
+	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli diversity-check \
+		--panel-csv outputs/confident_panel.csv \
+		--out outputs/diversity_report.md
 
 clean:
 	rm -rf outputs/*.jsonl outputs/*.md outputs/*.json outputs/evidence outputs/phase3_evidence .pytest_cache .ruff_cache
