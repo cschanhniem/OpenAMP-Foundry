@@ -123,6 +123,77 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional output path for human-readable markdown panel.",
     )
 
+    validate_scoring = sub.add_parser(
+        "validate-scoring",
+        help=(
+            "Retrospective AUROC benchmark: score known AMPs vs composition-matched "
+            "scrambled decoys. AUROC > 0.70 = model has meaningful discriminative power. "
+            "Run this before committing to wet-lab synthesis."
+        ),
+    )
+    validate_scoring.add_argument(
+        "--amp-csv",
+        default="examples/validation/known_amps.csv",
+        help="CSV of known AMPs with 'id' and 'sequence' columns (label=1).",
+    )
+    validate_scoring.add_argument(
+        "--decoy-csv",
+        default="examples/validation/scrambled_decoys.csv",
+        help="CSV of composition-matched shuffled decoys (label=0).",
+    )
+    validate_scoring.add_argument("--config", default="configs/pipeline.yaml")
+    validate_scoring.add_argument(
+        "--out",
+        required=False,
+        help="Optional JSON output path.",
+    )
+
+    external_predict = sub.add_parser(
+        "external-predict",
+        help=(
+            "Generate FASTA and submission checklist for external AMP prediction tools "
+            "(CAMPR4, AMPScanner v2, dbAMP). Must be submitted manually — no API calls made."
+        ),
+    )
+    external_predict.add_argument(
+        "--pilot-csv",
+        required=True,
+        help="Pilot panel CSV (output of 'pilot-panel' command).",
+    )
+    external_predict.add_argument(
+        "--out-fasta",
+        default="outputs/pilot_panel.fasta",
+        help="Output FASTA file for tool submission.",
+    )
+    external_predict.add_argument(
+        "--out-checklist",
+        default="outputs/external_predict_checklist.md",
+        help="Output markdown checklist for recording results.",
+    )
+
+    pilot_confident = sub.add_parser(
+        "pilot-confident",
+        help=(
+            "Filter a pilot panel to candidates confirmed by ≥2 external predictors. "
+            "Provide the comma-separated IDs of confirmed candidates via --keep."
+        ),
+    )
+    pilot_confident.add_argument(
+        "--pilot-csv",
+        required=True,
+        help="Pilot panel CSV (output of 'pilot-panel' command).",
+    )
+    pilot_confident.add_argument(
+        "--keep",
+        required=True,
+        help="Comma-separated candidate IDs to retain (from external predictor results).",
+    )
+    pilot_confident.add_argument(
+        "--out",
+        default="outputs/confident_panel",
+        help="Output path prefix (will write .csv and .md).",
+    )
+
     batch_pack = sub.add_parser(
         "batch-pack",
         help=(
@@ -186,6 +257,15 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "pilot-panel":
         return _run_pilot_panel(args)
+
+    if args.command == "validate-scoring":
+        return _run_validate_scoring(args)
+
+    if args.command == "external-predict":
+        return _run_external_predict(args)
+
+    if args.command == "pilot-confident":
+        return _run_pilot_confident(args)
 
     if args.command == "batch-pack":
         return _run_batch_pack(args)
@@ -284,6 +364,91 @@ def _run_pilot_panel(args: argparse.Namespace) -> int:
             "No antimicrobial activity has been demonstrated. "
             "Human expert review required before synthesis."
         ),
+    }, indent=2))
+    return 0
+
+
+def _run_validate_scoring(args: argparse.Namespace) -> int:
+    import json as _json
+    from openamp_foundry.benchmark.retrospective import run_retrospective_benchmark
+    from openamp_foundry.utils.io import write_json
+
+    result = run_retrospective_benchmark(
+        amp_csv=args.amp_csv,
+        decoy_csv=args.decoy_csv,
+        config_path=args.config,
+    )
+    if args.out:
+        write_json(args.out, result)
+    summary = {
+        "status": "ok",
+        "auroc": result["auroc"],
+        "auroc_above_random": result["auroc_above_random"],
+        "recall_at_10": result.get("recall_at_10"),
+        "recall_at_20": result.get("recall_at_20"),
+        "recall_at_44": result.get("recall_at_44"),
+        "interpretation": result["interpretation"],
+        "out": args.out,
+    }
+    print(_json.dumps(summary, indent=2))
+    return 0
+
+
+def _run_external_predict(args: argparse.Namespace) -> int:
+    import csv as _csv
+    import json as _json
+    from datetime import datetime, timezone
+    from openamp_foundry.reports.external_predict import (
+        write_external_predict_checklist,
+        write_pilot_fasta,
+    )
+
+    panel = []
+    with open(args.pilot_csv, newline="", encoding="utf-8") as f:
+        for row in _csv.DictReader(f):
+            panel.append(row)
+
+    generated_at = datetime.now(timezone.utc).isoformat()
+    write_pilot_fasta(panel, args.out_fasta)
+    write_external_predict_checklist(
+        panel, fasta_path=args.out_fasta, out_path=args.out_checklist,
+        generated_at=generated_at,
+    )
+    print(_json.dumps({
+        "status": "ok",
+        "n_candidates": len(panel),
+        "fasta": args.out_fasta,
+        "checklist": args.out_checklist,
+        "next_step": (
+            f"Submit {args.out_fasta} to CAMPR4, AMPScanner v2, and dbAMP. "
+            f"Fill in {args.out_checklist}. Then run 'make pilot-confident'."
+        ),
+    }, indent=2))
+    return 0
+
+
+def _run_pilot_confident(args: argparse.Namespace) -> int:
+    import csv as _csv
+    import json as _json
+    from datetime import datetime, timezone
+    from openamp_foundry.reports.external_predict import write_confident_panel
+
+    panel = []
+    with open(args.pilot_csv, newline="", encoding="utf-8") as f:
+        for row in _csv.DictReader(f):
+            panel.append(row)
+
+    keep_ids = [cid.strip() for cid in args.keep.split(",") if cid.strip()]
+    generated_at = datetime.now(timezone.utc).isoformat()
+    confident = write_confident_panel(panel, keep_ids, out_path=args.out, generated_at=generated_at)
+
+    print(_json.dumps({
+        "status": "ok",
+        "n_input": len(panel),
+        "n_confident": len(confident),
+        "out_csv": args.out + ".csv",
+        "out_md": args.out + ".md",
+        "disclaimer": "Confident candidates still require human expert review and biosafety sign-off.",
     }, indent=2))
     return 0
 

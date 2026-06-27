@@ -1,4 +1,4 @@
-.PHONY: demo test lint clean bench-leakage bench-baseline bench-hidden-active generate phase3 pilot
+.PHONY: demo test lint clean bench-leakage bench-baseline bench-hidden-active generate phase3 pilot validate-scoring external-predict pilot-confident
 
 PYTHON := $(shell [ -f .venv/bin/python ] && echo .venv/bin/python || echo python3)
 PYTEST  := $(shell [ -f .venv/bin/pytest ] && echo .venv/bin/pytest || echo pytest)
@@ -67,6 +67,28 @@ pilot: phase3
 		--n 20 \
 		--out-csv outputs/pilot_panel.csv \
 		--out-md outputs/pilot_panel.md
+
+validate-scoring:
+	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli validate-scoring \
+		--amp-csv examples/validation/known_amps.csv \
+		--decoy-csv examples/validation/scrambled_decoys.csv \
+		--out outputs/validate_scoring_report.json
+
+external-predict: pilot
+	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli external-predict \
+		--pilot-csv outputs/pilot_panel.csv \
+		--out-fasta outputs/pilot_panel.fasta \
+		--out-checklist outputs/external_predict_checklist.md
+
+pilot-confident:
+	@if [ -z "$(KEEP)" ]; then \
+		echo "Usage: make pilot-confident KEEP=ID1,ID2,..."; \
+		exit 1; \
+	fi
+	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli pilot-confident \
+		--pilot-csv outputs/pilot_panel.csv \
+		--keep "$(KEEP)" \
+		--out outputs/confident_panel
 
 clean:
 	rm -rf outputs/*.jsonl outputs/*.md outputs/*.json outputs/evidence outputs/phase3_evidence .pytest_cache .ruff_cache
