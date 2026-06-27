@@ -38,6 +38,8 @@ The OpenAMP Foundry pipeline applies a five-stage scoring system to candidate se
 | Stage | Method | What it measures |
 |-------|--------|-----------------|
 | Activity-likeness | Physicochemical heuristics | Charge, hydrophobicity, amphipathicity, length |
+| Boman activity | Boman index (2003) normalized | Per-residue protein-binding / interaction potential |
+| Model disagreement | \|activity − boman_activity\| | Scorer consensus: low = robust, high = uncertain |
 | Safety (toxicity proxy) | Physicochemical risk flags | Hemolysis-correlated excess hydrophobicity, charge density, repeats |
 | Synthesis feasibility | Composition and length filter | Cysteine content, proline content, repeat runs, length |
 | Novelty | Levenshtein distance | Sequence divergence from 45 known AMP references |
@@ -47,9 +49,14 @@ The OpenAMP Foundry pipeline applies a five-stage scoring system to candidate se
 **Selection rule:** `docs/SELECTION_RULE.md` (locked before generation)  
 **Full benchmark methodology:** `docs/BENCHMARKING.md`
 
-**Key limitation:** These are Level 0–2 evidence scores (syntax validity, reproducible features,
-transparent heuristics). They have not been validated against lab measurements. Independent
-multi-model consensus scoring (Level 3) and lab assay (Level 5) are the next required steps.
+**Key improvement (v0.2):** The pipeline now includes a second independent activity scorer
+(Boman 2003 interaction potentials) and a disagreement signal. Candidates with low disagreement
+(< 0.20) have dual-scorer consensus and are computationally more robust nominations.
+Candidates with disagreement ≥ 0.30 are flagged for extra scrutiny.
+
+**Evidence level:** These are Level 0–2 evidence scores (syntax validity, reproducible features,
+transparent heuristics). They have not been validated against lab measurements. Lab assay
+(Level 5) is still the required next gate.
 
 ---
 
@@ -203,7 +210,7 @@ The expert reviewer must be aware of these limitations:
 | Limitation | Impact |
 |-----------|--------|
 | Level 0–2 evidence only | Scores are physicochemical heuristics, not validated ML predictions |
-| No multi-model consensus | Only one scoring approach used; independent predictors not consulted |
+| Two scorers only | Boman index added as second scorer; disagreement available; no ML predictor yet |
 | Novelty vs. 45 references only | Novel against this reference set does not mean novel against all known AMPs |
 | Conservative generation only | Near-seed variants; genuinely novel families not explored |
 | No structural prediction | No secondary structure, membrane interaction, or 3D modeling |

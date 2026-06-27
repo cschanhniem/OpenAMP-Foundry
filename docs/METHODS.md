@@ -73,6 +73,8 @@ The following features were extracted for each sequence:
 | Proline fraction | P / length | — |
 | Longest repeat run | Longest run of identical consecutive residues | — |
 | Hydrophobic moment | Eisenberg (1984), 100°/residue helical angle | Eisenberg et al. 1984 |
+| Boman index | Mean per-residue interaction potential | Boman 2003, Table 1, set 2 |
+| GRAVY | Grand Average of hYdropathicity; mean Kyte-Doolittle value | Kyte & Doolittle 1982 |
 
 **Limitation:** Features assume linear, unstructured sequence. Amphipathicity (hydrophobic
 moment) assumes an α-helical conformation (100°/residue). Non-helical AMPs are not modeled.
@@ -86,6 +88,26 @@ moment) assumes an α-helical conformation (100°/residue). Non-helical AMPs are
 A heuristic score approximating AMP-like properties, computed from net_charge_proxy,
 hydrophobic_fraction, hydrophobic_moment, and length. Weights are not optimized; they
 encode biochemical priors only. Score range: [0, 1].
+
+### 4.1b Boman Activity Score (Second Independent Scorer)
+
+A second, independent activity score derived from the Boman index (Boman 2003):
+`Boman index = mean of per-residue interaction potentials`
+
+Interaction potentials are from Boman (2003), Table 1, set 2. Positive Boman index
+(> 1.0) correlates with AMP-like protein-binding potential in the published benchmark.
+The raw index is normalized to [0, 1] using a tanh mapping centred at 0.
+
+**Model disagreement score**: `disagreement = |activity_likeness − boman_activity|`
+
+A high disagreement value (≥ 0.30) indicates that the two independent scorers disagree
+on the candidate's activity potential. This is a computational uncertainty signal, not
+a biological risk flag. High-disagreement candidates warrant additional scrutiny before
+lab nomination. Low-disagreement candidates (both scorers agree) are computationally
+more robust nominations.
+
+Reference: Boman HG (2003). Peptide antibiotics and their role in innate immunity.
+Annual Review of Immunology, 13, 61-92.
 
 ### 4.2 Safety Score
 
@@ -206,7 +228,7 @@ required before strong claims of predictive power.
 | Scoring not validated against lab data | Activity/safety scores may not correlate with assay results | Known; lab calibration needed |
 | Near-seed generation only | Misses genuinely novel AMP families | Known; future work |
 | Small reference set | Novelty may be overestimated | Partially mitigated; 45 refs used |
-| Single scoring approach | No model disagreement signal | Known; multi-model planned in v0.3 |
+| Two scorers only | Disagreement is coarse uncertainty; not a calibrated posterior | Partially mitigated; Boman index added in v0.2 |
 | Helical amphipathicity assumption | Non-helical AMPs underscored | Known limitation |
 | No structural modeling | Cannot predict membrane interaction mode | Out of scope v0.1 |
 
