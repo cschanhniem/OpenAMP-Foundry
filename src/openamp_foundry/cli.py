@@ -35,6 +35,27 @@ def build_parser() -> argparse.ArgumentParser:
     leakage.add_argument("--threshold", type=float, default=0.90)
     leakage.add_argument("--out", required=False, help="Optional JSON output path.")
 
+    baseline = bench_sub.add_parser(
+        "baseline",
+        help="Evaluate pipeline recall vs random baseline on a labelled set.",
+    )
+    baseline.add_argument("--candidates", required=True, help="CSV of all candidates to score.")
+    baseline.add_argument("--references", required=False, help="Reference CSV for novelty scoring.")
+    baseline.add_argument(
+        "--positives",
+        required=True,
+        help="CSV of known-positive (active) peptides. IDs must match candidates CSV.",
+    )
+    baseline.add_argument(
+        "--k",
+        type=int,
+        nargs="+",
+        default=None,
+        help="Recall@k cutoffs (default: auto from dataset size).",
+    )
+    baseline.add_argument("--config", default="configs/pipeline.yaml")
+    baseline.add_argument("--out", required=False, help="Optional JSON output path.")
+
     return parser
 
 
@@ -69,11 +90,12 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _run_bench(args: argparse.Namespace) -> int:
-    from openamp_foundry.benchmark.leakage import find_near_duplicates
     from openamp_foundry.data.loaders import load_candidates_csv
     from openamp_foundry.utils.io import write_json
 
     if args.bench_command == "leakage":
+        from openamp_foundry.benchmark.leakage import find_near_duplicates
+
         candidates = load_candidates_csv(args.candidates)
         references = load_candidates_csv(args.references)
         hits = find_near_duplicates(candidates, references, threshold=args.threshold)
@@ -87,6 +109,24 @@ def _run_bench(args: argparse.Namespace) -> int:
                 "scoring baseline models, benchmark results may be inflated."
             ) if hits else None,
         }
+        if args.out:
+            write_json(args.out, result)
+        print(json.dumps(result, indent=2))
+        return 0
+
+    if args.bench_command == "baseline":
+        from openamp_foundry.benchmark.evaluate import benchmark_summary
+        from openamp_foundry.pipeline import score_candidates
+
+        scored, _ = score_candidates(
+            candidate_path=args.candidates,
+            reference_path=args.references,
+            config_path=args.config,
+        )
+        positives = load_candidates_csv(args.positives)
+        positive_ids = {p.candidate_id for p in positives}
+        summary = benchmark_summary(scored, positive_ids, ks=args.k)
+        result = {"status": "ok", **summary}
         if args.out:
             write_json(args.out, result)
         print(json.dumps(result, indent=2))
