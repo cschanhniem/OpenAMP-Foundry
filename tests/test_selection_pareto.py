@@ -58,6 +58,16 @@ class TestRankCandidates:
         assert len(ranked) == 3
         assert all(c.scores["ensemble"] == 0.80 for c in ranked)
 
+    def test_missing_ensemble_key_defaults_to_zero(self):
+        # rank_candidates uses .get("ensemble", 0.0) — a missing key silently ranks last
+        no_ensemble = ScoredCandidate(
+            candidate=PeptideCandidate(candidate_id="NO_ENS", sequence="AAAA", source="test"),
+            features=compute_features("AAAA"),
+            scores={"activity": 0.99},  # no "ensemble" key
+        )
+        ranked = rank_candidates([no_ensemble, _make("HAS_ENS", 0.5)])
+        assert ranked[-1].candidate.candidate_id == "NO_ENS"
+
 
 class TestSelectTop:
     def test_returns_correct_count(self):

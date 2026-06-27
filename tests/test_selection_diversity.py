@@ -32,8 +32,9 @@ _NEAR_DUPLICATES = [
 
 class TestGreedyDiverseSelect:
     def test_returns_up_to_top_n(self):
+        # _DISTINCT has pairwise similarities well below 0.85, so top_n=2 returns exactly 2
         result = greedy_diverse_select(_DISTINCT, top_n=2, max_pairwise_similarity=0.85)
-        assert len(result) <= 2
+        assert len(result) == 2
 
     def test_distinct_sequences_all_selected(self):
         result = greedy_diverse_select(_DISTINCT, top_n=3, max_pairwise_similarity=0.85)
@@ -65,7 +66,8 @@ class TestGreedyDiverseSelect:
         assert "D" in ids
 
     def test_threshold_one_accepts_all(self):
-        # max_pairwise_similarity=1.0 → only exact duplicates excluded
+        # max_pairwise_similarity=1.0 → condition is sim <= 1.0, always True (sim is in [0,1])
+        # so ALL candidates are accepted, including exact duplicates
         result = greedy_diverse_select(_NEAR_DUPLICATES, top_n=4, max_pairwise_similarity=1.0)
         assert len(result) == 4
 

@@ -1,6 +1,7 @@
 """Tests for utils/hashing.py and utils/io.py."""
 from __future__ import annotations
 
+import hashlib
 import json
 import tempfile
 from pathlib import Path
@@ -47,35 +48,33 @@ class TestStableJsonHash:
 
 class TestFileSha256:
     def test_matches_content_hash(self):
-        import hashlib
         content = b"hello world"
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(content)
-            path = f.name
-        expected = hashlib.sha256(content).hexdigest()
-        assert file_sha256(path) == expected
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "test.bin"
+            path.write_bytes(content)
+            expected = hashlib.sha256(content).hexdigest()
+            assert file_sha256(path) == expected
 
     def test_different_files_differ(self):
-        with tempfile.NamedTemporaryFile(delete=False) as f1:
-            f1.write(b"abc")
-            p1 = f1.name
-        with tempfile.NamedTemporaryFile(delete=False) as f2:
-            f2.write(b"xyz")
-            p2 = f2.name
-        assert file_sha256(p1) != file_sha256(p2)
+        with tempfile.TemporaryDirectory() as d:
+            p1 = Path(d) / "a.bin"
+            p2 = Path(d) / "b.bin"
+            p1.write_bytes(b"abc")
+            p2.write_bytes(b"xyz")
+            assert file_sha256(p1) != file_sha256(p2)
 
     def test_returns_64_char_hex(self):
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(b"data")
-            p = f.name
-        assert len(file_sha256(p)) == 64
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "data.bin"
+            path.write_bytes(b"data")
+            assert len(file_sha256(path)) == 64
 
     def test_empty_file(self):
-        import hashlib
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            p = f.name
-        expected = hashlib.sha256(b"").hexdigest()
-        assert file_sha256(p) == expected
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "empty.bin"
+            path.write_bytes(b"")
+            expected = hashlib.sha256(b"").hexdigest()
+            assert file_sha256(path) == expected
 
 
 class TestWriteJsonl:
@@ -113,8 +112,8 @@ class TestWriteJsonl:
         with tempfile.TemporaryDirectory() as d:
             path = Path(d) / "out.jsonl"
             write_jsonl(path, rows)
-            parsed = json.loads(path.read_text())
-        assert parsed["name"] == "café"
+            lines = path.read_text().strip().splitlines()
+        assert json.loads(lines[0])["name"] == "café"
 
 
 class TestReadWriteJson:
