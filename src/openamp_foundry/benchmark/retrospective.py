@@ -43,6 +43,34 @@ def _auc_wilcoxon(pos_scores: list[float], neg_scores: list[float]) -> float:
     return concordant / (n_pos * n_neg)
 
 
+def _bootstrap_auroc_ci(
+    pos_scores: list[float],
+    neg_scores: list[float],
+    n_bootstrap: int = 2000,
+    seed: int = 0,
+) -> dict:
+    """Bootstrap 95% CI for AUROC via percentile method."""
+    import random as _random
+    rng = _random.Random(seed)
+    n_pos, n_neg = len(pos_scores), len(neg_scores)
+    if n_pos == 0 or n_neg == 0:
+        return {"mean": 0.5, "ci_lo": 0.5, "ci_hi": 0.5, "n_bootstrap": 0}
+    samples = []
+    for _ in range(n_bootstrap):
+        pos_s = [rng.choice(pos_scores) for _ in range(n_pos)]
+        neg_s = [rng.choice(neg_scores) for _ in range(n_neg)]
+        samples.append(_auc_wilcoxon(pos_s, neg_s))
+    samples.sort()
+    lo_idx = int(0.025 * n_bootstrap)
+    hi_idx = int(0.975 * n_bootstrap)
+    return {
+        "mean": round(sum(samples) / len(samples), 4),
+        "ci_lo": round(samples[lo_idx], 4),
+        "ci_hi": round(samples[hi_idx], 4),
+        "n_bootstrap": n_bootstrap,
+    }
+
+
 def _recall_at_k(labels: list[int], k: int) -> float:
     """Fraction of true positives in the top-k ranked items."""
     n_pos = sum(labels)
@@ -76,6 +104,7 @@ def run_retrospective_benchmark(
     config_path: str | Path = "configs/pipeline.yaml",
     recall_ks: list[int] | None = None,
     benchmark_type: str = "standard",
+    n_bootstrap: int = 2000,
 ) -> dict:
     """Score known AMPs and shuffled decoys and compute AUROC + recall@k.
 
@@ -129,6 +158,7 @@ def run_retrospective_benchmark(
     pos_scores = [r["ensemble"] for r in rows if r["label"] == 1]
     neg_scores = [r["ensemble"] for r in rows if r["label"] == 0]
     auroc = round(_auc_wilcoxon(pos_scores, neg_scores), 4)
+    auroc_ci = _bootstrap_auroc_ci(pos_scores, neg_scores, n_bootstrap=n_bootstrap)
 
     n_total = len(rows)
     n_pos = sum(r["label"] for r in rows)
@@ -153,6 +183,10 @@ def run_retrospective_benchmark(
         "n_negatives": n_total - n_pos,
         "n_total": n_total,
         "auroc": auroc,
+        "auroc_ci95_lo": auroc_ci["ci_lo"],
+        "auroc_ci95_hi": auroc_ci["ci_hi"],
+        "auroc_bootstrap_mean": auroc_ci["mean"],
+        "n_bootstrap": auroc_ci["n_bootstrap"],
         "random_auroc": random_auroc,
         "auroc_above_random": round(auroc - random_auroc, 4),
         **recall,

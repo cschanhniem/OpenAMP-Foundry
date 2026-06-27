@@ -1,4 +1,4 @@
-.PHONY: demo test lint clean bench-leakage bench-baseline bench-hidden-active generate phase3 pilot validate-scoring validate-scoring-strict external-predict pilot-confident
+.PHONY: demo test lint clean bench-leakage bench-baseline bench-hidden-active generate phase3 pilot validate-scoring validate-scoring-strict external-predict pilot-confident presynth-qc gold-standard
 
 PYTHON := $(shell [ -f .venv/bin/python ] && echo .venv/bin/python || echo python3)
 PYTEST  := $(shell [ -f .venv/bin/pytest ] && echo .venv/bin/pytest || echo pytest)
@@ -97,6 +97,17 @@ pilot-confident:
 		--pilot-csv outputs/pilot_panel.csv \
 		--keep "$(KEEP)" \
 		--out outputs/confident_panel
+
+presynth-qc:
+	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli presynth-qc \
+		--panel-csv outputs/confident_panel.csv \
+		--out outputs/presynth_qc_report.md
+
+gold-standard:
+	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli gold-standard \
+		--panel-csv outputs/confident_panel.csv \
+		--out outputs/gold_standard_calibration.md \
+		--config configs/pipeline.yaml
 
 clean:
 	rm -rf outputs/*.jsonl outputs/*.md outputs/*.json outputs/evidence outputs/phase3_evidence .pytest_cache .ruff_cache
