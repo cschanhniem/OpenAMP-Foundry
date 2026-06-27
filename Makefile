@@ -1,4 +1,4 @@
-.PHONY: demo test lint clean bench-leakage bench-baseline
+.PHONY: demo test lint clean bench-leakage bench-baseline bench-hidden-active
 
 PYTHON := $(shell [ -f .venv/bin/python ] && echo .venv/bin/python || echo python3)
 PYTEST  := $(shell [ -f .venv/bin/pytest ] && echo .venv/bin/pytest || echo pytest)
@@ -31,6 +31,13 @@ bench-baseline:
 		--references examples/known_reference/demo_known_amps.csv \
 		--positives examples/known_reference/demo_known_amps.csv \
 		--out outputs/bench_baseline_report.json
+
+bench-hidden-active:
+	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli bench baseline \
+		--candidates examples/benchmark/mixed_candidates.csv \
+		--positives examples/benchmark/active_labels.csv \
+		--k 5 10 20 \
+		--out outputs/bench_hidden_active_report.json
 
 clean:
 	rm -rf outputs/*.jsonl outputs/*.md outputs/*.json outputs/evidence .pytest_cache .ruff_cache
