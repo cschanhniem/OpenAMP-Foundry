@@ -44,8 +44,6 @@ def _net_charge_at_ph(seq: str, ph: float) -> float:
     charge -= 1.0 / (1.0 + 10 ** (_PKA["C_term"] - ph))
     # Basic residues (positive)
     for aa, pka in [("K", _PKA["K"]), ("R", _PKA["R"]), ("H", _PKA["H"])]:
-        for _ in seq:
-            pass
         charge += seq.count(aa) / (1.0 + 10 ** (ph - pka))
     # Acidic residues (negative)
     for aa, pka in [("D", _PKA["D"]), ("E", _PKA["E"]), ("C", _PKA["C"]), ("Y", _PKA["Y"])]:
@@ -166,7 +164,10 @@ def check_sequence(candidate_id: str, seq: str, mu_h: float = 0.0) -> SynthQC:
         qc.hydrophobic_run = max(runs, key=len)
         qc.aggregation_risk = True
 
-    # Proteolytic sites (interior only — terminal K/R are typical, less risky)
+    # Proteolytic sites (interior only — terminal K/R are typical, less risky).
+    # _TRYPSIN_RE already requires a following character via (?=.), so the
+    # m.start() < len(seq)-1 check is the canonical guard; the regex lookahead
+    # provides a defence-in-depth backstop.
     qc.trypsin_sites = [m.start() for m in _TRYPSIN_RE.finditer(seq) if m.start() < len(seq) - 1]
     qc.chymotrypsin_sites = [m.start() for m in _CHYMOTRYPSIN_RE.finditer(seq) if m.start() < len(seq) - 1]
     qc.deamidation_sites = [
@@ -239,11 +240,15 @@ def check_panel(
 ) -> list[SynthQC]:
     """Run QC on a list of candidate dicts (must have 'candidate_id' and 'sequence')."""
     mu_h_map = mu_h_map or {}
-    return [
-        check_sequence(
-            c["candidate_id"],
-            c["sequence"],
-            mu_h=mu_h_map.get(c["candidate_id"], 0.0),
-        )
-        for c in candidates
-    ]
+    results = []
+    for c in candidates:
+        try:
+            cid = c["candidate_id"]
+            seq = c["sequence"]
+        except KeyError as exc:
+            raise KeyError(
+                f"Candidate row missing required column {exc} — "
+                "check that your panel CSV has 'candidate_id' and 'sequence' headers."
+            ) from exc
+        results.append(check_sequence(cid, seq, mu_h=mu_h_map.get(cid, 0.0)))
+    return results

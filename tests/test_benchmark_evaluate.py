@@ -58,10 +58,20 @@ class TestRecallAtK:
 
 class TestRandomRecallAtK:
     def test_expected_random_recall(self):
-        # 2 positives in 5 candidates, k=2 → expected 0.4 hits → 0.4/2 = 0.2...
-        # Actually E[hits] = k * n_pos / n = 2 * 2 / 5 = 0.8 → recall = 0.8/2 = 0.4
+        # E[recall@k] = k / n_candidates (hypergeometric expectation)
+        # k=2, n_candidates=5 → 2/5 = 0.4
         result = random_recall_at_k(n_candidates=5, n_positives=2, k=2)
-        assert 0 < result < 1
+        assert abs(result - 0.4) < 0.001, f"Expected 0.4, got {result}"
+
+    def test_expected_random_recall_k_less_than_positives(self):
+        # k=1 < n_positives=5, n_candidates=10 → E[recall@1] = 1/10 = 0.1
+        result = random_recall_at_k(n_candidates=10, n_positives=5, k=1)
+        assert abs(result - 0.1) < 0.001, f"Expected 0.1, got {result}"
+
+    def test_random_recall_real_benchmark_scale(self):
+        # 44 AMPs, 88 total candidates, k=8 → E[recall@8] = 8/88 ≈ 0.0909
+        result = random_recall_at_k(n_candidates=88, n_positives=44, k=8)
+        assert abs(result - 8 / 88) < 0.001, f"Expected {8/88:.4f}, got {result}"
 
     def test_zero_candidates_returns_zero(self):
         assert random_recall_at_k(0, 2, 2) == 0.0
@@ -97,8 +107,7 @@ class TestBenchmarkSummary:
 
     def test_summary_contains_disclaimer(self):
         result = benchmark_summary(ITEMS, POSITIVES, ks=[2])
-        assert "do not prove biological efficacy" in result["disclaimer"].lower() or \
-               "do not prove" in result["disclaimer"].lower()
+        assert "do not prove biological efficacy" in result["disclaimer"].lower()
 
     def test_verdict_positive_when_pipeline_outperforms(self):
         # C1 and C2 are top-ranked and are our positives — should outperform random at k=2

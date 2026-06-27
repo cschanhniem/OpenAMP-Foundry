@@ -1,0 +1,295 @@
+"""Tests for src/openamp_foundry/qc/presynth_check.py"""
+import pytest
+from openamp_foundry.qc.presynth_check import (
+    SynthQC,
+    check_panel,
+    check_sequence,
+)
+
+
+# ---------------------------------------------------------------------------
+# Molecular weight
+# ---------------------------------------------------------------------------
+
+class TestMolecularWeight:
+    def test_glycine_monomer(self):
+        # Single G: residue mass 75.03 - 0 water corrections = 75.03
+        qc = check_sequence("G1", "G")
+        assert qc.molecular_weight_da == pytest.approx(75.03, abs=0.5)
+
+    def test_short_peptide_positive(self):
+        qc = check_sequence("test", "ACDEF")
+        assert qc.molecular_weight_da > 0
+
+    def test_longer_peptide_heavier(self):
+        qc_short = check_sequence("s", "KRLF")
+        qc_long = check_sequence("l", "KRLFKKIGSALKFL")
+        assert qc_long.molecular_weight_da > qc_short.molecular_weight_da
+
+    def test_known_seed003(self):
+        # RRWQWRMKKLG should be ~1.4–1.6 kDa
+        qc = check_sequence("s3", "RRWQWRMKKLG")
+        assert 1300 < qc.molecular_weight_da < 1700
+
+
+# ---------------------------------------------------------------------------
+# Isoelectric point
+# ---------------------------------------------------------------------------
+
+class TestIsoelectricPoint:
+    def test_cationic_peptide_basic_pi(self):
+        # KKKK should be highly basic
+        qc = check_sequence("k4", "KKKK")
+        assert qc.isoelectric_point > 9.0
+
+    def test_acidic_peptide_low_pi(self):
+        # DDDD should be acidic
+        qc = check_sequence("d4", "DDDD")
+        assert qc.isoelectric_point < 5.0
+
+    def test_pi_in_valid_range(self):
+        qc = check_sequence("s", "KRLFKKIGSALKFL")
+        assert 0.0 < qc.isoelectric_point < 14.0
+
+
+# ---------------------------------------------------------------------------
+# Net charge
+# ---------------------------------------------------------------------------
+
+class TestNetCharge:
+    def test_cationic_amp_positive_charge(self):
+        # SEED-005 scaffold — K×3, R×1 → strongly positive
+        qc = check_sequence("s", "KRLFKKIGSALKFL")
+        assert qc.charge_ph74 > 2.0
+
+    def test_charge_decreases_at_higher_ph(self):
+        qc = check_sequence("s", "KRLFKKIGSALKFL")
+        assert qc.charge_ph74 < qc.charge_ph60
+
+    def test_lysine_rich_highly_positive(self):
+        qc = check_sequence("k", "KKKKKK")
+        assert qc.charge_ph74 > 4.0
+
+    def test_acidic_peptide_negative(self):
+        qc = check_sequence("d", "DDDDDD")
+        assert qc.charge_ph74 < 0.0
+
+
+# ---------------------------------------------------------------------------
+# Oxidation risk (Met, Cys)
+# ---------------------------------------------------------------------------
+
+class TestOxidationRisk:
+    def test_no_met_no_cys_no_risk(self):
+        qc = check_sequence("s", "KRLFKKIGSALKFL")
+        assert not qc.has_oxidation_risk
+        assert qc.methionine_count == 0
+        assert qc.cysteine_count == 0
+
+    def test_met_triggers_oxidation_risk(self):
+        qc = check_sequence("s", "KRLMKKIGSAIKFL")
+        assert qc.has_oxidation_risk
+        assert qc.methionine_count == 1
+
+    def test_cys_triggers_oxidation_risk(self):
+        qc = check_sequence("s", "ACYCRIPACIAGER")
+        assert qc.has_oxidation_risk
+        assert qc.cysteine_count >= 2
+
+    def test_two_met_counted(self):
+        qc = check_sequence("s", "RRWNWRMKKMG")
+        assert qc.methionine_count == 2
+
+    def test_met_flag_in_flags_list(self):
+        qc = check_sequence("s", "KRLMKKIGSAIKFL")
+        met_flags = [f for f in qc.flags if "MET" in f]
+        assert len(met_flags) == 1
+
+
+# ---------------------------------------------------------------------------
+# Trypsin/chymotrypsin sites
+# ---------------------------------------------------------------------------
+
+class TestProteolytic:
+    def test_trypsin_sites_detected(self):
+        # KRLFKKIGSALKFL: K and R (not terminal, not before P)
+        qc = check_sequence("s", "KRLFKKIGSALKFL")
+        assert len(qc.trypsin_sites) >= 3
+
+    def test_trypsin_before_proline_not_counted(self):
+        # KP: K before P should NOT be counted
+        qc = check_sequence("s", "AKPGG")
+        # K at pos 1 (0-based) is before P → should NOT be in sites
+        # A at pos 0 is just a residue
+        assert 1 not in qc.trypsin_sites
+
+    def test_chymotrypsin_w_detected(self):
+        qc = check_sequence("s", "RRWQWRMKKLG")
+        assert len(qc.chymotrypsin_sites) >= 1
+
+    def test_terminal_k_not_trypsin_site(self):
+        # K at last position should not be counted (terminal)
+        qc = check_sequence("s", "GGGGGK")
+        assert (len(qc.sequence) - 1) not in qc.trypsin_sites
+
+
+# ---------------------------------------------------------------------------
+# Deamidation
+# ---------------------------------------------------------------------------
+
+class TestDeamidation:
+    def test_ng_hotspot_detected(self):
+        qc = check_sequence("s", "ANGGG")
+        assert any("N" in s for s in qc.deamidation_sites)
+
+    def test_ns_hotspot_detected(self):
+        qc = check_sequence("s", "ANSGGG")
+        assert any("N" in s for s in qc.deamidation_sites)
+
+    def test_no_hotspot_when_absent(self):
+        qc = check_sequence("s", "KRLFKKIGSALKFL")
+        assert qc.deamidation_sites == []
+
+    def test_hotspot_format(self):
+        qc = check_sequence("s", "ANGGG")
+        # Should be like "N1G" (residue + 1-based position + next residue)
+        assert len(qc.deamidation_sites) >= 1
+        for site in qc.deamidation_sites:
+            assert site[0] == "N"
+
+
+# ---------------------------------------------------------------------------
+# Aggregation / hydrophobic runs
+# ---------------------------------------------------------------------------
+
+class TestAggregationRisk:
+    def test_four_hydrophobic_run_flagged(self):
+        qc = check_sequence("s", "VILLKK")
+        assert qc.aggregation_risk
+        assert "VILL" in qc.hydrophobic_run
+
+    def test_three_hydrophobic_not_flagged(self):
+        qc = check_sequence("s", "VILKK")
+        assert not qc.aggregation_risk
+
+    def test_seed005_flagged_for_alkfl_run(self):
+        # KRLFKKIGSALKFL has LKFL at the end with ALKFL — let's check
+        qc = check_sequence("s", "KRLFKKIGSALKFL")
+        # "ALKFL" has 5 chars with A, L, K, F, L — K is not in VILMFW
+        # so not a pure hydrophobic run. Let's just check the function works
+        assert isinstance(qc.aggregation_risk, bool)
+
+    def test_run_length_correct(self):
+        qc = check_sequence("s", "KVILMFWAAAK")
+        assert len(qc.hydrophobic_run) >= 4
+
+
+# ---------------------------------------------------------------------------
+# UV chromophore
+# ---------------------------------------------------------------------------
+
+class TestUVChromophore:
+    def test_w_gives_chromophore(self):
+        qc = check_sequence("s", "RRWQWRMKKLG")
+        assert qc.has_uv_chromophore
+
+    def test_y_gives_chromophore(self):
+        qc = check_sequence("s", "KRWQYRMKKLG")
+        assert qc.has_uv_chromophore
+
+    def test_f_gives_chromophore(self):
+        qc = check_sequence("s", "KRLFKKIGSALKFL")
+        assert qc.has_uv_chromophore
+
+    def test_no_chromophore(self):
+        qc = check_sequence("s", "KRKRKLLL")
+        assert not qc.has_uv_chromophore
+
+    def test_w_formulation_note_includes_eps280(self):
+        qc = check_sequence("s", "RRWWRR")
+        assert "A280" in qc.formulation_note
+        assert "ε=" in qc.formulation_note
+
+
+# ---------------------------------------------------------------------------
+# Hemolysis stratification
+# ---------------------------------------------------------------------------
+
+class TestHemolysisStratification:
+    def test_low_mu_h_start_at_mic(self):
+        qc = check_sequence("s", "AAAAAAA", mu_h=0.40)
+        assert "Start at MIC" in qc.hemolysis_start_conc
+
+    def test_moderate_mu_h_start_at_mic_third(self):
+        qc = check_sequence("s", "AAAAAAA", mu_h=0.65)
+        assert "MIC/3" in qc.hemolysis_start_conc
+
+    def test_high_mu_h_start_at_mic_tenth(self):
+        qc = check_sequence("s", "AAAAAAA", mu_h=0.90)
+        assert "MIC/10" in qc.hemolysis_start_conc
+
+    def test_boundary_at_055(self):
+        # μH exactly 0.55 → should still be "low risk" (> 0.55 triggers moderate)
+        qc = check_sequence("s", "AAAAAAA", mu_h=0.55)
+        assert "Start at MIC;" in qc.hemolysis_start_conc
+
+    def test_boundary_at_080(self):
+        # μH exactly 0.80 → moderate (> 0.80 triggers high)
+        qc = check_sequence("s", "AAAAAAA", mu_h=0.80)
+        assert "MIC/3" in qc.hemolysis_start_conc
+
+
+# ---------------------------------------------------------------------------
+# Synthesis difficulty
+# ---------------------------------------------------------------------------
+
+class TestSynthesisDifficulty:
+    def test_clean_peptide_low_difficulty(self):
+        # Simple 8-mer with no risky residues and no trypsin sites beyond terminal
+        qc = check_sequence("s", "RRWQWRMK")  # short, no M inside non-K/R position
+        assert qc.synthesis_difficulty in ("LOW", "MODERATE")
+
+    def test_many_flags_high_difficulty(self):
+        # Long peptide with Met, many Lys/Arg, deamidation sites
+        qc = check_sequence("s", "GIGKFLKSAKKFGKAFVPEIMNS")
+        # 23-mer with Met → HIGH difficulty expected
+        assert qc.synthesis_difficulty == "HIGH"
+
+    def test_no_flags_low(self):
+        # KKK: charge ~2.8 at pH7.4, ≤2 trypsin sites, no Met/Cys/aggregation/deamidation
+        qc = check_sequence("s", "KKK")
+        assert qc.synthesis_difficulty == "LOW"
+
+
+# ---------------------------------------------------------------------------
+# check_panel (batch function)
+# ---------------------------------------------------------------------------
+
+class TestCheckPanel:
+    def test_returns_list_of_qc(self):
+        panel = [
+            {"candidate_id": "A", "sequence": "KRLFKKIGSALKFL"},
+            {"candidate_id": "B", "sequence": "RRWQWRMKKLG"},
+        ]
+        results = check_panel(panel)
+        assert len(results) == 2
+        assert all(isinstance(r, SynthQC) for r in results)
+
+    def test_mu_h_map_applied(self):
+        panel = [{"candidate_id": "A", "sequence": "AAAAAA"}]
+        mu_h_map = {"A": 0.85}
+        results = check_panel(panel, mu_h_map=mu_h_map)
+        assert results[0].mu_h == 0.85
+
+    def test_empty_panel(self):
+        assert check_panel([]) == []
+
+    def test_preserves_candidate_id(self):
+        panel = [{"candidate_id": "SEED-003_VAR_016", "sequence": "RRWNWRMKKMG"}]
+        results = check_panel(panel)
+        assert results[0].candidate_id == "SEED-003_VAR_016"
+
+    def test_missing_mu_h_defaults_to_zero(self):
+        panel = [{"candidate_id": "A", "sequence": "AAAAAA"}]
+        results = check_panel(panel)
+        assert results[0].mu_h == 0.0

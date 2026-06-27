@@ -17,14 +17,16 @@ class TestHydrophobicMoment:
 
     def test_alternating_hydrophobic_polar_has_higher_moment(self):
         # Alternating hydrophobic/polar gives high periodicity
-        # e.g. KALALALA at 100deg/residue should show amphipathic character
-        # vs uniform KKKKKKKKwhich is all charged
+        # e.g. KLKLKLKL at 100deg/residue should show amphipathic character
+        # vs KKKKKKKK which is all charged (low hydrophobic contrast)
         seq_amphipathic = "KLKLKLKL"
         seq_uniform = "KKKKKKKK"
         result_amph = hydrophobic_moment(seq_amphipathic)
         result_unif = hydrophobic_moment(seq_uniform)
-        assert isinstance(result_amph, float)
-        assert isinstance(result_unif, float)
+        assert result_amph > result_unif, (
+            f"Amphipathic KLKLKLKL moment ({result_amph:.4f}) should exceed "
+            f"uniform KKKKKKKK moment ({result_unif:.4f})"
+        )
 
     def test_known_amp_has_nonzero_moment(self):
         # KWKLFKKIGAVLKVL is a classic AMP (magainin analogue)
