@@ -1,7 +1,6 @@
 """Tests for hydrophobic moment (amphipathicity) feature."""
 from __future__ import annotations
 
-import math
 
 from openamp_foundry.features.physchem import compute_features, hydrophobic_moment
 
