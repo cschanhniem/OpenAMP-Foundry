@@ -29,14 +29,16 @@ def recall_at_k(
 
 
 def random_recall_at_k(n_candidates: int, n_positives: int, k: int) -> float:
-    """Expected recall@k for a random ranker.
+    """Expected recall@k for a random ranker (hypergeometric expectation).
 
-    E[recall@k] = min(k, n_positives) / n_positives when sampling without replacement.
+    E[hits in top-k] = k * n_positives / n_candidates
+    E[recall@k]      = E[hits] / n_positives = k / n_candidates
+
+    Capped at 1.0 when k >= n_candidates (all positives recovered).
     """
     if n_positives == 0 or n_candidates == 0:
         return 0.0
-    expected_hits = min(k, n_positives) * min(k, n_candidates) / max(n_candidates, 1)
-    return round(min(1.0, expected_hits / n_positives), 4)
+    return round(min(1.0, k / n_candidates), 4)
 
 
 def enrichment_factor(

@@ -946,8 +946,8 @@ def _run_diversity_check(args: argparse.Namespace) -> int:
         "",
         "## Summary",
         "",
-        f"| Metric | Value |",
-        f"|---|---|",
+        "| Metric | Value |",
+        "|---|---|",
         f"| Candidates analysed | {stats['n_candidates']} |",
         f"| Structural clusters | {stats['n_clusters']} |",
         f"| Redundant candidates (same cluster as earlier) | {stats['n_redundant']} |",
@@ -977,11 +977,10 @@ def _run_diversity_check(args: argparse.Namespace) -> int:
     ]
 
     minimal_ids = {c["candidate_id"] for c in minimal}
-    cluster_first: dict[int, bool] = {}
+    seen_clusters: set[int] = set()
     for c in clustered:
         cid = c["cluster_id"]
-        is_first = cid not in cluster_first
-        cluster_first[cid] = True
+        seen_clusters.add(cid)
         rank = c.get("pilot_rank", "")
         cand_id = c["candidate_id"]
         seq = c["sequence"]

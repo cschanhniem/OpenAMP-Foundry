@@ -42,10 +42,13 @@ def activity_likeness_score(features: dict) -> float:
     # Typical range for AMPs: 0.3–0.8; scale to [0,1] over 0–0.8 range
     amphipathicity_score = clamp01(mu_h / 0.8) * 0.15
 
+    # Base weights (0.24+0.27+0.17 = 0.68) leave 0.32 headroom for bonuses
+    # (aromatic max 0.10 + amphipathicity max 0.15 = 0.25), ceiling = 0.93 < 1.0.
+    # Scale factor vs original (0.28, 0.32, 0.20): multiply each by 0.68/0.80 ≈ 0.85.
     score = (
-        0.28 * length_score
-        + 0.32 * charge_score
-        + 0.20 * hydro_score
+        0.24 * length_score
+        + 0.27 * charge_score
+        + 0.17 * hydro_score
         + aromatic_bonus
         + amphipathicity_score
     )
