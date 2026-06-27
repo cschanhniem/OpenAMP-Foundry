@@ -650,7 +650,7 @@ def _run_presynth_qc(args: argparse.Namespace) -> int:
             f"- **SPPS difficulty:** {r.synthesis_difficulty}",
         ]
         if r.flags:
-            lines.append(f"- **FLAGS:**")
+            lines.append("- **FLAGS:**")
             for flag in r.flags:
                 lines.append(f"  - ⚠ {flag}")
         else:

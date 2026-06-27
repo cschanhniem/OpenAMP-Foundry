@@ -1,8 +1,6 @@
 """Tests for hydrophobic-moment-aware safety scorer (v0.4)."""
 from __future__ import annotations
 
-import pytest
-
 from openamp_foundry.features.physchem import compute_features
 from openamp_foundry.scoring.safety import safety_score
 

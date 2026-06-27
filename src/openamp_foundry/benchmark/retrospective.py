@@ -112,7 +112,7 @@ def run_retrospective_benchmark(
     """
     from openamp_foundry.features.physchem import compute_features
     from openamp_foundry.scoring.activity import activity_likeness_score
-    from openamp_foundry.scoring.boman import boman_activity_score, gravy_score
+    from openamp_foundry.scoring.boman import boman_activity_score
     from openamp_foundry.scoring.ensemble import ensemble_score
     from openamp_foundry.scoring.novelty import novelty_score
     from openamp_foundry.scoring.safety import safety_score
