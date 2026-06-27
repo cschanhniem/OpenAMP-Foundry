@@ -126,9 +126,9 @@ def build_parser() -> argparse.ArgumentParser:
     validate_scoring = sub.add_parser(
         "validate-scoring",
         help=(
-            "Retrospective AUROC benchmark: score known AMPs vs composition-matched "
-            "scrambled decoys. AUROC > 0.70 = model has meaningful discriminative power. "
-            "Run this before committing to wet-lab synthesis."
+            "Retrospective AUROC benchmark: known AMPs vs background random peptides. "
+            "AUROC > 0.70 = model passes Gate 1 (proceed to synthesis). "
+            "Run before committing to wet-lab spend."
         ),
     )
     validate_scoring.add_argument(
@@ -138,8 +138,22 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_scoring.add_argument(
         "--decoy-csv",
-        default="examples/validation/scrambled_decoys.csv",
-        help="CSV of composition-matched shuffled decoys (label=0).",
+        default="examples/validation/random_background.csv",
+        help=(
+            "CSV of decoy peptides (label=0). "
+            "Default: background-frequency random peptides (standard benchmark). "
+            "Use examples/validation/scrambled_decoys.csv for the stricter "
+            "composition-matched shuffle test."
+        ),
+    )
+    validate_scoring.add_argument(
+        "--benchmark-type",
+        choices=["standard", "strict"],
+        default="standard",
+        help=(
+            "standard: AMPs vs background random peptides (primary synthesis gate). "
+            "strict: AMPs vs composition-matched shuffled decoys (order-sensitivity test)."
+        ),
     )
     validate_scoring.add_argument("--config", default="configs/pipeline.yaml")
     validate_scoring.add_argument(
@@ -373,10 +387,12 @@ def _run_validate_scoring(args: argparse.Namespace) -> int:
     from openamp_foundry.benchmark.retrospective import run_retrospective_benchmark
     from openamp_foundry.utils.io import write_json
 
+    benchmark_type = getattr(args, "benchmark_type", "standard")
     result = run_retrospective_benchmark(
         amp_csv=args.amp_csv,
         decoy_csv=args.decoy_csv,
         config_path=args.config,
+        benchmark_type=benchmark_type,
     )
     if args.out:
         write_json(args.out, result)

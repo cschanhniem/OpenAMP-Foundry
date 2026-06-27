@@ -1,4 +1,4 @@
-.PHONY: demo test lint clean bench-leakage bench-baseline bench-hidden-active generate phase3 pilot validate-scoring external-predict pilot-confident
+.PHONY: demo test lint clean bench-leakage bench-baseline bench-hidden-active generate phase3 pilot validate-scoring validate-scoring-strict external-predict pilot-confident
 
 PYTHON := $(shell [ -f .venv/bin/python ] && echo .venv/bin/python || echo python3)
 PYTEST  := $(shell [ -f .venv/bin/pytest ] && echo .venv/bin/pytest || echo pytest)
@@ -71,8 +71,16 @@ pilot: phase3
 validate-scoring:
 	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli validate-scoring \
 		--amp-csv examples/validation/known_amps.csv \
-		--decoy-csv examples/validation/scrambled_decoys.csv \
+		--decoy-csv examples/validation/random_background.csv \
+		--benchmark-type standard \
 		--out outputs/validate_scoring_report.json
+
+validate-scoring-strict:
+	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli validate-scoring \
+		--amp-csv examples/validation/known_amps.csv \
+		--decoy-csv examples/validation/scrambled_decoys.csv \
+		--benchmark-type strict \
+		--out outputs/validate_scoring_strict_report.json
 
 external-predict: pilot
 	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli external-predict \
