@@ -1,4 +1,4 @@
-.PHONY: demo test lint clean bench-leakage bench-baseline bench-hidden-active
+.PHONY: demo test lint clean bench-leakage bench-baseline bench-hidden-active generate phase3
 
 PYTHON := $(shell [ -f .venv/bin/python ] && echo .venv/bin/python || echo python3)
 PYTEST  := $(shell [ -f .venv/bin/pytest ] && echo .venv/bin/pytest || echo pytest)
@@ -39,5 +39,23 @@ bench-hidden-active:
 		--k 5 10 20 \
 		--out outputs/bench_hidden_active_report.json
 
+generate:
+	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli generate-batch \
+		--seeds examples/sequences/amp_seeds.csv \
+		--out examples/sequences/phase3_pool.csv \
+		--n-double 25 \
+		--n-charge 12 \
+		--rng-seed 2024
+
+phase3: generate
+	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli rank \
+		--candidates examples/sequences/phase3_pool.csv \
+		--references examples/sequences/amp_seeds.csv \
+		--out outputs/phase3_ranked.jsonl \
+		--report outputs/phase3_report.md \
+		--cert-dir outputs/phase3_evidence \
+		--manifest outputs/phase3_manifest.json \
+		--config configs/phase3.yaml
+
 clean:
-	rm -rf outputs/*.jsonl outputs/*.md outputs/*.json outputs/evidence .pytest_cache .ruff_cache
+	rm -rf outputs/*.jsonl outputs/*.md outputs/*.json outputs/evidence outputs/phase3_evidence .pytest_cache .ruff_cache

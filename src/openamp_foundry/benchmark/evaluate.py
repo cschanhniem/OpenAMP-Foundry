@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from openamp_foundry.scoring.novelty import normalized_similarity
 from openamp_foundry.types import ScoredCandidate
 
 
@@ -101,3 +102,29 @@ def benchmark_summary(
         "results": results,
         "verdict": verdict,
     }
+
+
+def find_contaminated_references(
+    candidate_sequences: list[str],
+    reference_sequences: list[str],
+    positive_ids: set[str],
+    candidate_ids: list[str],
+    threshold: float = 0.70,
+) -> set[int]:
+    """Return indices of references that are near-duplicates of test positives.
+
+    Used to build a cluster-split reference set: removing contaminated references
+    ensures benchmark performance is not inflated by reference-set memorization.
+    """
+    contaminated: set[int] = set()
+    positive_seqs = {
+        seq
+        for seq, cid in zip(candidate_sequences, candidate_ids)
+        if cid in positive_ids
+    }
+    for ref_idx, ref_seq in enumerate(reference_sequences):
+        for pos_seq in positive_seqs:
+            if normalized_similarity(ref_seq, pos_seq) >= threshold:
+                contaminated.add(ref_idx)
+                break
+    return contaminated

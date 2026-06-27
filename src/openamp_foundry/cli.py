@@ -56,6 +56,43 @@ def build_parser() -> argparse.ArgumentParser:
     baseline.add_argument("--config", default="configs/pipeline.yaml")
     baseline.add_argument("--out", required=False, help="Optional JSON output path.")
 
+    generate = sub.add_parser(
+        "generate-batch",
+        help=(
+            "Generate a candidate pool by conservative mutation of seed sequences. "
+            "Output is a CSV suitable for the 'rank' command. "
+            "This is a toy exploration tool — no biological activity is implied."
+        ),
+    )
+    generate.add_argument(
+        "--seeds",
+        required=True,
+        help="CSV of seed sequences (columns: id, sequence, source)",
+    )
+    generate.add_argument(
+        "--out",
+        required=True,
+        help="Output CSV path for the candidate pool.",
+    )
+    generate.add_argument(
+        "--n-double",
+        type=int,
+        default=25,
+        help="Double-substitution variants per seed (default: 25)",
+    )
+    generate.add_argument(
+        "--n-charge",
+        type=int,
+        default=12,
+        help="Charge-enhanced variants per seed (default: 12)",
+    )
+    generate.add_argument(
+        "--rng-seed",
+        type=int,
+        default=2024,
+        help="RNG seed for reproducibility (default: 2024)",
+    )
+
     return parser
 
 
@@ -84,6 +121,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "bench":
         return _run_bench(args)
+
+    if args.command == "generate-batch":
+        return _run_generate_batch(args)
 
     parser.error("unknown command")
     return 2
@@ -133,6 +173,52 @@ def _run_bench(args: argparse.Namespace) -> int:
         return 0
 
     return 2
+
+
+def _run_generate_batch(args: argparse.Namespace) -> int:
+    import csv
+
+    from openamp_foundry.generators.template_mutator import generate_candidate_pool
+
+    seeds_path = Path(args.seeds)
+    if not seeds_path.exists():
+        print(json.dumps({"status": "error", "message": f"Seeds file not found: {args.seeds}"}))
+        return 1
+
+    seed_ids: list[str] = []
+    seed_seqs: list[str] = []
+    with open(seeds_path, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            seed_ids.append(row["id"])
+            seed_seqs.append(row["sequence"].strip().upper())
+
+    pool = generate_candidate_pool(
+        seed_sequences=seed_seqs,
+        seed_ids=seed_ids,
+        n_double=args.n_double,
+        n_charge_enhance=args.n_charge,
+        rng_seed=args.rng_seed,
+    )
+
+    out_path = Path(args.out)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["id", "sequence", "source"])
+        writer.writeheader()
+        writer.writerows(pool)
+
+    print(json.dumps({
+        "status": "ok",
+        "n_seeds": len(seed_ids),
+        "n_candidates_generated": len(pool),
+        "out": str(out_path),
+        "disclaimer": (
+            "Generated candidates are toy conservative-substitution variants. "
+            "They have no demonstrated biological activity. "
+            "Run 'rank' to score and filter them."
+        ),
+    }, indent=2))
+    return 0
 
 
 if __name__ == "__main__":
