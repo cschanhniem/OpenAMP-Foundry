@@ -56,6 +56,10 @@ phase3: generate
 		--cert-dir outputs/phase3_evidence \
 		--manifest outputs/phase3_manifest.json \
 		--config configs/phase3.yaml
+	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli batch-pack \
+		--ranked outputs/phase3_ranked.jsonl \
+		--out-json outputs/phase3_batch_pack.json \
+		--out-md outputs/phase3_batch_pack.md
 
 clean:
 	rm -rf outputs/*.jsonl outputs/*.md outputs/*.json outputs/evidence outputs/phase3_evidence .pytest_cache .ruff_cache

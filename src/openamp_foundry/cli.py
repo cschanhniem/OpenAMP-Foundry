@@ -93,6 +93,35 @@ def build_parser() -> argparse.ArgumentParser:
         help="RNG seed for reproducibility (default: 2024)",
     )
 
+    batch_pack = sub.add_parser(
+        "batch-pack",
+        help=(
+            "Generate Phase 3 batch pack reports (diversity, novelty, toxicity, synthesis) "
+            "from a ranked JSONL file produced by 'rank'."
+        ),
+    )
+    batch_pack.add_argument(
+        "--ranked",
+        required=True,
+        help="Ranked JSONL file (output of the 'rank' command).",
+    )
+    batch_pack.add_argument(
+        "--out-json",
+        required=True,
+        help="Output path for machine-readable batch pack JSON.",
+    )
+    batch_pack.add_argument(
+        "--out-md",
+        required=False,
+        help="Optional output path for human-readable markdown report.",
+    )
+    batch_pack.add_argument(
+        "--diversity-threshold",
+        type=float,
+        default=0.80,
+        help="Similarity threshold for diversity clustering (default: 0.80)",
+    )
+
     return parser
 
 
@@ -124,6 +153,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "generate-batch":
         return _run_generate_batch(args)
+
+    if args.command == "batch-pack":
+        return _run_batch_pack(args)
 
     parser.error("unknown command")
     return 2
@@ -173,6 +205,31 @@ def _run_bench(args: argparse.Namespace) -> int:
         return 0
 
     return 2
+
+
+def _run_batch_pack(args: argparse.Namespace) -> int:
+    from openamp_foundry.reports.batch_pack import generate_batch_pack, write_batch_pack_markdown
+    from openamp_foundry.utils.io import write_json
+
+    pack = generate_batch_pack(
+        ranked_jsonl_path=args.ranked,
+        diversity_threshold=args.diversity_threshold,
+    )
+    write_json(args.out_json, pack)
+    if args.out_md:
+        write_batch_pack_markdown(pack, args.out_md)
+
+    print(json.dumps({
+        "status": "ok",
+        "n_selected": pack["summary"]["n_candidates_selected"],
+        "n_clusters": pack["summary"]["n_diversity_clusters"],
+        "mean_novelty": pack["summary"]["mean_novelty"],
+        "mean_safety": pack["summary"]["mean_safety"],
+        "mean_synthesis": pack["summary"]["mean_synthesis"],
+        "out_json": args.out_json,
+        "out_md": args.out_md,
+    }, indent=2))
+    return 0
 
 
 def _run_generate_batch(args: argparse.Namespace) -> int:
