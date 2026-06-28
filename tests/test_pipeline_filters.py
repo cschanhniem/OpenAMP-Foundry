@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
-
+from openamp_foundry.config import load_config
 from openamp_foundry.pipeline import _passes_length_filter, run_ranking_pipeline, score_candidates
 
 
@@ -134,9 +135,6 @@ def test_phase3_config_has_stricter_safety_filter_than_pipeline():
 
     A candidate with safety=0.50 passes pipeline.yaml but is blocked by phase3.yaml.
     """
-    from pathlib import Path
-    from openamp_foundry.config import load_config
-
     repo_root = Path(__file__).parents[1]
     pipeline_cfg = load_config(repo_root / "configs" / "pipeline.yaml")
     phase3_cfg = load_config(repo_root / "configs" / "phase3.yaml")

@@ -6,6 +6,8 @@ is accurate and not just self-consistent.
 """
 from __future__ import annotations
 
+import math
+
 import pytest
 
 from openamp_foundry.scoring.boman import (
@@ -109,20 +111,14 @@ class TestBomanActivityScore:
         score = boman_activity_score("KWK")
         assert score == round(score, 4)
 
-    def test_amp_threshold_bi_maps_to_expected_score(self):
-        # _AMP_THRESHOLD = 1.0 → boman_activity_score at bi=1.0
-        # score = 0.5 * (1 + tanh(1.0/2)) = 0.5 * (1 + tanh(0.5)) ≈ 0.7311
-        # K has boman_index 2.465; we need bi=1.0 via a mixed sequence.
-        # Verify the formula directly: boman_activity_score of any seq with bi=1.0
-        # "KG" → (2.465 + 0.0) / 2 = 1.2325; need to use the formula knowledge.
-        # Instead verify monotone: bi=1.0 is above neutral (0.5) and below bi=2 score.
-        import math
-        expected = round(0.5 * (1.0 + math.tanh(1.0 / 2.0)), 4)
-        assert abs(expected - 0.7311) < 0.001
-        # A 2-residue sequence "KG" has bi=1.2325; score must exceed expected
-        score_kg = boman_activity_score("KG")
-        assert score_kg > 0.5  # above neutral
-        assert score_kg > expected  # K/G bi=1.2325 > 1.0 → higher score
+    def test_tanh_formula_pinned_against_scorer(self):
+        # Pin the formula 0.5*(1+tanh(bi/2)) against the actual scorer output.
+        # K → boman_index = 2.465 (verified in TestBomanIndex::test_single_lysine)
+        # expected = 0.5 * (1 + tanh(2.465/2)) ≈ 0.9845
+        # If the divisor in the scorer were changed from 2.0 to 3.0 this test fails.
+        k_bi = boman_index("K")
+        expected = round(0.5 * (1.0 + math.tanh(k_bi / 2.0)), 4)
+        assert boman_activity_score("K") == pytest.approx(expected, abs=1e-4)
 
 
 class TestGravyScore:
