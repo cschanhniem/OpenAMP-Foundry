@@ -17,6 +17,8 @@ improvements already implemented or recommended.
 **Bottom line:** The pilot panel has a ~61–71% probability of yielding at least one candidate
 with MIC ≤ 32 μg/mL, and **~29–49%** probability of generating "breaking news" publication
 material with the fully updated panel (up from 5–12% before computational improvements).
+*External calibration: accounting for near-seed candidate correlation, the honest corrected
+estimate is ~15–30%. See the **External Calibration** section at the end of this document.*
 
 Key improvements since last assessment (PRs #39–#49):
 - **Charge×amphipathicity cross-term (PR #39):** Scoring now rewards simultaneous high charge AND
@@ -590,18 +592,33 @@ the seed level), most variants from that seed fail together. The effective numbe
 experiments is closer to the number of distinct scaffold families (8) than the number of
 candidates (20).
 
-**Corrected internal estimates accounting for correlation:**
+**Correlation-corrected estimate for the breaking-news gate:**
 
-| Outcome | Internal model | Correlation-corrected estimate |
-|---------|---------------|-------------------------------|
-| ≥1 candidate with MIC ≤ 32 μg/mL | ~61–71% | ~40–60% |
-| ≥1 candidate with MIC + acceptable selectivity (TI > 10) | ~29–49% | ~15–30% |
+The internal model's per-stage probabilities, multiplied across all 5 gates, give a per-candidate
+all-gates pass rate of approximately 1.6–3.1%. With 20 assumed-independent candidates, the
+pipeline estimates P(≥1 breaking-news hit) = 1 − (1 − p)^20 ≈ 29–49%.
+
+If the effective number of independent experiments is ~8 scaffold families (not 20), using
+the **same per-scaffold all-gates rate of 1.6–3.1%**:
+
+```
+P(≥1 from 8 at 1.6%) = 1 − (0.984)^8 ≈ 12%
+P(≥1 from 8 at 2.4%) = 1 − (0.976)^8 ≈ 17%
+P(≥1 from 8 at 3.1%) = 1 − (0.969)^8 ≈ 22%
+```
+
+**Calibrated estimate: ~12–22% (rounded to 15–30% to account for model uncertainty)**
+
+| Outcome | Internal model (n=20 independent) | Calibrated estimate (n≈8 effective) |
+|---------|-----------------------------------|--------------------------------------|
+| ≥1 candidate with MIC + acceptable selectivity ("breaking news") | ~29–49% | ~15–30% |
 | Publishable result (novel AMP + external replication) | not modeled | ~5–15% |
 | Major breakthrough (new AMP family, widely replicated) | not modeled | ~1–5% |
 
-These corrected estimates are more conservative. The difference arises because:
-- The internal model assumes independent 66% hit rates across 20 candidates
-- The reality is ~8 semi-independent scaffold experiments with ~40–60% per-scaffold hit rate
+The MIC-only probability (Stage 1) is harder to correct without a formal per-scaffold Stage 1
+rate; it is left as a qualitative adjustment toward the lower end of the 61–71% range.
+
+The corrected estimate is more conservative because:
 
 ### 2. Benchmark Limitations
 
@@ -630,6 +647,7 @@ Until this is done, novelty scores of 0.4–0.7 may be overestimates.
 The field is advancing rapidly. Relevant recent work:
 - **AMPGAN v3 (arXiv 2606.17127, June 2026):** Agentic AMP generation with actual in-vitro
   validation — 5 candidates tested, 2 active against Gram-positive strains, best MIC 8 μg/mL.
+  *(Confirm arXiv ID before citing externally — sourced from external reviewer notes.)*
 - **ESCAPE benchmark (arXiv 2511.04814, 2025):** Standardized multi-label AMP classification
   benchmark integrating > 80,000 peptides from 27 repositories; sets a new bar for what
   constitutes a rigorous AMP discriminative benchmark.
