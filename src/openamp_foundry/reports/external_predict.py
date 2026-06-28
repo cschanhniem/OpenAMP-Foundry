@@ -48,12 +48,14 @@ _TOOLS = [
     {
         "name": "AntiCP 2.0",
         "url": "https://webs.iiitd.edu.in/raghava/anticp2/",
-        "method": "SVM trained on anticancer peptides + AMPs; Raghava lab (IIIT Delhi)",
+        "method": "SVM trained on anticancer peptides (ACPs); Raghava lab (IIIT Delhi)",
         "input": "Select 'Predict' tab, paste sequences one per line (not FASTA), click 'Predict'",
-        "positive_label": "AMP",
+        "positive_label": "ACP (anticancer peptide — NOT AMP-specific)",
         "note": (
-            "Specialises in cytotoxicity-tested AMPs. Useful second opinion on selectivity "
-            "for candidates with borderline selectivity_proxy. Use 'Default' model."
+            "IMPORTANT: AntiCP 2.0 predicts anticancer peptides (ACPs), not antimicrobial "
+            "peptides directly. ACP and AMP activity correlate because both classes disrupt "
+            "negatively-charged membranes, but a positive call here means 'ACP-like', not "
+            "'confirmed AMP'. Count as indirect supporting evidence only. Use 'Default' model."
         ),
     },
     {

@@ -103,9 +103,12 @@ Test confirmed hits against:
 
 | Organism | Strain | Rationale |
 |----------|--------|-----------|
-| MRSA | USA300 | Most clinically relevant MRSA strain |
-| K. pneumoniae ESBL | ATCC BAA-2146 | Carbapenem-resistant Klebsiella |
-| A. baumannii | ATCC 19606 | ESKAPE pathogen, extreme drug resistance |
+| MRSA | USA300 (ATCC BAA-1556) | Most clinically relevant community-acquired MRSA strain |
+| K. pneumoniae NDM-1 | ATCC BAA-2146 | NDM-1 carbapenemase-producing; carbapenem-resistant (not merely ESBL) |
+| A. baumannii MDR | ATCC BAA-1710 | Clinical MDR isolate from ESKAPE panel; multi-drug resistant |
+
+> **Note:** ATCC 19606 is A. baumannii's susceptible reference strain — do NOT use it for MDR
+> testing. ATCC BAA-1710 is the correct clinical MDR representative.
 
 Expected activity: AMPs from the current scaffold classes are typically more active against
 MRSA than Gram-negative MDR strains. SEED-009 (Bac2A, proline-rich) may have better

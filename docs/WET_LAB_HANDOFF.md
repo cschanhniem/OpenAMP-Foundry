@@ -202,12 +202,15 @@ Record the result using the schema at `schemas/lab_result.schema.json` with:
 ```json
 {
   "result_qualitative": "inactive",
-  "result_value": null,
+  "result_value": 128.0,
   "result_unit": "µg/mL",
   "assay_type": "MIC",
-  "notes": "<reason for inactivity if known, e.g. 'MIC > 128 µg/mL in all replicates'>"
+  "notes": "No growth inhibition at 128 µg/mL (top concentration tested). MIC > 128 µg/mL."
 }
 ```
+
+> `result_value` records the **highest concentration tested with no activity** (not `null`).
+> This preserves the numerical upper bound, which is required for the active-learning loop.
 
 ### What to record for inactive candidates
 
