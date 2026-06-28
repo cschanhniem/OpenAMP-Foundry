@@ -3,7 +3,24 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from openamp_foundry.cli import main
+
+
+PANEL_CSV_HEADER = (
+    "pilot_rank,candidate_id,sequence,length,seed,ensemble,activity,boman_activity,"
+    "disagreement,safety,synthesis,novelty,serum_stability,selectivity_proxy,pilot_priority\n"
+)
+PANEL_CSV_ROW1 = "1,SEED-009_VAR_033,RRLPRPGYMPRP,12,SEED-009,0.8073,0.6385,0.5915,0.047,1.0,0.9,0.6923,0.5715,1.0,0.9064\n"
+PANEL_CSV_ROW2 = "2,SEED-007_VAR_009,IKFTTMLRKLG,11,SEED-007,0.8493,0.6968,0.4751,0.2217,1.0,0.9818,0.7273,0.6364,1.0,0.901\n"
+
+
+def _write_panel(tmp_path, rows=2):
+    panel = tmp_path / "panel.csv"
+    rows_content = (PANEL_CSV_ROW1 + PANEL_CSV_ROW2) if rows == 2 else PANEL_CSV_ROW1
+    panel.write_text(PANEL_CSV_HEADER + rows_content, encoding="utf-8")
+    return str(panel)
 
 
 def test_rank_command_success(tmp_path):
@@ -228,3 +245,151 @@ def test_synthesis_order_missing_columns_returns_error(tmp_path, capsys):
     data = json.loads(captured.out)
     assert data["status"] == "error"
     assert "sequence" in data["message"]
+
+
+class TestGoldStandard:
+    def test_gold_standard_returns_zero(self, tmp_path, capsys):
+        panel_csv = _write_panel(tmp_path)
+        out = str(tmp_path / "calibration.md")
+        rc = main(["gold-standard", "--panel-csv", panel_csv, "--out", out, "--config", "configs/pipeline.yaml"])
+        assert rc == 0
+
+    def test_gold_standard_creates_output_file(self, tmp_path, capsys):
+        panel_csv = _write_panel(tmp_path)
+        out = tmp_path / "calibration.md"
+        main(["gold-standard", "--panel-csv", panel_csv, "--out", str(out), "--config", "configs/pipeline.yaml"])
+        assert out.exists()
+
+    def test_gold_standard_output_has_panel_range(self, tmp_path, capsys):
+        panel_csv = _write_panel(tmp_path)
+        out = tmp_path / "calibration.md"
+        main(["gold-standard", "--panel-csv", panel_csv, "--out", str(out), "--config", "configs/pipeline.yaml"])
+        text = out.read_text()
+        assert "Confident panel score range" in text
+        assert "Min ensemble" in text
+
+    def test_gold_standard_stdout_has_status_ok(self, tmp_path, capsys):
+        panel_csv = _write_panel(tmp_path)
+        out = str(tmp_path / "calibration.md")
+        main(["gold-standard", "--panel-csv", panel_csv, "--out", out, "--config", "configs/pipeline.yaml"])
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data["status"] == "ok"
+        assert "panel_range" in data
+        assert "panel_mean" in data
+        assert data["n_gold_scored"] >= 4
+
+    def test_gold_standard_includes_disclaimer(self, tmp_path):
+        panel_csv = _write_panel(tmp_path)
+        out = tmp_path / "calibration.md"
+        main(["gold-standard", "--panel-csv", panel_csv, "--out", str(out), "--config", "configs/pipeline.yaml"])
+        text = out.read_text()
+        assert "AUROC=0.8420" in text
+        assert "Disclaimer" in text
+
+
+class TestExternalPredict:
+    def test_external_predict_returns_zero(self, tmp_path, capsys):
+        panel_csv = _write_panel(tmp_path)
+        rc = main([
+            "external-predict",
+            "--pilot-csv", panel_csv,
+            "--out-fasta", str(tmp_path / "panel.fasta"),
+            "--out-checklist", str(tmp_path / "checklist.md"),
+        ])
+        assert rc == 0
+
+    def test_external_predict_creates_fasta(self, tmp_path):
+        panel_csv = _write_panel(tmp_path)
+        fasta = tmp_path / "panel.fasta"
+        main([
+            "external-predict",
+            "--pilot-csv", panel_csv,
+            "--out-fasta", str(fasta),
+            "--out-checklist", str(tmp_path / "checklist.md"),
+        ])
+        assert fasta.exists()
+        content = fasta.read_text()
+        assert ">SEED-009_VAR_033" in content
+        assert "RRLPRPGYMPRP" in content
+
+    def test_external_predict_creates_checklist(self, tmp_path):
+        panel_csv = _write_panel(tmp_path)
+        checklist = tmp_path / "checklist.md"
+        main([
+            "external-predict",
+            "--pilot-csv", panel_csv,
+            "--out-fasta", str(tmp_path / "panel.fasta"),
+            "--out-checklist", str(checklist),
+        ])
+        assert checklist.exists()
+        text = checklist.read_text()
+        assert "CAMPR4" in text
+        assert "SEED-009_VAR_033" in text
+
+    def test_external_predict_stdout_n_candidates(self, tmp_path, capsys):
+        panel_csv = _write_panel(tmp_path, rows=2)
+        main([
+            "external-predict",
+            "--pilot-csv", panel_csv,
+            "--out-fasta", str(tmp_path / "panel.fasta"),
+            "--out-checklist", str(tmp_path / "checklist.md"),
+        ])
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data["status"] == "ok"
+        assert data["n_candidates"] == 2
+
+
+class TestPilotConfident:
+    def test_pilot_confident_returns_zero(self, tmp_path, capsys):
+        panel_csv = _write_panel(tmp_path)
+        rc = main([
+            "pilot-confident",
+            "--pilot-csv", panel_csv,
+            "--keep", "SEED-009_VAR_033",
+            "--out", str(tmp_path / "confident"),
+        ])
+        assert rc == 0
+
+    def test_pilot_confident_creates_csv_and_md(self, tmp_path):
+        panel_csv = _write_panel(tmp_path)
+        out = tmp_path / "confident"
+        main([
+            "pilot-confident",
+            "--pilot-csv", panel_csv,
+            "--keep", "SEED-009_VAR_033",
+            "--out", str(out),
+        ])
+        assert (tmp_path / "confident.csv").exists()
+        assert (tmp_path / "confident.md").exists()
+
+    def test_pilot_confident_filters_to_keep_ids(self, tmp_path, capsys):
+        panel_csv = _write_panel(tmp_path)
+        main([
+            "pilot-confident",
+            "--pilot-csv", panel_csv,
+            "--keep", "SEED-009_VAR_033",
+            "--out", str(tmp_path / "confident"),
+        ])
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data["status"] == "ok"
+        assert data["n_confident"] == 1
+        assert data["n_input"] == 2
+
+
+class TestDiversityCheck:
+    def test_diversity_check_returns_zero(self, tmp_path):
+        panel_csv = _write_panel(tmp_path)
+        out = str(tmp_path / "diversity.md")
+        rc = main(["diversity-check", "--panel-csv", panel_csv, "--out", out])
+        assert rc == 0
+
+    def test_diversity_check_creates_report(self, tmp_path):
+        panel_csv = _write_panel(tmp_path)
+        out = tmp_path / "diversity.md"
+        main(["diversity-check", "--panel-csv", panel_csv, "--out", str(out)])
+        assert out.exists()
+        text = out.read_text()
+        assert "Diversity" in text
