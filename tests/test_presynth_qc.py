@@ -108,6 +108,59 @@ class TestOxidationRisk:
 
 
 # ---------------------------------------------------------------------------
+# Pyroglutamate risk
+# ---------------------------------------------------------------------------
+
+class TestPyroglutamate:
+    def test_q_terminal_sets_risk(self):
+        qc = check_sequence("q", "QRLMKKIGSAIKFL")
+        assert qc.pyroglutamate_risk
+
+    def test_no_risk_for_all_non_q_starts(self):
+        # All canonical AAs except Q — includes E (negligible at pH 7.4, not flagged)
+        non_q = "ACDEFGHIKLMNPRSTUVWY"
+        for aa in non_q:
+            if aa == "U":
+                continue  # selenocysteine not canonical here
+            qc = check_sequence("x", aa + "RLMKKIGSAIKFL")
+            assert not qc.pyroglutamate_risk, f"False positive for N-terminal {aa}"
+
+    def test_e_terminal_does_not_set_risk(self):
+        # E→pGlu requires acid catalysis (pH 2–4); negligible at physiological pH
+        qc = check_sequence("e", "ERLMKKIGSAIKFL")
+        assert not qc.pyroglutamate_risk
+
+    def test_pyroglutamate_flag_emitted_for_q(self):
+        qc = check_sequence("q", "QRLMKKIGSAIKFL")
+        pglu_flags = [f for f in qc.flags if "PYROGLUTAMATE" in f]
+        assert len(pglu_flags) == 1
+        assert "pGlu" in pglu_flags[0]
+        assert "Nα-acetylation" in pglu_flags[0]
+        assert "hours–days" in pglu_flags[0]
+
+    def test_pyroglutamate_not_flagged_for_internal_q(self):
+        # Internal Q triggers deamidation (if followed by G/S), not pyroglutamate
+        qc = check_sequence("x", "KQRLMKKIGSAIKFL")
+        assert not qc.pyroglutamate_risk
+
+    def test_q_with_qg_motif_gets_both_pyroglutamate_and_deamidation_flags(self):
+        # QGKLRK: Q1 → pyroglutamate risk AND Q1G deamidation (two independent mechanisms)
+        qc = check_sequence("qq", "QGKLRK")
+        assert qc.pyroglutamate_risk
+        assert any("Q1G" in s for s in qc.deamidation_sites)
+        pglu_flags = [f for f in qc.flags if "PYROGLUTAMATE" in f]
+        deam_flags = [f for f in qc.flags if "DEAMIDATION" in f]
+        assert len(pglu_flags) == 1
+        assert len(deam_flags) == 1
+
+    def test_pyroglutamate_in_to_dict(self):
+        qc = check_sequence("q", "QRLMKKIGSAIKFL")
+        d = qc.to_dict()
+        assert "pyroglutamate_risk" in d
+        assert d["pyroglutamate_risk"] is True
+
+
+# ---------------------------------------------------------------------------
 # Trypsin/chymotrypsin sites
 # ---------------------------------------------------------------------------
 

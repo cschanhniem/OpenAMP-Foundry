@@ -118,6 +118,9 @@ class SynthQC:
     deamidation_sites: list[str] = field(default_factory=list)  # e.g. ["N3G", "Q5S"]
     isomerization_sites: list[str] = field(default_factory=list)  # e.g. ["D2G", "D9S"]
 
+    # N-terminal pyroglutamate cyclization
+    pyroglutamate_risk: bool = False   # N-terminal Q or E → pGlu (activity loss)
+
     # Tryptophan photolability
     tryptophan_count: int = 0
     trp_photolability_risk: bool = False   # ≥ 3 Trp → photooxidation risk under assay lighting
@@ -169,6 +172,7 @@ class SynthQC:
             "chymotrypsin_sites": self.chymotrypsin_sites,
             "deamidation_sites": self.deamidation_sites,
             "isomerization_sites": self.isomerization_sites,
+            "pyroglutamate_risk": self.pyroglutamate_risk,
             "tryptophan_count": self.tryptophan_count,
             "trp_photolability_risk": self.trp_photolability_risk,
             "has_uv_chromophore": self.has_uv_chromophore,
@@ -236,6 +240,15 @@ def check_sequence(candidate_id: str, seq: str, mu_h: float = 0.0) -> SynthQC:
         f"{m.group()[0]}{m.start() + 1}{m.group()[1]}"
         for m in _ISOMERIZATION_RE.finditer(seq)
     ]
+
+    # N-terminal pyroglutamate cyclization: Q at position 1 cyclises spontaneously to
+    # pyroglutamic acid (pGlu) at physiological pH (t½ hours–days at 37°C, 5–50× MIC loss).
+    # The same ring-closure occurs for E1 but requires acid catalysis (pH 2–4); at pH 7.4 the
+    # E1 rate is negligible (t½ months–years) and is not flagged here to avoid overcalling
+    # synthesis_difficulty. Nα-acetylation (zero synthesis cost) locks the free amine and
+    # completely blocks Q1 cyclisation. Literature: Chelius et al. (2006) Anal Chem 78:2370;
+    # Goolcharran & Borchardt (1998) J Pharm Sci 87:425.
+    qc.pyroglutamate_risk = len(seq) > 0 and seq[0] == "Q"
 
     # Tryptophan photolability: ≥3 Trp residues → UV-sensitive under assay lighting.
     # Trp photooxidizes to kynurenine (λmax 370 nm) and N-formylkynurenine under UV/visible
@@ -359,6 +372,13 @@ def check_sequence(candidate_id: str, seq: str, mu_h: float = 0.0) -> SynthQC:
         qc.flags.append(f"DEAMIDATION_RISK: {', '.join(qc.deamidation_sites)} — avoid >pH 7.5 storage; use pH 5–6 lyophilization buffer")
     if qc.isomerization_sites:
         qc.flags.append(f"ISOMERIZATION_RISK: {', '.join(qc.isomerization_sites)} — Asp→β-Asp rearrangement at neutral pH; store lyophilized at −20°C")
+    if qc.pyroglutamate_risk:
+        qc.flags.append(
+            "PYROGLUTAMATE_RISK: N-terminal Q cyclises to pGlu (t½ hours–days at 37°C, pH 7.4); "
+            "blocks N-terminus, typically 5–50× MIC loss — specify N-terminal Ac (Nα-acetylation) "
+            "in synthesis order (zero extra cost) to prevent cyclisation; or substitute Q1 → K1/R1 "
+            "(note: K1/R1 adds a trypsin site; only use if serum stability is not gated)"
+        )
     if qc.charge_ph74 < 2.0:
         qc.flags.append(f"LOW_CHARGE (pH7.4={qc.charge_ph74:.1f}): reduced membrane affinity")
     if qc.c_amidation_recommended:
