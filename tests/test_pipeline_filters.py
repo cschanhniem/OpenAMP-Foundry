@@ -217,7 +217,15 @@ def test_disagreement_gate_blocks_high_uncertainty_candidate(tmp_path):
 
 
 def test_disagreement_gate_config_values_documented(tmp_path):
-    """pipeline.yaml max_disagreement=0.40, phase3.yaml max_disagreement=0.30 (stricter)."""
+    """pipeline.yaml and phase3.yaml both use max_disagreement=0.40.
+
+    phase3 is stricter than pipeline on SAFETY (max_safety_risk 0.40 vs 0.70)
+    but uses the same disagreement threshold. The original 0.30 threshold was
+    raised to 0.40 because the Boman index (W=-3.398) systematically penalises
+    Trp-rich AMP scaffolds that use the interfacial insertion mechanism, creating
+    high disagreement (0.37-0.42) that reflects mechanism divergence rather than
+    genuine prediction uncertainty.
+    """
     repo_root = Path(__file__).parents[1]
     pipeline_cfg = load_config(repo_root / "configs" / "pipeline.yaml")
     phase3_cfg = load_config(repo_root / "configs" / "phase3.yaml")
@@ -225,10 +233,14 @@ def test_disagreement_gate_config_values_documented(tmp_path):
     pipeline_max = float(pipeline_cfg["selection"]["max_disagreement"])
     phase3_max = float(phase3_cfg["selection"]["max_disagreement"])
 
-    # phase3 is stricter (lower tolerance for disagreement)
-    assert phase3_max < pipeline_max
+    # Both configs use the same disagreement threshold (0.40)
     assert abs(pipeline_max - 0.40) < 0.01
-    assert abs(phase3_max - 0.30) < 0.01
+    assert abs(phase3_max - 0.40) < 0.01
+
+    # phase3 is stricter on safety (not disagreement)
+    pipeline_max_safety_risk = float(pipeline_cfg["selection"]["max_safety_risk"])
+    phase3_max_safety_risk = float(phase3_cfg["selection"]["max_safety_risk"])
+    assert phase3_max_safety_risk < pipeline_max_safety_risk
 
 
 def test_phase3_config_has_stricter_safety_filter_than_pipeline():
@@ -263,7 +275,7 @@ def test_phase3_config_has_stricter_safety_filter_than_pipeline():
 def test_zwitteramp_trap_scorer_divergence():
     """KDKDKDKD is the 'ZwitterAMP trap': Boman scores it high (K+D each = +2.465 Boman
     potential → high interaction energy), but activity_likeness scores it low (net charge = 0,
-    no hydrophobicity). Disagreement ≈ 0.73, well above both gate thresholds (0.40/0.30).
+    no hydrophobicity). Disagreement ≈ 0.73, well above both gate thresholds (pipeline=0.40, phase3=0.40).
 
     This test pins the end-to-end scorer divergence computation, ensuring that the two
     independent scoring systems and the disagreement gate together catch this false positive.
@@ -279,7 +291,7 @@ def test_zwitteramp_trap_scorer_divergence():
     assert bom > 0.85, f"boman_activity expected > 0.85 for KDKDKDKD, got {bom}"
     # Activity scorer correctly penalises: net charge = 0, no hydrophobicity
     assert act < 0.25, f"activity_likeness expected < 0.25 for KDKDKDKD (no net charge), got {act}"
-    # Disagreement is well above both gate thresholds (pipeline=0.40, phase3=0.30)
+    # Disagreement is well above both gate thresholds (pipeline=0.40, phase3=0.40)
     assert dis > 0.60, f"disagreement expected > 0.60 for KDKDKDKD, got {dis}"
 
 
@@ -323,10 +335,10 @@ def test_all_proline_pipeline_scores_and_disagreement(tmp_path):
     assert bom == pytest.approx(0.5, abs=0.01)
     # Activity is low: no charge, not hydrophobic
     assert act < 0.25
-    # Disagreement ≈ 0.33: passes pipeline gate (0.40) but fails phase3 gate (0.30)
+    # Disagreement ≈ 0.33: passes both pipeline and phase3 gate (both 0.40)
     assert 0.25 < dis < 0.45, f"PPPPPPPP disagreement expected ~0.33, got {dis}"
     repo_root = Path(__file__).parents[1]
     pipeline_max = float(load_config(repo_root / "configs" / "pipeline.yaml")["selection"]["max_disagreement"])
     phase3_max = float(load_config(repo_root / "configs" / "phase3.yaml")["selection"]["max_disagreement"])
     assert dis < pipeline_max, "PPPPPPPP should pass the pipeline disagreement gate"
-    assert dis > phase3_max, "PPPPPPPP should fail the stricter phase3 disagreement gate"
+    assert dis < phase3_max, "PPPPPPPP should also pass the phase3 disagreement gate (now 0.40)"

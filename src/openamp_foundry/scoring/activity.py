@@ -50,7 +50,8 @@ def activity_likeness_score(features: dict) -> float:
     # Cross-term: simultaneous high charge AND high amphipathicity is synergistic.
     # Electrostatic attraction (charge) + hydrophobic bilayer insertion (mu_h) are both
     # required for the carpet/pore-forming mechanism; neither alone is sufficient.
-    # Normalizer 0.15 = typical_cd (0.30) × typical_mu_h (0.50).
+    # Normalizer 0.15 ≈ typical pH 7.4 charge density (0.25–0.30) × typical μH (0.50–0.60);
+    # chosen so cross_bonus = 1.0 when both charge and amphipathicity are at their canonical AMP optimum.
     cross_bonus = clamp01(charge_density * mu_h / 0.15) * 0.02
 
     # Helix propensity: Chou-Fasman Pα > 1.00 rewards helix-forming sequences.

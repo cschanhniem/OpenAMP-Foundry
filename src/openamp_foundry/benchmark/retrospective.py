@@ -167,7 +167,8 @@ def run_retrospective_benchmark(
                 features = compute_features(seq)
                 act = activity_likeness_score(features)
                 safe = safety_score(features)
-                synth = synthesis_feasibility_score(features, valid_sequence=True)
+                valid = all(aa in "ACDEFGHIKLMNPQRSTVWY" for aa in seq)
+                synth = synthesis_feasibility_score(features, valid_sequence=valid)
                 nov, _ = novelty_score(seq, [])
                 boman_act = boman_activity_score(seq)
                 raw_scores = {
