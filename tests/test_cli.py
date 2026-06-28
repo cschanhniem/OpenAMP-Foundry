@@ -390,3 +390,54 @@ class TestDiversityCheck:
         assert "Diversity" in text
         assert "SEED-009_VAR_033" in text
         assert "SEED-007_VAR_009" in text
+
+
+class TestNoveltyCheckBroad:
+    def test_novelty_check_broad_returns_zero(self, tmp_path, capsys):
+        panel_csv = _write_panel(tmp_path)
+        rc = main([
+            "novelty-check-broad",
+            "--panel-csv", panel_csv,
+            "--out", str(tmp_path / "novelty.md"),
+        ])
+        assert rc == 0
+
+    def test_novelty_check_broad_creates_report(self, tmp_path):
+        panel_csv = _write_panel(tmp_path)
+        out = tmp_path / "novelty.md"
+        main([
+            "novelty-check-broad",
+            "--panel-csv", panel_csv,
+            "--out", str(out),
+        ])
+        assert out.exists()
+        text = out.read_text()
+        assert "Broad Novelty Check" in text
+        assert "SEED-009_VAR_033" in text
+        assert "SEED-007_VAR_009" in text
+
+    def test_novelty_check_broad_stdout_summary(self, tmp_path, capsys):
+        panel_csv = _write_panel(tmp_path)
+        main([
+            "novelty-check-broad",
+            "--panel-csv", panel_csv,
+            "--out", str(tmp_path / "novelty.md"),
+        ])
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data["status"] == "ok"
+        assert data["n_candidates"] == 2
+        assert data["n_references"] > 0
+        # Both SEED-009 and SEED-007 variants are genuinely novel (<50% to any reference)
+        assert data["n_novel"] == 2
+
+    def test_novelty_check_broad_missing_panel_returns_error(self, tmp_path, capsys):
+        rc = main([
+            "novelty-check-broad",
+            "--panel-csv", str(tmp_path / "nonexistent.csv"),
+            "--out", str(tmp_path / "novelty.md"),
+        ])
+        assert rc == 1
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data["status"] == "error"
