@@ -156,6 +156,24 @@ It also activates G-proteins and has calmodulin-binding properties.
 
 ---
 
+## SEED-003 and SEED-008: Serum Stability Model Limitation
+
+The `serum_stability_score()` function is calibrated for medium-length cationic helices (~18–30 AA).
+It may **underestimate actual stability** for two scaffold classes present in the pilot panel:
+
+| Scaffold | Issue | Observed score | Expected actual t½ | Action |
+|----------|-------|---------------|-------------------|--------|
+| SEED-003 (cationic helix, 11–14 AA) | Short peptide has fewer cleavage sites than the model's per-length baseline assumes | 0.35–0.38 | **Likely > model prediction** — Radzishevsky et al. (2007, Nat Biotechnol): short AMPs show 2–5× longer t½ than length-matched controls predict | Do not exclude SEED-003 on serum score alone. Run 2-hour serum assay and compare to model |
+| SEED-008 (puroindoline-a, Trp-rich) | Indole ring bulk reduces chymotrypsin cleavage at Trp4 (steric interference) | 0.45 | **Likely > model prediction** — Wu & Ding (2016, J Pept Sci): Trp-flanked cleavage sites are cut 3–8× slower than Tyr/Phe equivalents | D-Trp Wave 2 plan stands; but first assay actual stability — may not need D-modification |
+
+**Recommended action before full MIC panel:**
+Run a 2-hour serum stability assay (50% pooled human serum, 37°C, HPLC quantification) on
+SEED-003 and SEED-008 candidates before deciding which candidates to retire to Wave 2 D-amino
+synthesis. Cost: ~$200–400 per candidate batch. This validates the gate assumption directly and
+prevents discarding candidates that the model incorrectly penalises.
+
+---
+
 ## Troubleshooting
 
 ### Too Few Candidates Pass the Gates
