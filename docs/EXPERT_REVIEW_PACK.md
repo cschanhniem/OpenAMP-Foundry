@@ -276,7 +276,9 @@ The expert reviewer must be aware of these limitations:
 | SEED-008 high disagreement (0.41–0.44) | Boman index penalises Trp; activity_likeness more appropriate for Trp-rich sequences |
 | Serum stability model calibrated for 18–30 AA | SEED-003 (11 AA) and SEED-008 (13 AA) scores may underestimate actual stability |
 | Pro-rich serum stability not in model | SEED-009 model scores (0.572) expected to underestimate actual stability; Pro-X bond resistance is mechanistic |
-| SEED-007 Met oxidation (all 4 pilot variants) | Met at position 6 in all SEED-007 pilot sequences; oxidised Met loses amphipathicity; Nle substitution or argon storage required |
+| SEED-007 Met oxidation (all 4 pilot variants) | Met at position 6 in all SEED-007 pilot sequences; oxidised Met loses amphipathicity; Nle substitution or inert atmosphere storage required |
+| SEED-009_VAR_033 Met oxidation | VAR_033 (RRLPRPGYMPRP) has Met at position 9 — unique among SEED-009 variants; carries both MET×1 and PROLINE_RICH_INTRACELLULAR QC flags simultaneously; Nle substitution + HPLC purity mandatory at receipt |
+| N-terminal Q pyroglutamate cyclization (PYROGLUTAMATE_RISK) | N-terminal Gln (Q) spontaneously cyclises to pyroglutamic acid (pGlu) at pH 7.4 (t½ hours–days, 5–50× MIC loss); none of the 20 pilot candidates are affected (no Q-terminal sequences); E1 excluded (acid-catalysed at pH 2–4, negligible at physiological pH); Nα-acetylation is the zero-cost mitigation |
 | Novelty vs. 45 seeds only (pipeline) | Broad check vs 72-AMP DB done (PR #86); APD3 BLASTp still recommended before publication |
 | Conservative generation only | Near-seed variants; genuinely novel families not explored by de novo generation |
 | No structural prediction | No secondary structure, membrane interaction, or 3D modeling |

@@ -91,6 +91,8 @@ Implemented during the pre-wet-lab improvement loop (PRs #31–#54):
 - ASSAY_PREREGISTRATION.md serum stability model limitations block extended to cover all 5 affected families: SEED-003 (pre-existing, 11 AA length edge), SEED-007 (added: Met/Nle substitution + 11 AA length edge), SEED-008 (pre-existing, Trp steric, 13 AA length edge), SEED-009 (pre-existing, Pro-bond protease resistance), SEED-005 (added: safety gate, hemolysis at MIC/3 mandatory, exclude if HC₅₀ < 10× MIC); all limitations pre-registered before synthesis order (PR #103)
 - presynth_check.py: PYROGLUTAMATE_RISK flag added for N-terminal Q (cyclises to pGlu at pH 7.4, t½ hours–days, 5–50× MIC loss); E1 intentionally excluded (acid-catalysed only, negligible at physiological pH); Nα-acetylation (zero extra cost) or Q1→K1/R1 substitution surfaced as remediation; 7 tests including Q+QG double-flag interaction guard (PR #105)
 - WET_LAB_HANDOFF.md: SEED-009 synthesis guidance corrected — VAR_033 (RRLPRPGYMPRP) contains Met at position 9 (Nle substitution + HPLC purity required); the "No Met, no Cys" statement now scoped to VAR_027/017/039 only (PR #106)
+- test(qc): SEED-009_VAR_033 regression guard — asserts both MET×1 (Nle) and PROLINE_RICH_INTRACELLULAR fire simultaneously for RRLPRPGYMPRP; 1312 tests total (PR #107)
+- EXPERT_REVIEW_PACK.md: Pipeline Limitations table updated — PYROGLUTAMATE_RISK row added (N-terminal Q, physiological pH, none of 20 pilot candidates affected); SEED-009_VAR_033 Met row added (PR #108)
 
 ## v1.0 — Validated dry-lab-to-wet-lab loop
 
