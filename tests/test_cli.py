@@ -187,7 +187,7 @@ def test_validate_scoring_stdout_includes_n_and_auprc(tmp_path, capsys):
     assert "n_negatives" in data, "stdout missing n_negatives"
     assert "benchmark_type" in data, "stdout missing benchmark_type"
     assert "auprc" in data, "stdout missing auprc"
-    assert data["n_positives"] == 43
+    assert data["n_positives"] == 43  # 44 AMPs - 1 duplicate (REF-GIG-001 removed in PR #66)
     assert data["n_negatives"] == 44
     assert data["benchmark_type"] == "standard"
     assert 0.0 < data["auprc"] < 1.0

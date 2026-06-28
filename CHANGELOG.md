@@ -14,8 +14,8 @@ improvements made before committing the ~$10k wet-lab synthesis budget.
 - **PR #67** — JSONL error handling in `pilot-panel` CLI (CRITICAL: bare crash on malformed
   line → structured error with line number and preview); synthesis-order CSV header validation;
   `validate-scoring` stdout now includes `n_positives`, `n_negatives`, `benchmark_type`, `auprc`;
-  `check_sequence()` validates canonical AAs and minimum length before QC; WAVE2_PLAN.md SEED-008
-  Trp mechanism divergence note; CHANGELOG updated for PRs #61–66
+  `check_sequence()` validates canonical amino acids (all 20 standard AAs) before QC;
+  WAVE2_PLAN.md SEED-008 Trp mechanism divergence note; CHANGELOG updated for PRs #61–66
 - **PR #66** — Removed duplicate validation entry REF-GIG-001 (magainin-2 = REF-MAG-001 counted
   twice); corrected AUROC 0.8086→0.8047 (pipeline), 0.7890→0.7846 (phase3); config-identity
   sentinel tightened from `< 0.83` to `< 0.795`; orphaned DECOY-GIG-001 removed from
