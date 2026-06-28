@@ -3,7 +3,7 @@
 Two complementary benchmark modes:
 
   STANDARD (primary gate):
-    Positives — 44 confirmed literature AMPs
+    Positives — 43 confirmed literature AMPs (unique; REF-GIG-001 duplicate removed in PR #66)
     Negatives — 44 length-matched peptides drawn from UniProt Swiss-Prot
                 background amino acid frequencies (RNG seed=43)
     Tests: can the model distinguish AMP-like composition/structure from
@@ -12,8 +12,8 @@ Two complementary benchmark modes:
     Gate: AUROC > 0.70 → proceed; 0.55–0.70 → caution; < 0.55 → STOP.
 
   STRICT (order-sensitivity test, secondary):
-    Positives — 44 confirmed literature AMPs
-    Negatives — 44 per-sequence composition-matched shuffled decoys (RNG seed=42)
+    Positives — 43 confirmed literature AMPs
+    Negatives — 43 per-sequence composition-matched shuffled decoys (RNG seed=42)
     Tests: does the model have order-dependent signal beyond composition?
     Expected AUROC: 0.50–0.65 for any composition-heavy scorer. This is
     intentionally difficult — it tests ONLY the hydrophobic moment term
@@ -204,7 +204,7 @@ def run_retrospective_benchmark(
     labels_ranked = [r["label"] for r in rows]
 
     if recall_ks is None:
-        recall_ks = [10, 20, 44]
+        recall_ks = [10, 20, 43]
     recall = {f"recall_at_{k}": round(_recall_at_k(labels_ranked, k), 4) for k in recall_ks}
 
     random_auroc = 0.5

@@ -331,7 +331,7 @@ synthesis=0.20, novelty=0.15 vs pipeline.yaml activity=0.40, safety=0.25, synthe
 novelty=0.20) and a stricter safety gate (max_safety_risk=0.40). The AUROC is lower than
 pipeline.yaml because the higher safety weight down-ranks some literature AMPs that have
 hemolysis risk, which is scientifically correct behaviour for a synthesis gate. Interpretation:
-**STRONG** (AUROC > 0.70). AUPRC = 0.8240 (+0.3240 above random baseline of 0.50).
+**STRONG** (AUROC > 0.70). AUPRC = 0.8240 (+0.3297 above random baseline of 0.4943).
 Recall@10 = 0.23, Recall@20 = 0.44, Recall@43 = 0.70.
 
 > **Important:** The synthesis selection gate uses phase3.yaml. The phase3 AUROC (0.7846) is the

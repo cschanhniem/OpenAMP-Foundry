@@ -171,11 +171,12 @@ class TestRunRetrospectiveBenchmark:
             f"phase3.yaml AUROC={result['auroc']:.4f} < 0.75: a regression has occurred "
             "(baseline 0.7846). Synthesis gate still valid at >0.70 but scoring may be degraded."
         )
-        # Config-identity sentinel: pipeline.yaml AUROC=0.8047 > 0.83 would fail this,
-        # so a silent config fallback is caught rather than silently passing with the wrong weights.
-        assert result["auroc"] < 0.83, (
-            f"phase3.yaml AUROC={result['auroc']:.4f} >= 0.83: this is higher than expected "
-            "for phase3.yaml (0.7846). Check that phase3.yaml (not pipeline.yaml) was loaded."
+        # Config-identity sentinel: pipeline.yaml AUROC=0.8047 >= 0.795 would fail this,
+        # while phase3.yaml AUROC=0.7846 < 0.795 passes. Threshold sits between the two measured
+        # point estimates so a silent config fallback is caught.
+        assert result["auroc"] < 0.795, (
+            f"phase3.yaml AUROC={result['auroc']:.4f} >= 0.795: this is higher than expected "
+            "for phase3.yaml (measured 0.7846). Check that phase3.yaml (not pipeline.yaml) was loaded."
         )
         print(f"\n[phase3 benchmark] AUROC={result['auroc']:.4f}: {result['interpretation']}")
         print(f"AUPRC={result.get('auprc', 'N/A')}, Recall@20={result.get('recall_at_20', 'N/A')}")

@@ -584,7 +584,7 @@ Executing all four actions on the best Wave 1 hits would push the combined proba
 | Stage | Gate | Original | After PRs #31–38 | After PRs #39–42 | After PRs #43–47 | After PRs #48–53 (current) | Primary limiting factor |
 |-------|------|----------|-----------------|-----------------|-----------------|--------------------------|------------------------|
 | 0 | Synthesis success | ~90% | ~90% | ~88% | **~89%** ✓ | **~90%** ✓ (agg model + agg-safe gen + pro penalty + pH74 charge) | SEED-008 W-rich; all aggregation/synthesis risks modelled |
-| 1 | MIC ≤ 32 μg/mL | ~55–65% | ~55–65% | ~60–70% | **~60–70%** | **~61–71%** ✓ (AUROC 0.8086) | AUROC 0.8047 (AUPRC 0.8443); 6 scaffold families confirmed |
+| 1 | MIC ≤ 32 μg/mL | ~55–65% | ~55–65% | ~60–70% | **~60–70%** | **~61–71%** ✓ (AUROC 0.8047) | AUROC 0.8047 (AUPRC 0.8443); 6 scaffold families confirmed |
 | 2 | TI > 10 (selectivity) | ~35–50% | ~35–50% | ~38–52% | **~40–55%** ✓ | **~42–57%** ✓ (stronger SEED-004 demotion) | sel_proxy doubled penalty for HIGH_CYTOTOX_RISK tier |
 | 3 | t½ > 2 h (serum) | ~10–20% | ~25–40% | ~28–42% | **~28–42%** | **~29–44%** ✓ (3-protease model) | Wave 2 D-amino plan machine-readable |
 | 4 | Scaffold novelty | ~10–15% | ~18–25% | ~25–35% | **~26–36%** ✓ | **~26–36%** | Diversity filter removes cross-seed near-dups |
