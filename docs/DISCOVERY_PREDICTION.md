@@ -803,6 +803,15 @@ No biological activity has been demonstrated. The lab is the judge.*
 
 ---
 
+**Tracking note (post-PR #108):** EXPERT_REVIEW_PACK.md: Pipeline Limitations table updated —
+PYROGLUTAMATE_RISK row added (N-terminal Q cyclisation at pH 7.4, none of the 20 pilot
+candidates affected); SEED-009_VAR_033 Met oxidation row added (VAR_033 carries both MET×1
+and PROLINE_RICH_INTRACELLULAR flags; Nle substitution + HPLC purity mandatory at receipt).
+
+**Tracking note (post-PR #107):** test(qc): regression guard for SEED-009_VAR_033 — verifies
+both MET×1 (Nle) and PROLINE_RICH_INTRACELLULAR fire simultaneously for RRLPRPGYMPRP; 1312
+tests total.
+
 **Tracking note (post-PR #106):** WET_LAB_HANDOFF.md: factual correction — SEED-009 synthesis
 guidance previously stated "No Met, no Cys → standard Fmoc SPPS" for all 4 variants; corrected
 to note that VAR_033 (RRLPRPGYMPRP) has Met at position 9 (same Nle substitution + HPLC purity
