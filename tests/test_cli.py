@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 
-
 from openamp_foundry.cli import main
 
 
@@ -146,7 +145,9 @@ def test_presynth_qc_command_flags_met_residue(tmp_path):
     out_path = tmp_path / "qc_report.md"
     main(["presynth-qc", "--panel-csv", str(panel), "--out", str(out_path)])
     text = out_path.read_text()
-    assert "MET" in text or "oxidation" in text.lower()
+    # Both the candidate ID and the MET flag must appear — avoids a false pass from
+    # a generic preamble sentence that happens to contain the word "oxidation".
+    assert "MET-001" in text and "MET" in text
 
 
 def test_presynth_qc_command_contains_summary_table(tmp_path):

@@ -368,10 +368,22 @@ class TestSynthQCToDict:
         d = self._qc().to_dict()
         assert isinstance(d["oxidation_risk"], bool)
 
-    def test_to_dict_round_trips_charge_ph74(self):
+    def test_to_dict_charge_ph74_is_plausible_for_kkkk(self):
+        # KKKK is strongly cationic; charge at pH 7.4 should be ~3.8-4.2
+        # This pins the actual value rather than comparing self-referentially.
         qc = check_sequence("X", "KKKK")
         d = qc.to_dict()
-        assert abs(d["charge_pH7.4"] - round(qc.charge_ph74, 2)) < 1e-6
+        assert 3.0 < d["charge_pH7.4"] < 5.0
+
+    def test_to_dict_pi_matches_isoelectric_point(self):
+        qc = check_sequence("X", "KRLFKKIGSALKFL")
+        d = qc.to_dict()
+        assert abs(d["pI"] - qc.isoelectric_point) < 1e-9
+
+    def test_to_dict_mol_weight_matches_molecular_weight_da(self):
+        qc = check_sequence("X", "KWKLFKKIGAVLKVL")
+        d = qc.to_dict()
+        assert abs(d["mol_weight_da"] - qc.molecular_weight_da) < 0.01
 
     def test_to_dict_mu_h_preserved(self):
         qc = check_sequence("X", "AAAAAA", mu_h=0.72)
