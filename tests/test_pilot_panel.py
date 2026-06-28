@@ -413,8 +413,27 @@ class TestWritePilotCsv:
         expected = {"pilot_rank", "candidate_id", "sequence", "length", "seed",
                     "ensemble", "activity", "boman_activity", "disagreement",
                     "safety", "synthesis", "novelty", "serum_stability",
-                    "selectivity_proxy", "pilot_priority"}
+                    "selectivity_proxy", "pilot_priority",
+                    "amphipathic_score", "charge_ph74"}
         assert set(fields) == expected
+
+    def test_amphipathic_score_from_features(self, tmp_path):
+        cand = _make("X1", seed="SEED-001")
+        cand["features"]["helix_wheel_amphipathic_score"] = 0.72
+        cand["features"]["net_charge_ph74"] = 3.8
+        write_pilot_csv([cand], tmp_path / "pilot.csv")
+        with open(tmp_path / "pilot.csv", newline="") as f:
+            row = list(csv.DictReader(f))[0]
+        assert float(row["amphipathic_score"]) == pytest.approx(0.72)
+        assert float(row["charge_ph74"]) == pytest.approx(3.8)
+
+    def test_amphipathic_score_defaults_to_zero_when_missing(self, tmp_path):
+        # FIVE_SEEDS has only {"length": ...} in features — no helix_wheel key
+        write_pilot_csv(FIVE_SEEDS[:1], tmp_path / "pilot.csv")
+        with open(tmp_path / "pilot.csv", newline="") as f:
+            row = list(csv.DictReader(f))[0]
+        assert float(row["amphipathic_score"]) == pytest.approx(0.0)
+        assert float(row["charge_ph74"]) == pytest.approx(0.0)
 
     def test_row_count_matches_panel(self, tmp_path):
         panel = select_pilot_panel(FIVE_SEEDS, n=5)

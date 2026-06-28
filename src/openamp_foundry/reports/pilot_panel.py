@@ -19,6 +19,8 @@ _CSV_FIELDS = [
     "serum_stability",
     "selectivity_proxy",
     "pilot_priority",
+    "amphipathic_score",
+    "charge_ph74",
 ]
 
 _DISCLAIMER = (
@@ -31,10 +33,15 @@ _DISCLAIMER = (
 
 def _row(c: dict) -> dict:
     scores = c.get("scores", {})
+    features = c.get("features", {})
 
     def _f(key: str, fallback: float = 0.0) -> float:
         # Accept values from a nested scores dict OR directly on the row (CSV round-trip).
         v = scores.get(key, c.get(key, fallback))
+        return float(v) if v is not None else fallback
+
+    def _feat(key: str, fallback: float = 0.0) -> float:
+        v = features.get(key, c.get(key, fallback))
         return float(v) if v is not None else fallback
 
     return {
@@ -53,6 +60,8 @@ def _row(c: dict) -> dict:
         "serum_stability": round(_f("serum_stability"), 4),
         "selectivity_proxy": round(_f("selectivity_proxy", 1.0), 4),
         "pilot_priority": round(_f("pilot_priority"), 4),
+        "amphipathic_score": round(_feat("helix_wheel_amphipathic_score"), 4),
+        "charge_ph74": round(_feat("net_charge_ph74"), 4),
     }
 
 
