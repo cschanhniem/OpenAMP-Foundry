@@ -1,6 +1,6 @@
 # OpenAMP Foundry — Methods Appendix
 
-**Version:** 0.2.x (pipeline version); document updated for PRs #47–54  
+**Version:** 0.2.x (pipeline version); document updated for PRs #47–78  
 **Status:** Working draft for expert review. Not a peer-reviewed publication.
 
 ---
@@ -39,6 +39,14 @@ Three variant strategies were applied:
 3. **Charge-enhanced variants**: Polar positions (S, T, N, Q) replaced by K or R (n=12 per seed)
 
 Total: 383 unique variants from 5 seeds (rng_seed=2024).
+
+> **Note (PRs #63–78):** The figures above describe the initial benchmark run that generated
+> the 87-sequence evaluation set (43 nominated + 44 held-out) and AUROC 0.8420. The synthesis
+> pool generation was subsequently expanded to 7 scaffold families: SEED-006 through SEED-009
+> were added in earlier expansion PRs; SEED-001 (magainin-1) was re-entered in PR #72 after the
+> face_segregation_bonus raised its AUROC contribution. Current synthesis pool: **100 candidates
+> from 7 scaffold families**. The expanded pool shares the same scoring pipeline and configuration
+> (`pipeline.yaml`, `phase3.yaml`) but was generated from a wider seed set.
 
 **Limitation:** This generation strategy produces near-seed variants. It does not explore
 genuinely novel sequence space. Future work should incorporate protein language model sampling
