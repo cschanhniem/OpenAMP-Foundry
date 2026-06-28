@@ -78,6 +78,15 @@ class TestBomanIndex:
         assert boman_index("XXX") == pytest.approx(0.0, abs=1e-4)
         assert boman_index("BBBBB") == pytest.approx(0.0, abs=1e-4)
 
+    def test_all_proline_returns_zero(self):
+        # P has Boman potential 0.0 → mean = 0.0 for any poly-Pro sequence
+        assert boman_index("P") == pytest.approx(0.0, abs=1e-4)
+        assert boman_index("PPPPPPPP") == pytest.approx(0.0, abs=1e-4)
+
+    def test_proline_same_as_glycine_in_boman(self):
+        # Both G and P have Boman potential 0.0 (conformational residues, no charge)
+        assert boman_index("GGGG") == boman_index("PPPP")
+
 
 class TestBomanActivityScore:
     def test_returns_between_zero_and_one(self):
@@ -96,6 +105,11 @@ class TestBomanActivityScore:
     def test_zero_boman_maps_to_near_half(self):
         # G → 0.000 → tanh(0) = 0 → 0.5
         score = boman_activity_score("GGGG")
+        assert score == pytest.approx(0.5, abs=1e-2)
+
+    def test_all_proline_boman_activity_is_midpoint(self):
+        # P has Boman potential 0.0 → boman_index = 0.0 → tanh(0) = 0 → score = 0.5
+        score = boman_activity_score("PPPPPPPP")
         assert score == pytest.approx(0.5, abs=1e-2)
 
     def test_monotone_with_boman_index(self):
