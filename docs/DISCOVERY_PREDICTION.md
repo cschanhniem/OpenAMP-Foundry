@@ -323,12 +323,12 @@ Interior trypsin/chymotrypsin cleavage analysis by `serum_stability_score()` (pi
 
 | Seed family | Panel slots | serum_stability (pilot) | Stability gate | Wave 2 path | Predicted t½ |
 |-------------|-------------|------------------------|----------------|-------------|--------------|
-| SEED-003 (cationic Trp helix) | 4 | 0.35–0.38 ⚠ | Likely fail — model may underestimate: 11–14 AA short | D-Arg at 1–2, D-Lys at 6; Nα-Ac | <30 min model → **may be 1–3 h actual** (short-peptide effect); ~4–8 h Wave 2 |
-| SEED-005 (cecropin-magainin hybrid) | 1 | 0.45 | Borderline | Nα-Ac + D-Lys at K sites | ~1–2 h → ~3–8 h Wave 2 |
-| SEED-006 (mastoparan-X wasp venom) | 4 | 0.61–0.67 ✓ | Pass | Nα-Ac recommended | ~3–5 h; Wave 2 optional |
-| SEED-007 (bombolitin-II bumblebee) | 4 | 0.64–0.66 ✓ | Pass | Nα-Ac + D-Lys at 2 sites | ~2–4 h → ~5–12 h Wave 2 |
-| SEED-008 (puroindoline-a Trp-rich) | 1 | 0.45 ⚠ | Borderline — model may underestimate: Trp steric hindrance | D-Trp at Trp4 (Wave 2) | ~1 h model → **may be 1–3 h actual** (Trp-steric effect); ~4–8 h Wave 2 |
-| SEED-009 (Bac2A proline-rich) | 5 | 0.55–0.57 | Pass/borderline | Pro-rich sequences resist trypsin (Pro not cleaved) | ~2–4 h (Pro resistance); Wave 2 optional |
+| SEED-003 (cationic helix, 11–14 AA) | 4 | 0.35–0.38 ⚠ | Likely fail — model may underestimate: short peptide has fewer cleavage sites | D-Arg at 1–2, D-Lys at 6; Nα-Ac | <30 min model → **may be 1–3 h actual** (short-peptide effect); ~4–8 h Wave 2 |
+| SEED-005 (cecropin-magainin hybrid) | 1 | 0.449 ⚠ | Borderline (score below 0.50 t½ > 1h threshold) | Nα-Ac + D-Lys at K sites | ~30 min–1 h → ~3–8 h Wave 2 |
+| SEED-006 (mastoparan-X wasp venom) | 4 | 0.61–0.67 | Borderline (score 0.61–0.67; gate requires ≥ 0.70 for t½ > 2h) | Nα-Ac recommended | ~1–2 h model; ~3–5 h with Nα-Ac; Wave 2 optional |
+| SEED-007 (bombolitin-II bumblebee) | 5 | 0.64–0.66 | Borderline (score 0.64–0.66; gate requires ≥ 0.70 for t½ > 2h) | Nα-Ac + D-Lys at 2 sites | ~1–2 h model; ~5–12 h Wave 2 |
+| SEED-008 (puroindoline-a, Trp-rich) | 1 | 0.45 ⚠ | Borderline — model may underestimate: Trp steric hindrance at chymotrypsin site | D-Trp at Trp4 (Wave 2) | ~1 h model → **may be 1–3 h actual** (Trp-steric effect); ~4–8 h Wave 2 |
+| SEED-009 (Bac2A, proline-rich) | 5 | 0.55–0.57 | Borderline — Pro-rich backbone resists trypsin; model may undercount Pro-adjacent protection | Nα-Ac (D-sub less critical due to Pro resistance) | ~1–2 h model; **may be ~2–4 h actual** (Pro-trypsin resistance); Wave 2 optional |
 
 **Model limitation note:** `serum_stability_score()` is calibrated for medium-length cationic
 helices. It may underestimate actual stability for (a) short peptides ≤14 AA (fewer cleavage
@@ -351,10 +351,13 @@ This converts the serum stability risk from a "gap" into a scheduled synthesis o
 **For translational significance, serum stability must be assayed** (CLSI-standardized serum
 stability assay recommended before claiming therapeutic relevance in any publication).
 
-> **Recommended early screening:** Before the full MIC panel, run a 2-hour serum stability assay
-> (50% pooled human serum, 37°C, HPLC quantification) on all 20 pilot candidates. Cost: ~$200–400
-> per candidate batch. This directly validates Stage 3 gate assumptions for SEED-003 and SEED-008
-> and informs which candidates to carry into the full MIC panel vs retire to Wave 2 D-amino synthesis.
+> **Recommended early screening:** Before the full MIC panel, run a serum stability assay on all 20
+> pilot candidates: 50% pooled human serum, 37°C, time points 0/30/60/120 min, 100 µM peptide
+> working concentration, HPLC quantification. Include one stable D-peptide as positive stability
+> control. Cost: ~$200–400 per batch of candidates (not per individual peptide). This validates
+> Stage 3 gate assumptions — especially for SEED-003, SEED-005, and SEED-008 which are borderline
+> by model score — and informs which candidates to carry into the full MIC panel vs retire to
+> Wave 2 D-amino synthesis.
 
 ---
 
@@ -405,11 +408,14 @@ Gap:     ~51–71%
 Root causes (ranked by remaining impact):
 
 1. No protease-resistance engineering in Wave 1 (~-20 pp remaining):
-   Serum stability for SEED-003/008 variants remains <40 min without D-amino substitution.
+   Model-predicted serum t½ for SEED-003/008 variants is <30–60 min without D-amino substitution.
+   **Note:** The model may underestimate actual stability for SEED-003 (short peptides, steric
+   protection from fewer cleavage sites) and SEED-008 (Trp indole bulk reduces chymotrypsin rate).
+   An early serum assay (see Stage 3 section) is recommended before assuming model failure.
    ADDRESSED STRUCTURALLY: PR #42 now outputs specific D-Lys/D-Arg substitution positions
    for all interior trypsin sites (wave2_d_substitutions field). Wave 2 synthesis plan is ready.
-   But Wave 1 peptides will still fail the serum stability gate until Wave 2 is executed.
-   Fix: synthesize Wave 2 D-amino variants of the 3 best Wave 1 hits.
+   Fix: run serum assay on Wave 1 candidates first; synthesize Wave 2 D-amino variants of the
+   3 best hits that still fail the gate after assay confirmation.
 
 2. No MDR strain testing (~-10 pp): Testing only ATCC reference strains limits publication impact.
    Any candidate with MIC < 8 μg/mL vs MRSA, E. coli ST131, or K. pneumoniae KPC becomes
@@ -603,7 +609,7 @@ Executing all four actions on the best Wave 1 hits would push the combined proba
 | 0 | Synthesis success | ~90% | ~90% | ~88% | **~89%** ✓ | **~90%** ✓ (agg model + agg-safe gen + pro penalty + pH74 charge) | SEED-008 W-rich; all aggregation/synthesis risks modelled |
 | 1 | MIC ≤ 32 μg/mL | ~55–65% | ~55–65% | ~60–70% | **~60–70%** | **~61–71%** ✓ (AUROC 0.8047) | AUROC 0.8047 (AUPRC 0.8443); 6 scaffold families confirmed |
 | 2 | TI > 10 (selectivity) | ~35–50% | ~35–50% | ~38–52% | **~40–55%** ✓ | **~42–57%** ✓ (stronger SEED-004 demotion) | sel_proxy doubled penalty for HIGH_CYTOTOX_RISK tier |
-| 3 | t½ > 2 h (serum) | ~10–20% | ~25–40% | ~28–42% | **~28–42%** | **~29–44%** ✓ (3-protease model) | **~30–46%** (short/Trp-rich correction; pilot-panel data; early screening recommended) |
+| 3 | t½ > 2 h (serum) | ~10–20% | ~25–40% | ~28–42% | **~28–42%** | **~30–46%** ✓ (3-protease model + short/Trp-rich model correction; pilot-panel data) | SEED-003/008 may outperform model score; all seeds borderline — early serum assay recommended |
 | 4 | Scaffold novelty | ~10–15% | ~18–25% | ~25–35% | **~26–36%** ✓ | **~26–36%** | Diversity filter removes cross-seed near-dups |
 | All | "Breaking news" hit | ~5–12% | ~16–35% | ~22–42% | ~24–45% | **~29–49%** ✓ | MDR strains + Wave 2 D-amino = path to 50%+ |
 
