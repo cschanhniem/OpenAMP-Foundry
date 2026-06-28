@@ -1,6 +1,8 @@
 """Tests for scoring/synthesis.py — synthesis_feasibility_score."""
 from __future__ import annotations
 
+import pytest
+
 from openamp_foundry.scoring.synthesis import synthesis_feasibility_score
 
 
@@ -83,3 +85,15 @@ class TestSynthesisFeasibilityScore:
         for length in [5, 8, 15, 30, 40, 80]:
             score = synthesis_feasibility_score(_feat(length, repeat_run=6, cys=0.25))
             assert 0.0 <= score <= 1.0, f"score={score} out of range for length={length}"
+
+    def test_missing_length_key_raises_key_error(self):
+        with pytest.raises(KeyError):
+            synthesis_feasibility_score({"longest_repeat_run": 1, "cysteine_fraction": 0.0})
+
+    def test_missing_repeat_run_key_raises_key_error(self):
+        with pytest.raises(KeyError):
+            synthesis_feasibility_score({"length": 15, "cysteine_fraction": 0.0})
+
+    def test_missing_cysteine_fraction_key_raises_key_error(self):
+        with pytest.raises(KeyError):
+            synthesis_feasibility_score({"length": 15, "longest_repeat_run": 1})

@@ -293,3 +293,87 @@ class TestCheckPanel:
         panel = [{"candidate_id": "A", "sequence": "AAAAAA"}]
         results = check_panel(panel)
         assert results[0].mu_h == 0.0
+
+    def test_missing_candidate_id_raises_key_error(self):
+        panel = [{"sequence": "KRLFKK"}]  # no 'candidate_id'
+        with pytest.raises(KeyError, match="candidate_id"):
+            check_panel(panel)
+
+    def test_missing_sequence_raises_key_error(self):
+        panel = [{"candidate_id": "A"}]  # no 'sequence'
+        with pytest.raises(KeyError, match="sequence"):
+            check_panel(panel)
+
+
+# ---------------------------------------------------------------------------
+# SynthQC.to_dict()
+# ---------------------------------------------------------------------------
+
+class TestSynthQCToDict:
+    def _qc(self, seq: str = "KRLFKKIGSALKFL", cid: str = "TEST-001") -> SynthQC:
+        return check_sequence(cid, seq)
+
+    def test_to_dict_returns_dict(self):
+        assert isinstance(self._qc().to_dict(), dict)
+
+    def test_to_dict_has_required_keys(self):
+        d = self._qc().to_dict()
+        required = {
+            "candidate_id", "sequence", "length",
+            "mol_weight_da", "pI", "charge_pH7.4", "charge_pH6.0",
+            "cysteine_count", "methionine_count", "oxidation_risk", "aggregation_risk",
+            "hydrophobic_run", "trypsin_sites", "chymotrypsin_sites", "deamidation_sites",
+            "has_uv_chromophore", "formulation_note",
+            "mu_h", "hemolysis_start_conc",
+            "flags", "synthesis_difficulty",
+        }
+        missing = required - set(d.keys())
+        assert not missing, f"to_dict() is missing keys: {missing}"
+
+    def test_to_dict_candidate_id_matches(self):
+        d = check_sequence("MY-ID", "KWKLF").to_dict()
+        assert d["candidate_id"] == "MY-ID"
+
+    def test_to_dict_sequence_matches(self):
+        d = check_sequence("X", "KWKLF").to_dict()
+        assert d["sequence"] == "KWKLF"
+
+    def test_to_dict_length_matches(self):
+        seq = "KWKLFKKIGAVLKVL"
+        d = check_sequence("X", seq).to_dict()
+        assert d["length"] == len(seq)
+
+    def test_to_dict_mol_weight_positive(self):
+        d = self._qc().to_dict()
+        assert d["mol_weight_da"] > 0
+
+    def test_to_dict_charge_is_float(self):
+        d = self._qc().to_dict()
+        assert isinstance(d["charge_pH7.4"], float)
+        assert isinstance(d["charge_pH6.0"], float)
+
+    def test_to_dict_flags_is_list(self):
+        d = self._qc().to_dict()
+        assert isinstance(d["flags"], list)
+
+    def test_to_dict_synthesis_difficulty_valid(self):
+        d = self._qc().to_dict()
+        assert d["synthesis_difficulty"] in ("LOW", "MODERATE", "HIGH")
+
+    def test_to_dict_trypsin_sites_is_list(self):
+        d = self._qc().to_dict()
+        assert isinstance(d["trypsin_sites"], list)
+
+    def test_to_dict_oxidation_risk_is_bool(self):
+        d = self._qc().to_dict()
+        assert isinstance(d["oxidation_risk"], bool)
+
+    def test_to_dict_round_trips_charge_ph74(self):
+        qc = check_sequence("X", "KKKK")
+        d = qc.to_dict()
+        assert abs(d["charge_pH7.4"] - round(qc.charge_ph74, 2)) < 1e-6
+
+    def test_to_dict_mu_h_preserved(self):
+        qc = check_sequence("X", "AAAAAA", mu_h=0.72)
+        d = qc.to_dict()
+        assert abs(d["mu_h"] - 0.72) < 1e-9

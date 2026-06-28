@@ -109,3 +109,55 @@ def test_report_contains_disclaimer(tmp_path):
     text = (tmp_path / "report.md").read_text()
     assert "NOT validated biological predictors" in text
     assert "no antimicrobial activity has been demonstrated" in text.lower() or "No antimicrobial activity" in text
+
+
+def test_presynth_qc_command_returns_zero(tmp_path):
+    panel = tmp_path / "panel.csv"
+    panel.write_text(
+        "candidate_id,sequence,source\n"
+        "SEED-001,KWKLFKKIGAVLKVL,test\n"
+        "SEED-002,RRWQWRMKKLG,test\n"
+    )
+    out = str(tmp_path / "report.md")
+    ret = main(["presynth-qc", "--panel-csv", str(panel), "--out", out])
+    assert ret == 0
+
+
+def test_presynth_qc_command_creates_report(tmp_path):
+    panel = tmp_path / "panel.csv"
+    panel.write_text(
+        "candidate_id,sequence,source\n"
+        "SEED-001,KWKLFKKIGAVLKVL,test\n"
+    )
+    out_path = tmp_path / "qc_report.md"
+    main(["presynth-qc", "--panel-csv", str(panel), "--out", str(out_path)])
+    assert out_path.exists()
+    text = out_path.read_text()
+    assert "Pre-Synthesis QC Report" in text
+    assert "SEED-001" in text
+
+
+def test_presynth_qc_command_flags_met_residue(tmp_path):
+    panel = tmp_path / "panel.csv"
+    panel.write_text(
+        "candidate_id,sequence,source\n"
+        "MET-001,KRLMKKIGSAIKFL,test\n"
+    )
+    out_path = tmp_path / "qc_report.md"
+    main(["presynth-qc", "--panel-csv", str(panel), "--out", str(out_path)])
+    text = out_path.read_text()
+    assert "MET" in text or "oxidation" in text.lower()
+
+
+def test_presynth_qc_command_contains_summary_table(tmp_path):
+    panel = tmp_path / "panel.csv"
+    panel.write_text(
+        "candidate_id,sequence,source\n"
+        "A,KWKLFKKIGAVLKVL,test\n"
+        "B,AAAAAAAAGGGGGGGG,test\n"
+    )
+    out_path = tmp_path / "qc_report.md"
+    main(["presynth-qc", "--panel-csv", str(panel), "--out", str(out_path)])
+    text = out_path.read_text()
+    assert "Summary Table" in text
+    assert "Candidates checked: 2" in text
