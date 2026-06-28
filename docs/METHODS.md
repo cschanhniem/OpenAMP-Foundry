@@ -102,20 +102,31 @@ seven terms; weights encode biochemical priors only (not data-optimised). Score 
 **Formula (Python source: `scoring/activity.py`):**
 
 ```
+# Anionic guard (PR #70): if charge_density_ph74 < 0.0, return 0.0 immediately.
+# Anionic peptides are electrostatically repelled by bacterial membranes.
+
+μH_eff = max(hydrophobic_moment, max_hydrophobic_moment)  # windowed mu_h (PR #70)
+
 score = 0.24 × length_score
       + 0.27 × clamp01((charge_density_ph74 + 0.05) / 0.55)
       + 0.17 × (1 − min(|hydrophobic − 0.45| / 0.45, 1.0))
-      + min(aromatic / 0.20, 1.0) × 0.10          # aromatic_bonus
-      + clamp01(μH / 0.8) × 0.14                  # amphipathicity_score
-      + clamp01((Pα − 1.0) / 0.20) × 0.03         # helix_bonus
-      + clamp01(charge_density_ph74 × μH / 0.15) × 0.02  # cross_bonus
+      + min(aromatic / 0.20, 1.0) × 0.10              # aromatic_bonus
+      + clamp01(μH_eff / 0.8) × 0.14                  # amphipathicity_score (windowed)
+      + clamp01((Pα − 1.0) / 0.20) × 0.03             # helix_bonus
+      + clamp01(charge_density_ph74 × μH_eff / 0.15) × 0.02  # cross_bonus
 # Maximum achievable: 0.24+0.27+0.17+0.10+0.14+0.03+0.02 = 0.97 (arithmetic ceiling;
 # no explicit min() cap — the code returns clamp01(score) which clips to 1.0)
 ```
 
+`μH_eff` = `max(hydrophobic_moment, max_hydrophobic_moment)`. `max_hydrophobic_moment` is the
+best μH over any 11-residue window (Eisenberg standard). For sequences ≤ 11 AA this equals
+the full-sequence μH. For longer sequences it captures the most amphipathic helical segment,
+which better reflects the membrane-active region. (Added PR #70.)
+
 `charge_density_ph74` is the net peptide charge at pH 7.4 (Henderson-Hasselbalch) divided
 by sequence length; the code falls back to `charge_density` (integer net-charge proxy / length)
-for callers that pre-date the pH-7.4 charge model.
+for callers that pre-date the pH-7.4 charge model. Lookup uses explicit `if key in features`
+conditional (not `dict.get()`) to avoid Python's eager evaluation of the fallback argument.
 
 ### 4.1b Boman Activity Score (Second Independent Scorer)
 
@@ -316,29 +327,26 @@ Phase 2 benchmarks verified that the pipeline:
 - Produces stable rankings under repeated runs (reproducibility)
 - Shows performance degradation when key scoring dimensions are ablated
 
-**Retrospective AUROC — pipeline.yaml (v0.7.x):** `0.8047` (95% CI: 0.7072–0.8922, n=2000
-bootstrap). Positive-vs-negative separation on the 43-AMP + 44-background benchmark set using
-the full ensemble scorer with pipeline.yaml weights. Historical progression: 0.7926 → 0.8138 →
+**Retrospective AUROC — pipeline.yaml (v0.8.x):** `0.8348` (95% CI: TBD, n=2000 bootstrap).
+Positive-vs-negative separation on the 43-AMP + 44-background benchmark set using the full
+ensemble scorer with pipeline.yaml weights. Historical progression: 0.7926 → 0.8138 →
 0.8164 (PRs #48–54) → 0.8086 (PR #65: Trp-weighted aromatic bonus, safety abs() fix) →
-0.8047 (PR #66: removed duplicate GIGKFLHSAKKFGKAFVGEIMNS / REF-GIG-001 from validation set;
-43 unique AMPs used). The minor decrease from 0.8086 reflects that the removed entry (magainin-2)
-is a high-ranking AMP; fewer true positives at the top slightly reduce AUROC. Scientifically
-more accurate than the pre-dedup estimate.
+0.8047 (PR #66: removed duplicate REF-GIG-001; 43 unique AMPs) →
+0.8348 (PR #70: windowed mu_h + anionic guard; see below).
 
-**Retrospective AUROC — phase3.yaml (synthesis gate, v0.7.x):** `0.7846` (95% CI: 0.6829–0.8747,
+**Retrospective AUROC — phase3.yaml (synthesis gate, v0.8.x):** `0.8126` (95% CI: TBD,
 n=2000 bootstrap). Phase3 uses re-weighted ensemble scores (activity=0.35, safety=0.30,
 synthesis=0.20, novelty=0.15 vs pipeline.yaml activity=0.40, safety=0.25, synthesis=0.15,
-novelty=0.20) and a stricter safety gate (max_safety_risk=0.40). The AUROC is lower than
-pipeline.yaml because the higher safety weight down-ranks some literature AMPs that have
-hemolysis risk, which is scientifically correct behaviour for a synthesis gate. Interpretation:
-**STRONG** (AUROC > 0.70). AUPRC = 0.8240 (+0.3297 above random baseline of 0.4943).
-Recall@10 = 0.23, Recall@20 = 0.44, Recall@43 = 0.70.
+novelty=0.20) and a stricter safety gate (max_safety_risk=0.40). Historical: 0.7846 (PR #66)
+→ 0.8126 (PR #70). The AUROC is lower than pipeline.yaml because the higher safety weight
+down-ranks some literature AMPs that have hemolysis risk, which is scientifically correct
+behaviour for a synthesis gate. Interpretation: **STRONG** (AUROC > 0.70).
 
-> **Important:** The synthesis selection gate uses phase3.yaml. The phase3 AUROC (0.7846) is the
-> operationally relevant benchmark. pipeline.yaml AUROC (0.8047) is the full-ensemble reference.
-> Both point estimates exceed the AUROC > 0.70 synthesis gate. Note that with n=87 sequences the
-> 95% CI spans the gate boundary; synthesis decisions are made on point estimates, which is standard
-> practice at this sample size — the CI reflects sampling uncertainty, not model unreliability.
+> **Important:** The synthesis selection gate uses phase3.yaml. The phase3 AUROC (0.8126) is the
+> operationally relevant benchmark. pipeline.yaml AUROC (0.8348) is the full-ensemble reference.
+> Both point estimates comfortably exceed the AUROC > 0.70 synthesis gate. Note that with n=87
+> sequences the 95% CI spans ~±0.09; synthesis decisions are made on point estimates, which is
+> standard practice at this sample size — the CI reflects sampling uncertainty, not model unreliability.
 
 **AUPRC (v0.7.x):** `0.8443` for pipeline.yaml (+0.2943 above the random baseline of 0.4943).
 Area Under Precision-Recall Curve is computed alongside AUROC and reported by `make validate-scoring`.
@@ -352,7 +360,7 @@ pessimistic tie-breaking (negatives sort first on tied scores) to match sklearn
 `make validate-scoring-phase3` (synthesis gate weights, phase3.yaml) or
 `make validate-scoring-strict` for the composition-matched (scrambled-decoy) variant.
 
-**Key scoring changes in v0.2.x–v0.7.x (PRs #48–65):**
+**Key scoring changes in v0.2.x–v0.8.x (PRs #48–70):**
 
 | PR | Change | AUROC impact |
 |----|--------|-------------|
@@ -365,6 +373,22 @@ pessimistic tie-breaking (negatives sort first on tied scores) to match sklearn
 | #58 | AUPRC added; SEED-009 (Bac2A) + SEED-010 (KR-12) added | +2 scaffolds |
 | #65 | Trp-weighted aromatic bonus (1.5× vs Phe/Tyr); safety abs() fix | 0.8164→0.8086 |
 | #66 | Remove duplicate REF-GIG-001 (magainin-2 counted twice in validation set) | 0.8086→0.8047 |
+| #70 | Windowed mu_h (window=11, Eisenberg standard); anionic charge guard | 0.8047→0.8348 (pipeline); 0.7846→0.8126 (phase3) |
+
+**PR #70 detail — windowed hydrophobic moment:** For sequences > 11 residues, the full-sequence
+μH is diluted by non-helical termini and linker regions. `max_windowed_hydrophobic_moment()`
+computes the maximum μH over all 11-residue windows (the Eisenberg standard helical period).
+For magainin-2 (23 AA): full-seq μH = 0.4548 vs windowed μH = 0.6862 (1.51×). For cecropin-A
+(37 AA): full-seq μH = 0.2267 vs windowed μH = 0.6567 (2.90×). Short sequences (≤ 11 AA)
+are unaffected: windowed == full-seq.
+
+**PR #70 detail — anionic charge guard:** Anionic peptides (charge_density_ph74 < 0.0) are
+electrostatically repelled by bacterial membranes (phosphatidylglycerol, cardiolipin surface)
+and cannot operate via the canonical cationic AMP mechanism. The guard returns 0.0 immediately,
+preventing partial credit from hydrophobic/length terms. Boundary: exactly 0.0 charge density
+is not blocked (reflects neutral peptides rather than anionic). Fixed a Python eagerness bug
+in feature dict lookup (`features.get(key, features["fallback"])` evaluates fallback eagerly;
+replaced with explicit `if "key" in features` conditional).
 
 **Limitation:** Benchmarks use a small, curated demo dataset (43 AMPs + 44 background). They
 do not validate against large independent AMP databases. Real retrospective validation against

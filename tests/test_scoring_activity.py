@@ -124,6 +124,68 @@ class TestLengthComponent:
         assert abs(score - 0.4666) < 0.001
 
 
+class TestAnionicGuard:
+    """Anionic peptides must receive score 0.0 — they are electrostatically repelled
+    by bacterial membranes and cannot operate via the cationic AMP mechanism."""
+
+    def test_anionic_peptide_returns_zero(self):
+        # charge_density_ph74 < 0.0 → guard fires, return 0.0 regardless of other terms
+        feat = {
+            "length": 16, "charge_density_ph74": -0.5,
+            "hydrophobic_fraction": 0.45, "aromatic_fraction": 0.10,
+            "hydrophobic_moment": 0.6,
+        }
+        assert activity_likeness_score(feat) == 0.0
+
+    def test_anionic_guard_uses_ph74_field_preferentially(self):
+        # charge_density_ph74 field takes precedence over legacy charge_density
+        feat = {
+            "length": 18, "charge_density": 0.30,  # positive legacy field
+            "charge_density_ph74": -0.3,             # but negative at pH 7.4
+            "hydrophobic_fraction": 0.45, "aromatic_fraction": 0.0,
+            "hydrophobic_moment": 0.0,
+        }
+        assert activity_likeness_score(feat) == 0.0
+
+    def test_anionic_guard_polyglutamate(self):
+        # EEIEIEIEIEIEIEE-like peptide: highly structured but anionic — must be 0
+        feat = {
+            "length": 15, "charge_density_ph74": -0.6,
+            "hydrophobic_fraction": 0.40, "aromatic_fraction": 0.0,
+            "hydrophobic_moment": 0.42, "max_hydrophobic_moment": 0.55,
+        }
+        assert activity_likeness_score(feat) == 0.0
+
+    def test_zero_charge_density_not_blocked(self):
+        # Exactly 0.0 charge density should NOT trigger the guard (guard is < 0.0)
+        feat = {
+            "length": 18, "charge_density_ph74": 0.0,
+            "hydrophobic_fraction": 0.45, "aromatic_fraction": 0.0,
+            "hydrophobic_moment": 0.0,
+        }
+        score = activity_likeness_score(feat)
+        # Should still get some score from length + hydrophobic terms
+        assert score > 0.0
+
+    def test_small_negative_charge_blocked(self):
+        # Even mildly negative (e.g. -0.05) must return 0.0
+        feat = {
+            "length": 18, "charge_density_ph74": -0.05,
+            "hydrophobic_fraction": 0.45, "aromatic_fraction": 0.0,
+            "hydrophobic_moment": 0.0,
+        }
+        assert activity_likeness_score(feat) == 0.0
+
+    def test_positive_charge_not_blocked(self):
+        # Positive charge density must pass through normally
+        feat = {
+            "length": 18, "charge_density": 0.25,
+            "hydrophobic_fraction": 0.45, "aromatic_fraction": 0.0,
+            "hydrophobic_moment": 0.0,
+        }
+        assert activity_likeness_score(feat) > 0.0
+
+
 class TestChargeComponent:
     def test_negative_charge_penalised(self):
         neg = activity_likeness_score(_feat(charge_density=-0.5))
@@ -288,6 +350,46 @@ class TestTrpWeightedAromaticBonus:
         assert activity_likeness_score(feat_hi_trp) == activity_likeness_score(feat_hi_phe), (
             "High aromatic fraction: both Trp and Phe should saturate the cap at 0.10"
         )
+
+
+class TestMaxWindowedMuHInActivity:
+    """activity_likeness_score uses max(hydrophobic_moment, max_hydrophobic_moment)
+    so that long-sequence AMPs get credit for their best helical window."""
+
+    def test_max_hydrophobic_moment_used_when_higher(self):
+        # max_hydrophobic_moment > hydrophobic_moment → score should reflect the max
+        feat_with_max = {
+            "length": 23, "charge_density": 0.25,
+            "hydrophobic_fraction": 0.45, "aromatic_fraction": 0.0,
+            "hydrophobic_moment": 0.45,
+            "max_hydrophobic_moment": 0.69,  # windowed value higher than full-seq
+        }
+        feat_full_only = {
+            "length": 23, "charge_density": 0.25,
+            "hydrophobic_fraction": 0.45, "aromatic_fraction": 0.0,
+            "hydrophobic_moment": 0.45,
+            # no max_hydrophobic_moment key
+        }
+        assert activity_likeness_score(feat_with_max) > activity_likeness_score(feat_full_only)
+
+    def test_full_seq_used_when_no_max_key(self):
+        # Backward compat: if max_hydrophobic_moment absent, full-seq mu_h is used
+        feat = {
+            "length": 18, "charge_density": 0.30,
+            "hydrophobic_fraction": 0.45, "aromatic_fraction": 0.0,
+            "hydrophobic_moment": 0.6,
+        }
+        score = activity_likeness_score(feat)
+        assert score > 0.0
+
+    def test_missing_both_mu_h_keys_defaults_to_zero(self):
+        feat = {
+            "length": 18, "charge_density": 0.30,
+            "hydrophobic_fraction": 0.45, "aromatic_fraction": 0.0,
+        }
+        score = activity_likeness_score(feat)
+        # Should still work; mu_h defaults to 0 → amphipathicity_score = 0
+        assert score >= 0.0
 
 
 class TestAmphipathicityBonus:

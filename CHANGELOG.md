@@ -9,8 +9,22 @@ All notable changes to OpenAMP Foundry are documented here.
 **Status:** Pipeline frozen for synthesis batch ordering. All changes below were quality
 improvements made before committing the ~$10k wet-lab synthesis budget.
 
-### Latest fixes (PRs #61–69)
+### Latest fixes (PRs #61–70)
 
+- **PR #70** — Windowed hydrophobic moment (window=11, Eisenberg standard) + anionic charge guard:
+  `max_windowed_hydrophobic_moment()` added to `features/physchem.py`; `max_hydrophobic_moment`
+  feature now in `compute_features()` output; `activity_likeness_score()` uses
+  `max(hydrophobic_moment, max_hydrophobic_moment)` so long-sequence AMPs (magainin-2: 1.51×
+  improvement, cecropin-A: 2.90×) get credit for their best helical window rather than a
+  diluted full-sequence average; anionic guard returns 0.0 for peptides with
+  `charge_density_ph74 < 0.0` (bacterial membrane repulsion; corrects EEIEIEIEIEIEIEE
+  receiving 0.42 erroneously); fixed Python eager-evaluation bug in feature dict fallback
+  (`dict.get(key, features["k"])` → `if key in features` conditional); 23 new tests covering
+  windowed mu_h behaviour, max_hydrophobic_moment in compute_features(), anionic guard cases;
+  AUROC pipeline.yaml 0.8047→0.8348, phase3.yaml 0.7846→0.8126; regression sentinel updated
+  (≥0.79); config-identity sentinel updated (<0.82, sits between phase3=0.8126 and
+  pipeline=0.8348); METHODS.md and DISCOVERY_PREDICTION.md AUROC values updated;
+  1223 tests passing
 - **PR #69** — synthesis_readiness_report.md updated for current 20-candidate pilot panel
   (AUROC 0.8047; 43 AMPs; 6 seed families; all output files regenerated: presynth_qc_report.md,
   diversity_report.md, gold_standard_calibration.md); external predictor gate marked PENDING for

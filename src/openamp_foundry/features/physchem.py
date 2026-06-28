@@ -139,6 +139,41 @@ def hydrophobic_moment(sequence: str, angle_deg: float = 100.0) -> float:
     return round(moment, 4)
 
 
+def max_windowed_hydrophobic_moment(
+    sequence: str,
+    window: int = 11,
+    angle_deg: float = 100.0,
+) -> float:
+    """Maximum hydrophobic moment over any contiguous window of `window` residues.
+
+    For short sequences (len <= window), this equals the full-sequence mu_h.
+    For longer sequences the Eisenberg (1984) window=11 standard captures the best
+    amphipathic helical segment rather than averaging over the entire sequence,
+    which dilutes the amphipathicity signal for multi-segment peptides (>15 AA).
+
+    This value is stored as `max_hydrophobic_moment` in the feature dict and used by
+    `activity_likeness_score()` to improve discrimination for longer helical AMPs such
+    as magainin-2, cecropin-A, and LL-37 class peptides.
+    """
+    if not sequence:
+        return 0.0
+    w = min(window, len(sequence))
+    angle_rad = math.radians(angle_deg)
+    best = 0.0
+    for start in range(len(sequence) - w + 1):
+        sub = sequence[start : start + w]
+        sin_sum = cos_sum = 0.0
+        for i, aa in enumerate(sub):
+            h = _HYDROPHOBICITY.get(aa, 0.0)
+            theta = i * angle_rad
+            sin_sum += h * math.sin(theta)
+            cos_sum += h * math.cos(theta)
+        moment = math.sqrt(sin_sum ** 2 + cos_sum ** 2) / w
+        if moment > best:
+            best = moment
+    return round(best, 4)
+
+
 def interior_protease_sites(sequence: str, cleavage_set: set[str]) -> int:
     """Count interior residues susceptible to a protease (excludes C-terminal position).
 
@@ -251,6 +286,7 @@ def compute_features(sequence: str) -> dict[str, float | int | dict[str, int]]:
     pro_fraction = counts.get("P", 0) / length if length else 0.0
     repeat_run = longest_repeat_run(sequence)
     mu_h = hydrophobic_moment(sequence)
+    max_mu_h = max_windowed_hydrophobic_moment(sequence)
     n_trypsin = interior_protease_sites(sequence, TRYPSIN_SITES)
     n_chymotrypsin = interior_protease_sites(sequence, CHYMOTRYPSIN_SITES)
     n_elastase = interior_protease_sites(sequence, ELASTASE_SITES)
@@ -276,6 +312,7 @@ def compute_features(sequence: str) -> dict[str, float | int | dict[str, int]]:
         "proline_fraction": round(pro_fraction, 4),
         "longest_repeat_run": repeat_run,
         "hydrophobic_moment": mu_h,
+        "max_hydrophobic_moment": max_mu_h,
         "helix_propensity": helix_pa,
         "boman_index": boman_index(sequence),
         "gravy": gravy,

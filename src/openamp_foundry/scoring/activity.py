@@ -23,10 +23,32 @@ def activity_likeness_score(features: dict) -> float:
     length = features["length"]
     # Prefer physiologically accurate pH-7.4 charge density; fall back to proxy for
     # manually constructed feature dicts that predate this field.
-    charge_density = features.get("charge_density_ph74", features["charge_density"])
+    # NOTE: dict.get(key, features["fallback"]) evaluates the fallback eagerly in Python;
+    # use explicit conditional to avoid KeyError when only charge_density_ph74 is present.
+    if "charge_density_ph74" in features:
+        charge_density = features["charge_density_ph74"]
+    else:
+        charge_density = features["charge_density"]
+
+    # Anionic peptides (net charge < 0 at pH 7.4) are electrostatically repelled by
+    # bacterial membranes (phosphatidylglycerol, cardiolipin surface) and cannot operate
+    # via the canonical cationic AMP mechanism modelled by this scorer.
+    # Return 0.0 immediately rather than awarding partial credit for hydrophobic/length terms.
+    if charge_density < 0.0:
+        return 0.0
+
     hydrophobic = features["hydrophobic_fraction"]
     aromatic = features["aromatic_fraction"]
-    mu_h = features.get("hydrophobic_moment", 0.0)
+    # Use the maximum windowed mu_h (window=11, Eisenberg standard) when available.
+    # For short sequences (≤11 AA) this equals the full-sequence mu_h.
+    # For longer sequences it captures the best amphipathic helical segment rather than
+    # diluting the signal by averaging over non-helical termini or linkers.
+    # The full-sequence hydrophobic_moment is still used by safety_score() (calibrated
+    # for its own threshold) — only the activity amphipathicity term changes here.
+    mu_h = max(
+        features.get("hydrophobic_moment", 0.0),
+        features.get("max_hydrophobic_moment", 0.0),
+    )
     # Chou-Fasman mean Pα: range ~0.57 (all Pro/Gly) to ~1.51 (all Glu)
     # AMP-relevant range: 1.0 (indifferent) to ~1.20 (good helical sequence)
     helix_pa = features.get("helix_propensity", 1.0)
