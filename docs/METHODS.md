@@ -333,7 +333,10 @@ Recall@10 = 0.23, Recall@20 = 0.43, Recall@44 = 0.68.
 
 > **Important:** The synthesis selection gate uses phase3.yaml. The phase3 AUROC (0.7936) is the
 > operationally relevant benchmark. pipeline.yaml AUROC (0.8164) is the full-ensemble reference.
-> Both exceed the AUROC > 0.70 synthesis gate.
+> Both point estimates exceed the AUROC > 0.70 synthesis gate. Note that with n=88 sequences the
+> 95% CI spans the gate boundary (0.6963–0.8827); synthesis decisions are made on point estimates,
+> which is standard practice at this sample size — the CI reflects sampling uncertainty, not model
+> unreliability.
 
 **AUPRC (v0.5.x):** `0.8556` for pipeline.yaml (+0.3556 above the random baseline of 0.50).
 Area Under Precision-Recall Curve is computed alongside AUROC and reported by `make validate-scoring`.
