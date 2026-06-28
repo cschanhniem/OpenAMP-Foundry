@@ -136,7 +136,8 @@ class TestLoadCandidatesCsv:
         assert isinstance(candidates[0], PeptideCandidate)
 
     def test_uses_demo_file_successfully(self):
-        candidates = load_candidates_csv("examples/sequences/demo_candidates.csv")
+        demo = Path(__file__).parents[1] / "examples" / "sequences" / "demo_candidates.csv"
+        candidates = load_candidates_csv(demo)
         assert len(candidates) > 0
         for c in candidates:
             assert len(c.sequence) > 0
