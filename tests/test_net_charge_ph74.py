@@ -1,7 +1,6 @@
 """Tests for net_charge_at_ph74() and its integration into compute_features()."""
 from __future__ import annotations
 
-import math
 import pytest
 
 from openamp_foundry.features.physchem import compute_features, net_charge_at_ph74
