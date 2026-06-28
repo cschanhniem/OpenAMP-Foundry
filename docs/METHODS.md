@@ -86,8 +86,9 @@ moment) assumes an α-helical conformation (100°/residue). Non-helical AMPs are
 ### 4.1 Activity-Likeness Score
 
 A heuristic score approximating AMP-like physicochemical properties. Computed from
-seven terms; weights encode biochemical priors only (not data-optimised). Score ceiling
-0.97 < 1.0 (architectural headroom).
+eight terms; weights encode biochemical priors only (not data-optimised). Pre-clamp ceiling
+1.02; final `clamp01()` bounds output to ≤ 1.0. Without `helix_wheel_amphipathic_score` key
+the pre-clamp ceiling is 0.97 (backward-compatible with pre-PR-#72 feature dicts).
 
 | Term | Contribution | Literature basis |
 |------|-------------|-----------------|

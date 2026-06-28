@@ -276,7 +276,7 @@ def test_phase3_config_has_stricter_safety_filter_than_pipeline():
 def test_zwitteramp_trap_scorer_divergence():
     """KDKDKDKD is the 'ZwitterAMP trap': Boman scores it high (K+D each = +2.465 Boman
     potential → high interaction energy), but activity_likeness scores it low (net charge = 0,
-    no hydrophobicity). Disagreement ≈ 0.73, well above both gate thresholds (pipeline=0.40, phase3=0.40).
+    no hydrophobicity). Disagreement ≈ 0.73, well above both gate thresholds (pipeline=0.45, phase3=0.45).
 
     This test pins the end-to-end scorer divergence computation, ensuring that the two
     independent scoring systems and the disagreement gate together catch this false positive.
@@ -292,7 +292,7 @@ def test_zwitteramp_trap_scorer_divergence():
     assert bom > 0.85, f"boman_activity expected > 0.85 for KDKDKDKD, got {bom}"
     # Activity scorer correctly penalises: net charge = 0, no hydrophobicity
     assert act < 0.25, f"activity_likeness expected < 0.25 for KDKDKDKD (no net charge), got {act}"
-    # Disagreement is well above both gate thresholds (pipeline=0.40, phase3=0.40)
+    # Disagreement is well above both gate thresholds (pipeline=0.45, phase3=0.45)
     assert dis > 0.60, f"disagreement expected > 0.60 for KDKDKDKD, got {dis}"
 
 
@@ -314,16 +314,16 @@ def test_zwitteramp_trap_blocked_by_pipeline(tmp_path):
     row = rows[0]
     # Both scorer values should be captured
     assert row["scores"]["disagreement"] > 0.60
-    # The default pipeline.yaml has max_disagreement=0.40 → this candidate is blocked
+    # The default pipeline.yaml has max_disagreement=0.45 → this candidate is blocked (dis ~0.73)
     assert row["selected"] is False, (
         f"KDKDKDKD should be blocked (disagreement={row['scores']['disagreement']:.3f} "
-        f"> pipeline max_disagreement=0.40)"
+        f"> pipeline max_disagreement=0.45)"
     )
 
 
 def test_all_proline_pipeline_scores_and_disagreement(tmp_path):
     """PPPPPPPP: Boman(P)=0 → boman_activity=0.5; activity_likeness ≈ 0.17 (no charge).
-    Disagreement ≈ 0.33 — below both pipeline and phase3 gate (both 0.40).
+    Disagreement ≈ 0.33 — below both pipeline and phase3 gate (both 0.45).
     Pins this edge case so proline handling is explicit.
     """
     seq = "PPPPPPPP"
@@ -336,13 +336,13 @@ def test_all_proline_pipeline_scores_and_disagreement(tmp_path):
     assert bom == pytest.approx(0.5, abs=0.01)
     # Activity is low: no charge, not hydrophobic
     assert act < 0.25
-    # Disagreement ≈ 0.33: passes both pipeline and phase3 gate (both 0.40)
+    # Disagreement ≈ 0.33: passes both pipeline and phase3 gate (both 0.45)
     assert 0.25 < dis < 0.45, f"PPPPPPPP disagreement expected ~0.33, got {dis}"
     repo_root = Path(__file__).parents[1]
     pipeline_max = float(load_config(repo_root / "configs" / "pipeline.yaml")["selection"]["max_disagreement"])
     phase3_max = float(load_config(repo_root / "configs" / "phase3.yaml")["selection"]["max_disagreement"])
     assert dis < pipeline_max, "PPPPPPPP should pass the pipeline disagreement gate"
-    assert dis < phase3_max, "PPPPPPPP should also pass the phase3 disagreement gate (now 0.40)"
+    assert dis < phase3_max, "PPPPPPPP should also pass the phase3 disagreement gate (now 0.45)"
 
 
 def test_seed008_trp_rich_disagreement_in_mechanism_divergence_zone():
@@ -368,9 +368,9 @@ def test_seed008_trp_rich_disagreement_in_mechanism_divergence_zone():
     bom = boman_activity_score(seq)
     dis = model_disagreement(act, bom)
 
-    # Disagreement must sit in the 0.40-0.45 window — above old 0.40 threshold, below new 0.45
-    assert 0.40 <= dis <= 0.45, (
-        f"SEED-008 Trp-rich disagreement expected in 0.40-0.45 (mechanism divergence zone), "
+    # Disagreement must sit in the (0.40, 0.45) window — above old 0.40 threshold, below new 0.45
+    assert 0.40 < dis < 0.45, (
+        f"SEED-008 Trp-rich disagreement expected in (0.40, 0.45) (mechanism divergence zone), "
         f"got {dis:.4f}. Check Boman W potential, aromatic_fraction bonus, and "
         "face_segregation_bonus in activity.py."
     )
@@ -379,6 +379,3 @@ def test_seed008_trp_rich_disagreement_in_mechanism_divergence_zone():
         f"activity_likeness ({act:.4f}) should score higher than boman_activity ({bom:.4f}) "
         "for Trp-rich sequences: Trp aromatic bonus + face_segregation vs W=-3.398 in Boman."
     )
-    # Verify it passes the new 0.45 phase3 gate (would have been blocked at 0.40 after PR #72)
-    assert dis < 0.45, "SEED-008 parent should pass the updated phase3 max_disagreement=0.45"
-    assert dis > 0.40, "SEED-008 parent should have failed the pre-PR-#72 phase3 max_disagreement=0.40"

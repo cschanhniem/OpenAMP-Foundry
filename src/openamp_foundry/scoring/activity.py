@@ -102,11 +102,11 @@ def activity_likeness_score(features: dict) -> float:
     # For non-helical AMPs (proline-rich, Trp-anchoring), this is a rough proxy only;
     # the anionic guard and aromatic_bonus carry the main discriminative signal there.
     # Literature: Wieprecht et al. (1997) Biochemistry; Tossi et al. (2000) Biopolymers.
-    hw_amphipathic = features.get("helix_wheel_amphipathic_score", 0.0)
+    hw_amphipathic = min(features.get("helix_wheel_amphipathic_score", 0.0), 1.0)
     face_segregation_bonus = hw_amphipathic * 0.05
 
     # ceiling = 0.24+0.27+0.17+0.10+0.14+0.03+0.02+0.05 = 1.02; capped to 1.0 by
-    # final clamp01(). Only a peptide that is simultaneously optimal on all seven terms
+    # final clamp01(). Only a peptide that is simultaneously optimal on all eight terms
     # reaches 1.02 before clamping — a theoretical maximum that no real sequence attains.
     score = (
         0.24 * length_score

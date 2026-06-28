@@ -543,8 +543,14 @@ class TestFaceSegregationBonus:
 
     def test_high_hw_score_improves_score_for_known_amp(self):
         # Magainin-2 features: adding measured hw_amphipathic_score should improve score
+        # Magainin-2 is a textbook amphipathic helix with high face contrast → hw_score > 0.40
         from openamp_foundry.features.physchem import compute_features
         feats = compute_features("GIGKFLHSAKKFGKAFVGEIMNS")
+        hw = feats.get("helix_wheel_amphipathic_score", 0.0)
+        assert hw > 0.40, (
+            f"Magainin-2 helix_wheel_amphipathic_score={hw:.4f} should be > 0.40 for a "
+            "textbook amphipathic helix — face_contrast / 2.0 should be substantial"
+        )
         score_with = activity_likeness_score(feats)
         feats_no_hw = {k: v for k, v in feats.items() if k != "helix_wheel_amphipathic_score"}
         score_without = activity_likeness_score(feats_no_hw)
