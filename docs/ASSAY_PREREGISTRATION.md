@@ -50,11 +50,23 @@ non-reporting of negative results.
 | Priority | Organism | Strain | Gram | Rationale |
 |----------|----------|--------|------|-----------|
 | 1 | *Escherichia coli* | ATCC 25922 | Negative | QC reference, EUCAST standard |
-| 2 | *Staphylococcus aureus* | ATCC 29213 | Positive | Clinical relevance, MRSA proxy |
-| 3 | *Pseudomonas aeruginosa* | ATCC 27853 | Negative | ESKAPE organism, hard target |
-| 4 | *Klebsiella pneumoniae* | ATCC 700603 | Negative | Clinical priority, MDR context |
+| 2 | *Staphylococcus aureus* | ATCC 29213 | Positive | Clinical relevance, methicillin-sensitive reference |
+| 3 | *Staphylococcus aureus* | USA300 LAC (MRSA) | Positive | MRSA clinical isolate; ESKAPE; raises publication impact ~2× |
+| 4 | *Pseudomonas aeruginosa* | ATCC 27853 | Negative | ESKAPE organism, hard target |
+| 5 | *Klebsiella pneumoniae* | ATCC 700603 | Negative | Clinical priority, MDR context |
 
-Priority order: if budget-constrained, run organisms 1 and 2 only (minimum viable screen).
+Priority order: if budget-constrained, run organisms 1, 2, and 3 (minimum viable screen + MDR
+impact). MRSA USA300 is priority 3 because SEED-007 (bombolitin-II), SEED-008 (Trp-rich
+puroindoline-a), and SEED-009 (proline-rich Bac2A) have mechanisms that operate well against
+Gram-positive; MRSA activity is the single highest-impact result achievable with this panel.
+Cost: +$200–400 per peptide at most contract labs.
+
+**Note for SEED-009 (proline-rich, top 4 ensemble-score ranks in pilot panel):** Proline-rich
+cathelicidins can show reduced activity in standard Mueller-Hinton Broth — media composition
+(amino acids, divalent cation concentration) affects translocation efficiency and intracellular
+availability for this AMP class (Krizsan et al. 2014 Angew Chem Int Ed 53:14546). Run SEED-009
+variants in parallel in RPMI-1640 medium in addition to standard MHB. Report both results; if
+MHB MIC is ≥4× higher than RPMI MIC, annotate as "media-dependent activity" in the results.
 
 ### Controls
 
@@ -107,16 +119,27 @@ TI = HC50 (µg/mL) / MIC (µg/mL)
 
 ---
 
-## 5. Serum Stability Assay (Wave 1 optional, Wave 2 mandatory)
+## 5. Serum Stability Assay (Wave 1 recommended before full MIC panel)
 
-- **Matrix:** 25% human serum in PBS (37 °C)
-- **Peptide concentration:** 100 µg/mL
-- **Time points:** 0, 0.5, 1, 2, 4 h
-- **Readout:** Residual antimicrobial activity by agar dilution or analytical HPLC + MS
-- **Pass criterion:** > 50% activity remaining at 2 h
+- **Matrix:** 50% pooled human serum in PBS (37 °C) — consistent with Otvos & Cudic 2002
+  (Curr Pharm Design) and `docs/WET_LAB_HANDOFF.md` Section 4
+- **Peptide concentration:** 100 µM
+- **Time points:** 0, 30, 60, 120 min
+- **Primary readout:** HPLC/MS peptide quantification (intact peptide fraction at each time point)
+- **Backup readout:** Residual antimicrobial activity by agar dilution (used only when HPLC is
+  unavailable; note in methods if backup readout is used)
+- **Pass criterion:** > 50% intact peptide remaining at 60 min (primary readout)
 
-> **Pre-registered decision:** Serum stability is optional in Wave 1 if capacity is limited.
-> It becomes mandatory in Wave 2 for any candidate with MIC ≤ 8 µg/mL (tier 1 hits).
+> **Pre-registered decision:** Serum stability is required for ALL 20 candidates as a triage
+> step BEFORE committing to the full MIC panel. This is the primary pre-registered plan — not an
+> amendment. Rationale: five of seven scaffold families have model-flagged stability limitations;
+> early triage saves assay cost. Serum stability data is required for therapeutic relevance claims
+> in any resulting publication.
+> 
+> Families with known model limitations (score may underestimate actual stability):
+> - SEED-003 (11 AA, <15 AA calibration edge)
+> - SEED-008 (13 AA, model calibrated for 18–30 AA)
+> - SEED-009 (Pro-X protease resistance not captured by model; expected to exceed model score)
 
 ---
 
@@ -164,7 +187,7 @@ A candidate is classified as a **provisional hit** if criterion 1 is met but cri
 |------|-----------|-----------------|-----------------|
 | P1: ≥1 candidate MIC ≤ 32 µg/mL | Hit count ≥ 1 | Proceed to Wave 2 (D-amino variants, MDR strains) | Re-evaluate pipeline; consider new seeds |
 | P2: ≥1 candidate TI > 10 + MIC ≤ 32 µg/mL | Hit count ≥ 1 | Proceed to serum stability gating | Return to design; re-weigh selectivity scoring |
-| P3: ≥1 candidate all-gates pass (P2 + t½ > 2h + novel scaffold) | Hit count ≥ 1 | Prepare confirmatory external lab replication | Document as negative result; publish pipeline learnings |
+| P3: ≥1 candidate all-gates pass (P2 + > 50% stability at 60 min + novel scaffold) | Hit count ≥ 1 | Prepare confirmatory external lab replication | Document as negative result; publish pipeline learnings |
 
 ---
 
