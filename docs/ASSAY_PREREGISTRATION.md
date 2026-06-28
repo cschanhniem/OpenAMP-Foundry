@@ -50,11 +50,22 @@ non-reporting of negative results.
 | Priority | Organism | Strain | Gram | Rationale |
 |----------|----------|--------|------|-----------|
 | 1 | *Escherichia coli* | ATCC 25922 | Negative | QC reference, EUCAST standard |
-| 2 | *Staphylococcus aureus* | ATCC 29213 | Positive | Clinical relevance, MRSA proxy |
-| 3 | *Pseudomonas aeruginosa* | ATCC 27853 | Negative | ESKAPE organism, hard target |
-| 4 | *Klebsiella pneumoniae* | ATCC 700603 | Negative | Clinical priority, MDR context |
+| 2 | *Staphylococcus aureus* | ATCC 29213 | Positive | Clinical relevance, methicillin-sensitive reference |
+| 3 | *Staphylococcus aureus* | USA300 LAC (MRSA) | Positive | MRSA clinical isolate; ESKAPE; raises publication impact ~2× |
+| 4 | *Pseudomonas aeruginosa* | ATCC 27853 | Negative | ESKAPE organism, hard target |
+| 5 | *Klebsiella pneumoniae* | ATCC 700603 | Negative | Clinical priority, MDR context |
 
-Priority order: if budget-constrained, run organisms 1 and 2 only (minimum viable screen).
+Priority order: if budget-constrained, run organisms 1, 2, and 3 (minimum viable screen + MDR
+impact). MRSA USA300 is priority 3 because SEED-007 (bombolitin-II), SEED-008 (Trp-rich
+puroindoline-a), and SEED-009 (proline-rich Bac2A) have mechanisms that operate well against
+Gram-positive; MRSA activity is the single highest-impact result achievable with this panel.
+Cost: +$200–400 per peptide at most contract labs.
+
+**Note for SEED-009 (proline-rich, ranks 1–2, 6–7):** Proline-rich cathelicidins show reduced
+activity in Mueller-Hinton Broth (protein-rich media interferes with intracellular uptake).
+Run SEED-009 variants in parallel in RPMI-1640 medium (or 2× diluted MHB) in addition to
+standard MHB. Report both; if MHB MIC is high but RPMI MIC is low, note the media effect
+explicitly in the results (Gagnon et al. 2016 Cell 167:471; Krizsan et al. 2014 Angew Chem).
 
 ### Controls
 
@@ -107,16 +118,25 @@ TI = HC50 (µg/mL) / MIC (µg/mL)
 
 ---
 
-## 5. Serum Stability Assay (Wave 1 optional, Wave 2 mandatory)
+## 5. Serum Stability Assay (Wave 1 recommended before full MIC panel)
 
-- **Matrix:** 25% human serum in PBS (37 °C)
-- **Peptide concentration:** 100 µg/mL
-- **Time points:** 0, 0.5, 1, 2, 4 h
-- **Readout:** Residual antimicrobial activity by agar dilution or analytical HPLC + MS
-- **Pass criterion:** > 50% activity remaining at 2 h
+- **Matrix:** 50% pooled human serum in PBS (37 °C) — consistent with Otvos & Cudic 2002
+  (Curr Pharm Design) and `docs/WET_LAB_HANDOFF.md` Section 4
+- **Peptide concentration:** 100 µM
+- **Time points:** 0, 30, 60, 120 min
+- **Readout:** Residual antimicrobial activity (agar dilution) or HPLC/MS peptide quantification
+- **Pass criterion:** > 50% intact peptide (or activity) remaining at 60 min
 
-> **Pre-registered decision:** Serum stability is optional in Wave 1 if capacity is limited.
-> It becomes mandatory in Wave 2 for any candidate with MIC ≤ 8 µg/mL (tier 1 hits).
+> **Pre-registered decision (updated):** Serum stability is recommended for ALL 20 candidates
+> as a triage step BEFORE the full MIC panel, not as an optional add-on. Rationale: five of
+> seven scaffold families have model-flagged stability limitations; early attrition here saves
+> synthesis/assay cost for low-stability candidates. Serum stability data is also required
+> for any publication reporting therapeutic relevance.
+> 
+> Families with known model limitations (score may underestimate actual stability):
+> - SEED-003 (11 AA, <15 AA calibration edge)
+> - SEED-008 (13 AA, model calibrated for 18–30 AA)
+> - SEED-009 (Pro-X protease resistance not captured by model; expected to exceed model score)
 
 ---
 
