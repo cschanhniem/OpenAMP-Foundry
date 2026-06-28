@@ -6,10 +6,10 @@ activity_likeness_score combines:
   - hydro_score   (weight 0.17): 1 - min(|hf - 0.45| / 0.45, 1.0)
   - aromatic_bonus (max 0.10): min(aromatic / 0.20, 1.0) * 0.10
   - amphipathicity (max 0.14): clamp01(mu_h / 0.8) * 0.14
-  - helix_bonus   (max 0.01): clamp01((helix_pa - 1.0) / 0.20) * 0.01
+  - helix_bonus   (max 0.03): clamp01((helix_pa - 1.0) / 0.20) * 0.03
   - cross_bonus   (max 0.02): clamp01(charge_density * mu_h / 0.15) * 0.02
 
-Total max = 0.24+0.27+0.17+0.10+0.14+0.01+0.02 = 0.95. Result is clamped to [0, 1] and rounded to 4 dp.
+Total max = 0.24+0.27+0.17+0.10+0.14+0.03+0.02 = 0.97. Result is clamped to [0, 1] and rounded to 4 dp.
 """
 from __future__ import annotations
 
@@ -253,6 +253,37 @@ class TestChargeAmphipathicityCrossTerm:
         dual = activity_likeness_score(_feat(charge_density=0.35, mu_h=0.65))
         only_amph = activity_likeness_score(_feat(charge_density=0.0, mu_h=0.65))
         assert dual > only_amph
+
+
+class TestHelixBonusWeight:
+    def test_helix_bonus_weight_0_03(self):
+        # helix_pa=1.20 → clamp01((1.20-1.0)/0.20)=1.0 → bonus=1.0*0.03=0.03
+        base = {
+            "length": 18, "charge_density": 0.30, "hydrophobic_fraction": 0.45,
+            "aromatic_fraction": 0.0, "hydrophobic_moment": 0.0,
+        }
+        s_no_helix = activity_likeness_score({**base, "helix_propensity": 1.0})
+        s_full_helix = activity_likeness_score({**base, "helix_propensity": 1.20})
+        assert abs((s_full_helix - s_no_helix) - 0.03) < 0.001
+
+    def test_helix_bonus_partial_at_pa_110(self):
+        # helix_pa=1.10 → clamp01(0.10/0.20)=0.5 → bonus=0.5*0.03=0.015
+        base = {
+            "length": 18, "charge_density": 0.30, "hydrophobic_fraction": 0.45,
+            "aromatic_fraction": 0.0, "hydrophobic_moment": 0.0,
+        }
+        s_no_helix = activity_likeness_score({**base, "helix_propensity": 1.0})
+        s_half_helix = activity_likeness_score({**base, "helix_propensity": 1.10})
+        assert abs((s_half_helix - s_no_helix) - 0.015) < 0.001
+
+    def test_score_ceiling_is_0_97(self):
+        # All components at maximum: ceiling = 0.24+0.27+0.17+0.10+0.14+0.03+0.02 = 0.97
+        all_max = {
+            "length": 18, "charge_density": 0.50, "hydrophobic_fraction": 0.45,
+            "aromatic_fraction": 0.20, "hydrophobic_moment": 0.80,
+            "helix_propensity": 1.20,
+        }
+        assert activity_likeness_score(all_max) == 0.97
 
 
 class TestKnownAMPs:

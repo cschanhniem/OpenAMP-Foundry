@@ -53,11 +53,15 @@ def activity_likeness_score(features: dict) -> float:
     # Normalizer 0.15 = typical_cd (0.30) × typical_mu_h (0.50).
     cross_bonus = clamp01(charge_density * mu_h / 0.15) * 0.02
 
-    # Helix propensity: Chou-Fasman Pα > 1.03 rewards helix-forming sequences
-    # Scale: indifferent (1.0) → 0.0; strong helix-former (1.20+) → 1.0
-    helix_bonus = clamp01((helix_pa - 1.0) / 0.20) * 0.01
+    # Helix propensity: Chou-Fasman Pα > 1.00 rewards helix-forming sequences.
+    # Scale: indifferent (1.0) → 0.0; strong helix-former (1.20+) → 1.0 (capped at 1.0).
+    # Weight increased 0.01 → 0.03: helical AMPs (LL-37, magainin, mastoparan) represent
+    # ~70% of membrane-active AMP families; this bonus better distinguishes them from
+    # structurally disordered or beta-sheet peptides at otherwise equal composition scores.
+    # Literature: Huang (2000) Biochim Biophys Acta; Tossi et al. (2000) Biopolymers.
+    helix_bonus = clamp01((helix_pa - 1.0) / 0.20) * 0.03
 
-    # ceiling = 0.24+0.27+0.17+0.10+0.14+0.01+0.02 = 0.95 < 1.0
+    # ceiling = 0.24+0.27+0.17+0.10+0.14+0.03+0.02 = 0.97 < 1.0
     score = (
         0.24 * length_score
         + 0.27 * charge_score

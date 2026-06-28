@@ -97,3 +97,49 @@ class TestSynthesisFeasibilityScore:
     def test_missing_cysteine_fraction_key_raises_key_error(self):
         with pytest.raises(KeyError):
             synthesis_feasibility_score({"length": 15, "longest_repeat_run": 1})
+
+
+class TestProlinePenalty:
+    def _pro_feat(self, pro: float = 0.0) -> dict:
+        return {"length": 15, "longest_repeat_run": 1, "cysteine_fraction": 0.0, "proline_fraction": pro}
+
+    def test_high_proline_penalised(self):
+        # proline_fraction > 0.15 → -0.10 penalty
+        score_low = synthesis_feasibility_score(self._pro_feat(pro=0.0))
+        score_high = synthesis_feasibility_score(self._pro_feat(pro=0.20))
+        assert score_high < score_low
+
+    def test_proline_above_threshold_penalty_value(self):
+        # 15-mer, no other defects, pro=0.20 (>0.15) → 1.0 - 0.10 = 0.90
+        score = synthesis_feasibility_score(self._pro_feat(pro=0.20))
+        assert abs(score - 0.90) < 0.001
+
+    def test_proline_at_threshold_no_penalty(self):
+        # condition is > 0.15, so exactly 0.15 must not be penalised
+        score = synthesis_feasibility_score(self._pro_feat(pro=0.15))
+        assert score == 1.0
+
+    def test_proline_just_above_threshold_penalised(self):
+        # 0.16 > 0.15 → penalty applied
+        score = synthesis_feasibility_score(self._pro_feat(pro=0.16))
+        assert abs(score - 0.90) < 0.001
+
+    def test_backward_compat_missing_proline_key(self):
+        # Features without proline_fraction (older callers) should default to 0.0 → no penalty
+        feat = {"length": 15, "longest_repeat_run": 1, "cysteine_fraction": 0.0}
+        assert synthesis_feasibility_score(feat) == 1.0
+
+    def test_proline_penalty_stacks_with_other_penalties(self):
+        # repeat_run=5 (-0.10) + cys=0.25 (-0.15) + pro=0.20 (-0.10) → 1.0 - 0.35 = 0.65
+        feat = {"length": 15, "longest_repeat_run": 5, "cysteine_fraction": 0.25, "proline_fraction": 0.20}
+        score = synthesis_feasibility_score(feat)
+        assert abs(score - 0.65) < 0.001
+
+    def test_proline_stacks_with_aggregation_propensity(self):
+        # agg=0.4: min(0.4*0.25, 0.20)=0.10 penalty; pro=0.20: 0.10 penalty → 1.0-0.20=0.80
+        feat = {
+            "length": 15, "longest_repeat_run": 1, "cysteine_fraction": 0.0,
+            "aggregation_propensity": 0.4, "proline_fraction": 0.20,
+        }
+        score = synthesis_feasibility_score(feat)
+        assert abs(score - 0.80) < 0.001
