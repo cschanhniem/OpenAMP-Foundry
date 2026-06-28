@@ -188,27 +188,33 @@ def helix_wheel_faces(
     sequence: str,
     angle_deg: float = 100.0,
 ) -> dict[str, float]:
-    """Rotation-invariant amphipathic face analysis on an α-helix wheel.
+    """Moment-oriented amphipathic face analysis on an α-helix wheel.
 
     Uses the hydrophobic moment vector (Eisenberg 1984) to define the hydrophobic face
-    direction for the specific peptide, so the analysis is rotation-invariant (independent
-    of which residue index is first). This is important because the "hydrophobic face" of
-    an AMP falls at different wheel orientations for different sequences.
+    direction for the specific peptide's N-terminal convention. This is NOT independent
+    of circular permutation: because the angle model assigns θ = i × angle_deg to each
+    position index, shifting the N-terminus changes the moment vector direction and can
+    change face assignments. Results are meaningful for designed peptides with a fixed
+    N-terminal residue (which is the case for all synthesis candidates in this pipeline).
 
     Algorithm:
       1. Compute the hydrophobic moment vector (mu_x, mu_y) from Eisenberg hydrophobicities
-      2. The direction of this vector is the hydrophobic face axis
-      3. Each residue i is on the "hydrophobic face" if its projection onto the moment vector
-         is positive: dot = cos(i*θ) * mu_x + sin(i*θ) * mu_y > 0
+      2. The direction of this vector defines the hydrophobic face axis for this sequence
+      3. Each residue i is assigned to the "hydrophobic face" if its projection onto the
+         moment vector is positive: dot = cos(i*θ) × mu_x + sin(i*θ) × mu_y > 0
+         (the / mu_mag division doesn't affect sign classification — it normalises dot to
+         the cosine similarity range [-1, 1] for interpretability)
       4. Compute mean Eisenberg hydrophobicity for each face, cationic fraction, and contrast
 
     Returns a dict with:
       - hydrophobic_face_mean_h: mean Eisenberg H of residues on the hydrophobic face
       - hydrophilic_face_mean_h: mean Eisenberg H of residues on the hydrophilic face
       - face_contrast: hydrophobic_face_mean_h − hydrophilic_face_mean_h (positive for AMPs)
-      - h_face_cationic_fraction: fraction of K/R/H on the hydrophobic face (bad for AMP design)
-      - ph_face_cationic_fraction: fraction of K/R/H on the hydrophilic face (good)
-      - amphipathic_score: normalised [0, 1] face contrast; > 0.33 is AMP-like
+      - h_face_cationic_fraction: fraction of K/R/H on the hydrophobic face (undesirable)
+      - ph_face_cationic_fraction: fraction of K/R/H on the hydrophilic face (ideal for AMPs)
+      - amphipathic_score: normalised [0, 1] over contrast range [0, 2.0]; > 0.4 is AMP-like
+        (Histidine is counted in cationic fractions at its standard K/R/H convention —
+        note this overestimates H's charge contribution vs the pH-7.4 model)
 
     For sequences < 4 AA, amphipathic character is ill-defined; returns zeros.
 
@@ -270,9 +276,11 @@ def helix_wheel_faces(
     h_face_cat = h_face_pos / len(h_face_vals) if h_face_vals else 0.0
     ph_face_cat = ph_face_pos / len(ph_face_vals) if ph_face_vals else 0.0
 
-    # Normalise contrast: ideal AMP (e.g. magainin, KWKLFKK-class) has contrast ~0.7–1.2.
-    # Scale: contrast/1.2 → [0, 1]; contrast < 0 → 0.
-    amphipathic_score = round(max(0.0, min(1.0, contrast / 1.2)), 4)
+    # Normalise contrast over [0, 2.0]: empirical AMP range is ~0.7 (cecropin-A) to ~2.0
+    # (short cationic helices like SEED-003). Raising the reference from 1.2 to 2.0 prevents
+    # the majority of high-quality reference AMPs (magainin, LL-37) from saturating at 1.0.
+    # Threshold interpretation: < 0.2 poor, 0.2-0.4 marginal, > 0.4 AMP-like, > 0.8 excellent.
+    amphipathic_score = round(max(0.0, min(1.0, contrast / 2.0)), 4)
 
     return {
         "hydrophobic_face_mean_h": round(hf_mean, 4),
@@ -436,8 +444,8 @@ def compute_features(sequence: str) -> dict[str, float | int | dict[str, int]]:
         "interior_trypsin_sites": n_trypsin,
         "interior_chymotrypsin_sites": n_chymotrypsin,
         "interior_elastase_sites": n_elastase,
-        "helix_wheel_hydrophobic_face_h": hw_faces["hydrophobic_face_mean_h"],
-        "helix_wheel_hydrophilic_face_h": hw_faces["hydrophilic_face_mean_h"],
+        "helix_wheel_hydrophobic_face_mean_h": hw_faces["hydrophobic_face_mean_h"],
+        "helix_wheel_hydrophilic_face_mean_h": hw_faces["hydrophilic_face_mean_h"],
         "helix_wheel_face_contrast": hw_faces["face_contrast"],
         "helix_wheel_h_face_cationic_fraction": hw_faces["h_face_cationic_fraction"],
         "helix_wheel_ph_face_cationic_fraction": hw_faces["ph_face_cationic_fraction"],

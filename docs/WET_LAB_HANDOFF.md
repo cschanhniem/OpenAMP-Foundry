@@ -189,14 +189,18 @@ hydrophilic faces and reports face contrast, cationic segregation, and amphipath
 
 **Pilot panel seed results (seeds analyzed, not all 20 variants):**
 
-| Seed | Face Contrast | Amph Score | Cationic on H-face | Mechanism | Assessment |
+| Seed | Face Contrast | Amph Score (÷2.0) | Cationic on H-face | Mechanism | Assessment |
 |------|:---:|:---:|:---:|---|---|
 | SEED-003 (cationic helix, 11 AA) | 2.058 | 1.000 | 0% | Helical insertion | ✅ Ideal amphipathic architecture |
-| SEED-005 (cecropin-magainin, 14 AA) | 1.942 | 1.000 | 0% | Helical insertion | ✅ Excellent amphipathic segregation |
-| SEED-006 (mastoparan-X, 14 AA) | 0.960 | 0.800 | 0% | Helical insertion | ✅ Good amphipathic architecture |
-| SEED-007 (bombolitin II, 18 AA) | 0.978 | 0.815 | 0% | Helical insertion | ✅ Good amphipathic architecture |
+| SEED-005 (cecropin-magainin, 14 AA) | 1.942 | 0.971 | 0% | Helical insertion | ✅ Excellent amphipathic segregation |
+| SEED-006 (mastoparan-X, 14 AA) | 0.960 | 0.480 | 0% | Helical insertion | ✅ Good amphipathic architecture |
+| SEED-007 (bombolitin II, 18 AA) | 0.978 | 0.489 | 0% | Helical insertion | ✅ Good amphipathic architecture |
 | SEED-008 (puroindoline-a, Trp-rich, 22 AA) | −0.139 | 0.000 | 8% | **Aromatic anchoring** | ⚠️ Not a classical helix-wheel AMP — expected |
-| SEED-009 (Bac2A proline-rich, 9 AA) | 0.036 | 0.030 | 50% | **Intracellular (ribosome)** | ⚠️ Not a classical helix-wheel AMP — expected |
+| SEED-009 (Bac2A proline-rich, 9 AA) | 0.036 | 0.018 | 50% | **Intracellular (ribosome)** | ⚠️ Not a classical helix-wheel AMP — expected |
+
+> **Note:** Amphipathic scores depend on the N-terminal convention (position-0 residue). All pipeline
+> candidates are presented N→C as synthesized. Do not compare scores across circularly permuted
+> representations. Magainin-2 reference: contrast=1.228, score=0.614 (with 2.0 normalization).
 
 **Interpretation — SEED-008 and SEED-009 are non-helical AMPs (correct by design):**
 
