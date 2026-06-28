@@ -57,14 +57,28 @@ If known AMPs score *far below*, the panel may be over-scoring on non-AMP featur
 
 ## Blind spots (documented)
 
-- **Melittin** — hemolytic benchmark; high safety penalty (μH > 0.8) is expected and correct.
+- **Melittin** — Safety=1.0 and μH=0.353 in the table above. The safety model assigns Melittin
+  the maximum safety score despite its well-documented hemolytic activity (HC₅₀ ≈ 1–5 µg/mL
+  in vitro). This is a confirmed model blind spot: the scorer does not detect hemolysis in
+  cationic amphipathic sequences that lyse membranes via curvature-mediated mechanisms rather
+  than charge alone. **Implication**: Safety=1.0 for panel candidates (including all four
+  SEED-008 Trp-rich variants) cannot be used as evidence of non-hemolytic activity. Hemolysis
+  must be assayed experimentally for every candidate regardless of safety score.
+- **LL-37 and Cecropin-A** — both score below the panel floor (0.714 and 0.713 vs panel
+  minimum 0.796). These are clinically relevant, well-characterised broad-spectrum AMPs. Their
+  low scores indicate the pipeline's features are optimised for helical amphipathic AMPs of the
+  magainin/mastoparan class. Candidates whose mechanism resembles LL-37 (helix-linker-helix) or
+  Cecropin-A (long N-terminal amphipathic helix) are likely under-scored by this pipeline.
 - **Defensin-HNP1** — β-sheet disulfide peptide; our scorer targets α-helical AMPs; lower score expected.
 - **Polymyxin B** — cyclic lipopeptide with non-standard AA; not scorable by this pipeline.
-- **Temporin-A** (`FLPLIGRVLSGIL`) — similar scaffold to SEED-004; should score comparably.
+- **Temporin-A** (`FLPLIGRVLSGIL`) — similar to frog-skin short-helix scaffolds excluded from
+  the current panel (formerly SEED-004). Score 0.803 is within panel range, consistent with
+  SEED-004-class sequences.
 
 ## Disclaimer
 
 This calibration uses the same scoring model as candidate nomination. It is not
 independent validation — it confirms internal consistency, not external predictive power.
 The AUROC benchmark (AUROC=0.8420 on 43 literature AMPs vs 44 background peptides) is
-the appropriate independent validation.
+the appropriate measure of pipeline discrimination performance; it is a retrospective
+benchmark, not external prospective validation.

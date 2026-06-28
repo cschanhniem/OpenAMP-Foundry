@@ -13,7 +13,7 @@
 |---------|:-----------:|-----------|
 | ≥1 candidate with MIC ≤ 16 µg/mL vs E. coli | **70–85%** | 7 independent scaffold families; 40%+ per-family base rate |
 | ≥1 candidate with MIC ≤ 4 µg/mL (potent) | **40–60%** | Potency threshold ~3× more stringent than screen threshold |
-| ≥1 hit passes hemolysis (HC₅₀ > 100 µg/mL) | **45–65%** | Safety scores 0.85–1.0; SEED-008 Trp-rich at risk |
+| ≥1 hit passes hemolysis (HC₅₀ > 100 µg/mL) | **45–65%** | Safety model blind spot confirmed (Melittin scores 1.0); estimate from structural class literature; SEED-008 Trp-rich at risk |
 | Publishable novel result (≥2 organisms, novel family) | **30–50%** | Contingent on ≥1 potent hit from a non-seed family |
 | Breaking news (novel scaffold, MDR, in vivo) | **5–15%** | Requires unexpected mechanism + Phase II investment |
 | 100% guaranteed discovery | **0%** | Computationally impossible; see Section 6 |
@@ -42,8 +42,11 @@ SEED-001_VAR_064 serves as the **positive control** (nearest known sequence: mag
 novelty 0.133 means 86.7% identity to seed). Its activity is expected; its main value is
 confirming that the assay platform and controls work correctly.
 
-SEED-003, SEED-005 have the highest activity scores (0.816–0.842) but the lowest serum stability
-(0.377, 0.449) — expected for short or helical sequences without protective modifications.
+SEED-003 and SEED-005 have the highest activity scores (0.816–0.842). SEED-003 (0.377) and
+SEED-008 (0.429–0.473) have the lowest model-estimated serum stability scores, though the SEED-008
+model values are expected to underestimate reality for 13 AA sequences (model calibrated for
+18–30 AA). SEED-005 (0.449) is also flagged. Serum stability screen is mandatory before committing
+to full MIC panels for these three families.
 
 SEED-008 has the **highest ensemble scores** in the panel (0.832–0.857) and good serum stability
 model scores (0.429–0.473; note: model calibrated for 18–30 AA; SEED-008 is 13 AA, may
@@ -179,9 +182,10 @@ Per-family P(≥1 active hit, MIC ≤ 16 µg/mL) is estimated using:
 
 - Ensemble: 0.796–0.808 | Novelty: 0.647–0.692 | Serum stability: **0.572** (highest in panel)
 - Activity: 0.624–0.640 | Safety: 1.000 | Disagreement: 0.042–0.059 (lowest — models strongly agree)
-- **Mechanism**: Proline-rich cathelicidins act by entering bacterial cells without lysis and
-  inhibiting the 70S ribosome (DnaK chaperone pathway). Different mechanism from membrane-
-  disruptive AMPs. Pro-X bonds resist trypsin/chymotrypsin/elastase cleavage (Pro nitrogen
+- **Mechanism**: Proline-rich cathelicidins act by entering bacterial cells without lysis via
+  two distinct intracellular targets: (1) 70S ribosome exit tunnel binding, inhibiting
+  translation (Gagnon et al. 2016 Cell 167:471); (2) DnaK (Hsp70) chaperone binding, disrupting
+  protein folding. Different mechanism from membrane-disruptive AMPs. Pro-X bonds resist trypsin/chymotrypsin/elastase cleavage (Pro nitrogen
   lacks free H for serine protease oxyanion hole; cis-trans isomerisation barrier; Vanhoof et al.
   1995 FASEB J 9:736–744; Otvos & Cudic 2002).
 - **Literature base rate**: Bac2A-type Pro-rich AMPs: ~35–50% active in MIC screens; however,
@@ -215,7 +219,7 @@ P(panel zero hits) = P(SEED-001 inactive) × P(SEED-003 inactive) × P(SEED-005 
 Pessimistic:
   = (1-0.70) × (1-0.50) × (1-0.55) × (1-0.70) × (1-0.72) × (1-0.72) × (1-0.60)
   = 0.30 × 0.50 × 0.45 × 0.30 × 0.28 × 0.28 × 0.40
-  = 0.000127  →  P(≥1 active) ≈ 99.99%
+  = 0.000635  →  P(≥1 active) ≈ 99.94%
 
 Moderate (excluding SEED-001 as positive control, only novel families):
   6 novel families, per-family P(active) = 40–60%
@@ -234,8 +238,8 @@ Excluding SEED-001: **85–95%** that at least one novel family has activity.
 |---|:---:|---|
 | P(≥1 active, MIC ≤ 16 µg/mL) | **92–97%** | Any family, including positive control |
 | P(≥1 active, MIC ≤ 4 µg/mL) | **65–80%** | Potent activity threshold |
-| P(passes hemolysis, given active) | **65–80%** | Safety scores mostly 0.85–1.0 |
-| P(active AND passes hemolysis) | **55–70%** | Joint probability |
+| P(passes hemolysis, given active) | **55–70%** | Safety scores not predictive (Melittin blind spot); estimate from structural class literature |
+| P(active AND passes hemolysis) | **45–60%** | Joint probability; hemolysis must be assayed |
 | P(serum stable AND active, MIC ≤ 16) | **35–55%** | SEED-009 best positioned |
 | P(publishable novel result) | **30–50%** | ≥2 organisms, novel family, full characterisation |
 | P(breaking news) | **5–15%** | Novel scaffold class, MDR, in vivo data |
