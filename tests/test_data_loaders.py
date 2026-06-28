@@ -141,3 +141,31 @@ class TestLoadCandidatesCsv:
         assert len(candidates) > 0
         for c in candidates:
             assert len(c.sequence) > 0
+
+    def test_missing_sequence_column_raises_value_error(self):
+        # A CSV with no 'sequence' column should give a helpful error, not a bare KeyError.
+        # This guards against users passing in a wrongly-formatted file and getting
+        # a cryptic crash deep in the pipeline.
+        rows = [{"id": "C1", "seq": "KWKLF", "source": "test"}]  # 'seq' not 'sequence'
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "bad.csv"
+            with path.open("w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=["id", "seq", "source"])
+                writer.writeheader()
+                writer.writerows(rows)
+            import pytest as _pytest
+            with _pytest.raises(ValueError, match="sequence"):
+                load_candidates_csv(path)
+
+    def test_missing_sequence_column_error_names_found_columns(self):
+        # The error message should list what columns were found to help the user.
+        rows = [{"peptide": "KWKLF"}]
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "bad.csv"
+            with path.open("w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=["peptide"])
+                writer.writeheader()
+                writer.writerows(rows)
+            import pytest as _pytest
+            with _pytest.raises(ValueError, match="peptide"):
+                load_candidates_csv(path)

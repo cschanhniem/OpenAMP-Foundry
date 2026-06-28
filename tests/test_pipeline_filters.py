@@ -164,6 +164,58 @@ def test_eligibility_novelty_at_exact_minimum_passes(tmp_path):
     assert rows[0]["selected"] is True
 
 
+def test_disagreement_gate_blocks_high_uncertainty_candidate(tmp_path):
+    """Candidates where activity and Boman index strongly disagree should be blocked.
+
+    max_disagreement in config caps the |activity - boman_activity| gap.
+    A perfectly safe/novel candidate is still rejected when scorer disagreement is too high.
+    Uses a sequence that naturally has high disagreement (high physchem activity but low
+    Boman potential) by setting max_disagreement=0.0 so any disagreement blocks selection.
+    """
+    # max_disagreement=0.0 means ONLY candidates with zero scorer disagreement pass.
+    # In practice disagreement>0 for any real sequence, so nothing should be selected.
+    strict_config = tmp_path / "strict_disagree.yaml"
+    strict_config.write_text(
+        "pipeline_version: '0.1.0'\n"
+        "filters:\n  min_length: 8\n  max_length: 35\n"
+        "  allowed_amino_acids: 'ACDEFGHIKLMNPQRSTVWY'\n"
+        "weights:\n  activity: 0.40\n  safety: 0.25\n  synthesis: 0.15\n  novelty: 0.20\n"
+        "selection:\n  top_n: 100\n  min_novelty: 0.0\n  max_safety_risk: 1.0\n"
+        "  max_disagreement: 0.0\n"
+    )
+    csv_path = tmp_path / "candidates.csv"
+    refs_path = tmp_path / "refs.csv"
+    csv_path.write_text("id,sequence,source\nTEST-001,KWKLFKKIGAVLKVL,test\n")
+    refs_path.write_text("id,sequence,source\n")  # empty refs → novelty=1.0 (passes novelty gate)
+    out = tmp_path / "ranked.jsonl"
+    run_ranking_pipeline(
+        candidate_path=csv_path,
+        reference_path=refs_path,
+        out_path=out,
+        config_path=strict_config,
+    )
+    rows = [json.loads(line) for line in out.read_text().splitlines() if line.strip()]
+    assert len(rows) == 1
+    # disagreement > 0 for any real sequence → blocked by max_disagreement=0.0
+    assert rows[0]["selected"] is False
+    assert rows[0]["scores"]["disagreement"] > 0.0
+
+
+def test_disagreement_gate_config_values_documented(tmp_path):
+    """pipeline.yaml max_disagreement=0.40, phase3.yaml max_disagreement=0.30 (stricter)."""
+    repo_root = Path(__file__).parents[1]
+    pipeline_cfg = load_config(repo_root / "configs" / "pipeline.yaml")
+    phase3_cfg = load_config(repo_root / "configs" / "phase3.yaml")
+
+    pipeline_max = float(pipeline_cfg["selection"]["max_disagreement"])
+    phase3_max = float(phase3_cfg["selection"]["max_disagreement"])
+
+    # phase3 is stricter (lower tolerance for disagreement)
+    assert phase3_max < pipeline_max
+    assert abs(pipeline_max - 0.40) < 0.01
+    assert abs(phase3_max - 0.30) < 0.01
+
+
 def test_phase3_config_has_stricter_safety_filter_than_pipeline():
     """phase3.yaml max_safety_risk=0.40 (safety>=0.60) vs pipeline.yaml 0.70 (safety>=0.30).
 

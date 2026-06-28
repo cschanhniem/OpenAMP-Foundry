@@ -25,6 +25,13 @@ def load_candidates_csv(path: str | Path) -> list[PeptideCandidate]:
         reader = csv.DictReader(f)
         for i, row in enumerate(reader, start=1):
             cid = row.get("id") or f"candidate-{i:06d}"
+            if "sequence" not in row:
+                cols = list(row.keys())
+                raise ValueError(
+                    f"CSV row {i} is missing required 'sequence' column. "
+                    f"Found columns: {cols!r}. "
+                    "Check that the CSV header spells it exactly as 'sequence'."
+                )
             seq = normalize_sequence(row["sequence"])
             source = row.get("source", "csv")
             rows.append(PeptideCandidate(candidate_id=cid, sequence=seq, source=source))
