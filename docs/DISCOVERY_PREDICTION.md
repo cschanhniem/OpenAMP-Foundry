@@ -576,6 +576,86 @@ Executing all four actions on the best Wave 1 hits would push the combined proba
 
 ---
 
+## External Calibration — Honest Second Opinion
+
+An independent expert review (2026-06-28) identified the following risks that are **not
+captured in the internal probability model above**:
+
+### 1. Candidate Correlation (Most Important Risk)
+
+The internal model treats each of the 20 pilot candidates as approximately independent draws.
+**They are not independent.** All candidates are near-seed variants from 8 template sequences.
+If a seed family fails (e.g., wrong mechanism, assay incompatibility, mammalian toxicity at
+the seed level), most variants from that seed fail together. The effective number of independent
+experiments is closer to the number of distinct scaffold families (8) than the number of
+candidates (20).
+
+**Corrected internal estimates accounting for correlation:**
+
+| Outcome | Internal model | Correlation-corrected estimate |
+|---------|---------------|-------------------------------|
+| ≥1 candidate with MIC ≤ 32 μg/mL | ~61–71% | ~40–60% |
+| ≥1 candidate with MIC + acceptable selectivity (TI > 10) | ~29–49% | ~15–30% |
+| Publishable result (novel AMP + external replication) | not modeled | ~5–15% |
+| Major breakthrough (new AMP family, widely replicated) | not modeled | ~1–5% |
+
+These corrected estimates are more conservative. The difference arises because:
+- The internal model assumes independent 66% hit rates across 20 candidates
+- The reality is ~8 semi-independent scaffold experiments with ~40–60% per-scaffold hit rate
+
+### 2. Benchmark Limitations
+
+The AUROC 0.8164 is measured on a small 44+44 demo dataset, not validated against the full
+APD3 (> 3,000 AMPs), DRAMP v3.0 (> 19,000 entries), or ESCAPE benchmark (> 80,000 peptides
+from 27 repositories). This may overestimate discriminative power.
+
+Required to strengthen confidence:
+- Cluster-split evaluation on APD3-scale data (≥ 500 AMPs vs composition-matched background)
+- AUPRC alongside AUROC (better for class-imbalanced datasets)
+- External predictor comparison (AMPScanner, AntiCP2, AMPlify, Macrel)
+
+### 3. Novelty Verification
+
+The 45-sequence reference set used for novelty scoring does not represent the full landscape
+of known AMPs. Real-world novelty check required against:
+- APD3 (Antimicrobial Peptide Database v3): > 3,000 natural AMPs
+- DRAMP v3.0 (Data Repository of Antimicrobial Peptides): > 19,000 entries
+- dbAMP: > 4,000 validated AMPs
+- UniProt antimicrobial sequences
+
+Until this is done, novelty scores of 0.4–0.7 may be overestimates.
+
+### 4. Competitive Landscape
+
+The field is advancing rapidly. Relevant recent work:
+- **AMPGAN v3 (arXiv 2606.17127, June 2026):** Agentic AMP generation with actual in-vitro
+  validation — 5 candidates tested, 2 active against Gram-positive strains, best MIC 8 μg/mL.
+- **ESCAPE benchmark (arXiv 2511.04814, 2025):** Standardized multi-label AMP classification
+  benchmark integrating > 80,000 peptides from 27 repositories; sets a new bar for what
+  constitutes a rigorous AMP discriminative benchmark.
+
+The current pipeline is **differentiated** by its verification-first philosophy, reproducibility,
+evidence certificates, and pre-registration — not (yet) by benchmark scale or wet-lab results.
+
+### 5. Path to Meaningful Probability Uplift
+
+Based on the external review, the following would meaningfully improve the odds:
+
+| Action | Expected impact | When |
+|--------|----------------|------|
+| Run validate-scoring against APD3-scale dataset | +confidence in AUROC | Before wet-lab order |
+| Add ≥2 external predictor adapters (AMPScanner-like) | +scientific credibility | Before wet-lab order |
+| True novelty check (APD3, DRAMP, dbAMP) | ±probability (may revise up or down) | Before wet-lab order |
+| Wave 1 wet-lab data | +20–35 pp if >0 hits confirmed | After wet-lab |
+| Wave 2 D-amino variants on best hits | +8–12 pp | After Wave 1 |
+
+**Honest pre-synthesis summary:** This pipeline is a **well-engineered dry-lab verification
+scaffold** with strong evidence hygiene, but with wet-lab hit probability in the **15–30%**
+range (not 29–49%) when accounting for candidate correlation and benchmark limitations. The
+path to 50%+ requires wet-lab data integration.
+
+---
+
 ## Confidence Calibration
 
 This assessment is based on:
