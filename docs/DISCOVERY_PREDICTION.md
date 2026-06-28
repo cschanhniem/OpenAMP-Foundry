@@ -3,7 +3,7 @@
 **Pipeline:** OpenAMP-Foundry v0.1.0  
 **Date:** 2026-06-28 (updated 2026-06-28)  
 **Status:** Pre-synthesis scientific assessment — for expert review before ordering  
-**Completed improvements:** Serum stability scoring (PR #31/#32), Family diversity cap (PR #31), Reference set expansion 44→73 sequences (PR #33)
+**Completed improvements:** Serum stability scoring (PR #31/#32), Family diversity cap (PR #31), Reference set expansion 44→73 sequences (PR #33), Net charge at pH 7.4 via Henderson-Hasselbalch (PR #34)
 
 ---
 
@@ -275,18 +275,27 @@ WLBU2, BP100, omiganan, and other well-characterized diverse families.
 Note: does not change novelty scores for current nominees (seeds are still in references);
 improves discrimination for future runs with non-seed-derived candidates.
 
-**4. Net charge at physiological pH (Recommended next)**  
-Replace `net_charge_proxy` (counts His as fully cationic) with `net_charge_at_ph74()` using
-Henderson-Hasselbalch equation (His ≈ +0.11 at pH 7.4, pKa=6.5 in peptides).  
-Affects: 24/88 nominees contain His; charge density overestimated by ~0.08/His residue.  
-Expected impact: re-ranks a few His-containing candidates; ~+2pp on Stage 1 accuracy.
+**4. Net charge at physiological pH ✅ DONE (PR #34)**  
+Replaced `net_charge_proxy` (counts His as +1.0) with `net_charge_at_ph74()` using
+Henderson-Hasselbalch (His ≈ +0.114 at pH 7.4, pKa=6.5 in peptides). New fields
+`net_charge_ph74` and `charge_density_ph74` in all feature dicts; `activity_likeness_score()`
+now uses physiologically accurate charge density.  
+Impact: charge density corrected for 24/88 nominees with His; proxy overestimated by ~0.89
+per His residue, affecting scoring accuracy not final panel composition.
 
-**4. D-amino acid variants (Wave 2 synthesis)**  
+**5. Chou-Fasman helix propensity (Recommended next)**  
+Add `helix_propensity` feature using Chou-Fasman (1974) residue parameters. Helical AMPs
+(cecropin, magainin, LL-37 family — all 5 seeds in pilot panel) rely on amphipathic helix
+formation for membrane disruption. Mean helix propensity above 1.05 distinguishes good
+helical AMPs from unstructured sequences more accurately than hydrophobic_fraction alone.  
+Affects: all 88 nominees; expected to improve AUROC by ~0.01–0.02.
+
+**6. D-amino acid variants (Wave 2 synthesis)**  
 Replace all L-amino acids with D-amino acids in top 2 active Wave 1 hits.  
 Expected: serum t½ increases from <30 min to >8 h (literature: Wade et al. 1990).  
 Impact: crosses the serum stability gate that currently blocks ~80% of candidates.
 
-**5. MDR strain panel (Assay expansion)**  
+**7. MDR strain panel (Assay expansion)**  
 Add MRSA USA300, E. coli ST131, K. pneumoniae ATCC BAA-1705 (KPC) to MIC assay.  
 Impact: any hit against MDR strains is immediately publishable as clinically significant.
 
