@@ -6,10 +6,10 @@ activity_likeness_score combines:
   - hydro_score   (weight 0.17): 1 - min(|hf - 0.45| / 0.45, 1.0)
   - aromatic_bonus (max 0.10): min(aromatic / 0.20, 1.0) * 0.10
   - amphipathicity (max 0.14): clamp01(mu_h / 0.8) * 0.14
-  - helix_bonus   (max 0.01): clamp01((helix_pa - 1.0) / 0.20) * 0.01
+  - helix_bonus   (max 0.03): clamp01((helix_pa - 1.0) / 0.20) * 0.03
   - cross_bonus   (max 0.02): clamp01(charge_density * mu_h / 0.15) * 0.02
 
-Total max = 0.24+0.27+0.17+0.10+0.14+0.01+0.02 = 0.95. Result is clamped to [0, 1] and rounded to 4 dp.
+Total max = 0.24+0.27+0.17+0.10+0.14+0.03+0.02 = 0.97. Result is clamped to [0, 1] and rounded to 4 dp.
 """
 from __future__ import annotations
 

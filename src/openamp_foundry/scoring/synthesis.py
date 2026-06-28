@@ -14,6 +14,10 @@ def synthesis_feasibility_score(features: dict, valid_sequence: bool = True) -> 
     - Aggregation propensity > 0: interior hydrophobic runs (VILMFW ≥ 4) and high
       beta-branched density (Val/Ile/Thr) cause on-resin aggregation and poor solubility.
       References: Quittot et al. (2017) Protein Sci; Wurth et al. (2006) J Mol Biol.
+    - Proline fraction > 15%: N-methylated backbone requires extended activation; XP junctions
+      prone to diketopiperazine (DKP) formation during Fmoc SPPS; overall coupling efficiency
+      reduced. References: Barlos et al. (1989) Int J Peptide Protein Res; Quibell et al.
+      (1994) J Am Chem Soc; Fischer (2003) Curr Opin Drug Discov Devel.
     """
     if not valid_sequence:
         return 0.0
@@ -21,6 +25,7 @@ def synthesis_feasibility_score(features: dict, valid_sequence: bool = True) -> 
     repeat_run = features["longest_repeat_run"]
     cys = features["cysteine_fraction"]
     agg = features.get("aggregation_propensity", 0.0)
+    pro = features.get("proline_fraction", 0.0)
 
     score = 1.0
     if length > 30:
@@ -33,4 +38,6 @@ def synthesis_feasibility_score(features: dict, valid_sequence: bool = True) -> 
         score -= 0.15
     if agg > 0.0:
         score -= min(agg * 0.25, 0.20)
+    if pro > 0.15:
+        score -= 0.10
     return round(clamp01(score), 4)
