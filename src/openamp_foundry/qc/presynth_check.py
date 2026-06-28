@@ -250,8 +250,8 @@ def check_sequence(candidate_id: str, seq: str, mu_h: float = 0.0) -> SynthQC:
         qc.flags.append(f"LOW_CHARGE (pH7.4={qc.charge_ph74:.1f}): reduced membrane affinity")
     if qc.c_amidation_recommended:
         qc.flags.append(
-            f"C_AMIDATION_RECOMMENDED: specify 'CONH₂ C-terminus' at ordering "
-            f"(charge boost ≈+0.7, improved serum stability)"
+            "C_AMIDATION_RECOMMENDED: specify 'CONH₂ C-terminus' at ordering "
+            "(charge boost ≈+0.7, improved serum stability)"
         )
     if qc.length > 30:
         qc.flags.append(f"LONG_PEPTIDE ({qc.length}aa): SPPS yield risk; consider native chemical ligation")
