@@ -83,9 +83,11 @@ class TestBomanIndex:
         assert boman_index("P") == pytest.approx(0.0, abs=1e-4)
         assert boman_index("PPPPPPPP") == pytest.approx(0.0, abs=1e-4)
 
-    def test_proline_same_as_glycine_in_boman(self):
-        # Both G and P have Boman potential 0.0 (conformational residues, no charge)
-        assert boman_index("GGGG") == boman_index("PPPP")
+    def test_proline_boman_index_is_zero_like_glycine(self):
+        # Both G and P have Boman potential 0.0 (conformational residues, no side-chain charge)
+        # Assert against the ground truth (0.0) rather than comparing two computed values.
+        assert boman_index("PPPP") == pytest.approx(0.0, abs=1e-4)
+        assert boman_index("GGGG") == pytest.approx(0.0, abs=1e-4)
 
 
 class TestBomanActivityScore:

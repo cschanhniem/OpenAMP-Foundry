@@ -7,7 +7,10 @@ from pathlib import Path
 import pytest
 
 from openamp_foundry.config import load_config
+from openamp_foundry.features.physchem import compute_features
 from openamp_foundry.pipeline import _passes_length_filter, run_ranking_pipeline, score_candidates
+from openamp_foundry.scoring.activity import activity_likeness_score
+from openamp_foundry.scoring.boman import boman_activity_score, model_disagreement
 
 
 def test_length_filter_within_range():
@@ -265,10 +268,6 @@ def test_zwitteramp_trap_scorer_divergence():
     This test pins the end-to-end scorer divergence computation, ensuring that the two
     independent scoring systems and the disagreement gate together catch this false positive.
     """
-    from openamp_foundry.features.physchem import compute_features
-    from openamp_foundry.scoring.activity import activity_likeness_score
-    from openamp_foundry.scoring.boman import boman_activity_score, model_disagreement
-
     seq = "KDKDKDKD"
     features = compute_features(seq)
 
@@ -280,10 +279,8 @@ def test_zwitteramp_trap_scorer_divergence():
     assert bom > 0.85, f"boman_activity expected > 0.85 for KDKDKDKD, got {bom}"
     # Activity scorer correctly penalises: net charge = 0, no hydrophobicity
     assert act < 0.25, f"activity_likeness expected < 0.25 for KDKDKDKD (no net charge), got {act}"
-    # Disagreement exceeds BOTH gate thresholds (pipeline=0.40, phase3=0.30)
+    # Disagreement is well above both gate thresholds (pipeline=0.40, phase3=0.30)
     assert dis > 0.60, f"disagreement expected > 0.60 for KDKDKDKD, got {dis}"
-    assert dis > 0.40, "KDKDKDKD must exceed pipeline.yaml max_disagreement=0.40"
-    assert dis > 0.30, "KDKDKDKD must exceed phase3.yaml max_disagreement=0.30"
 
 
 def test_zwitteramp_trap_blocked_by_pipeline(tmp_path):
@@ -316,10 +313,6 @@ def test_all_proline_pipeline_scores_and_disagreement(tmp_path):
     Disagreement ≈ 0.33 — below pipeline gate (0.40) but above phase3 gate (0.30).
     Pins this edge case so proline handling is explicit.
     """
-    from openamp_foundry.features.physchem import compute_features
-    from openamp_foundry.scoring.activity import activity_likeness_score
-    from openamp_foundry.scoring.boman import boman_activity_score, model_disagreement
-
     seq = "PPPPPPPP"
     features = compute_features(seq)
     act = activity_likeness_score(features)
