@@ -465,7 +465,7 @@ class TestCTerminalAmidation:
 
 class TestWave2Guidance:
     def test_n_acetylation_recommended_when_interior_trypsin_sites(self):
-        # "RRWQWRMKKLG" has R at pos 0,1,5 and K at pos 7,8 — all interior
+        # K/R at 0-based pos 0,1,5,7,8 (regex excludes pos 10=C-terminal G; all K/R here are considered interior)
         qc = check_sequence("w1", "RRWQWRMKKLG")
         assert qc.n_acetylation_recommended is True
 
@@ -515,3 +515,30 @@ class TestWave2Guidance:
         # "RRRAAA" has R at positions 0, 1, 2 — all interior → all D-Arg guidance
         qc = check_sequence("w10", "RRRAAA")
         assert any("D-Arg" in entry for entry in qc.wave2_d_substitutions)
+
+    def test_n_acetylation_not_recommended_when_only_terminal_kr(self):
+        # C-terminal K is excluded by trypsin regex (?=.) lookahead + guard
+        qc = check_sequence("w_cterm_only", "AAAAK")
+        assert qc.n_acetylation_recommended is False
+        assert qc.wave2_d_substitutions == []
+        assert not any("N_ACETYLATION" in f for f in qc.flags)
+
+    def test_d_amino_guidance_positions_are_1_indexed(self):
+        # RRWQWRMKKLG: internal K/R at 0-based positions 0,1,5,7,8
+        # Top 3 (most N-terminal) = positions 0,1,5 → displayed as 1,2,6
+        qc = check_sequence("w_pos_1idx", "RRWQWRMKKLG")
+        assert len(qc.wave2_d_substitutions) == 3
+        assert "Position 1" in qc.wave2_d_substitutions[0]
+        assert "Position 2" in qc.wave2_d_substitutions[1]
+        assert "Position 6" in qc.wave2_d_substitutions[2]
+
+    def test_empty_sequence_no_crash_wave2(self):
+        qc = check_sequence("w_empty", "")
+        assert qc.n_acetylation_recommended is False
+        assert qc.wave2_d_substitutions == []
+
+    def test_n_acetylation_reason_populated_when_recommended(self):
+        qc = check_sequence("w_reason", "RRWQWRMKKLG")
+        assert qc.n_acetylation_recommended is True
+        assert len(qc.n_acetylation_reason) > 0
+        assert "acetylat" in qc.n_acetylation_reason.lower()
