@@ -98,7 +98,7 @@ recommended starting concentration based on the computed hydrophobic moment (μH
 | μH range | Starting concentration |
 |---------|----------------------|
 | ≤ 0.55 | Start at MIC (low risk) |
-| 0.55–0.80 | Start at MIC/3 (moderate risk) |
+| > 0.55 and ≤ 0.80 | Start at MIC/3 (moderate risk) |
 | > 0.80 | Start at MIC/10 (high risk — very cautious) |
 
 Use human red blood cells (hRBCs) at 0.5% in PBS. Incubate 1h at 37°C. Read at A540.
@@ -112,9 +112,10 @@ Hemolysis > 10% at MIC is a fail.
 
 If fewer than 10 candidates are nominated from a batch:
 
-1. Check `disagreement` scores — if many candidates cluster near 0.40, the two scorers may
-   systematically disagree for this peptide series. Consider whether to relax `max_disagreement`
-   in a custom config (document the change).
+1. Check `disagreement` scores — if many candidates cluster near the configured `max_disagreement`
+   threshold (0.30 for phase3.yaml, 0.40 for pipeline.yaml), the two scorers may systematically
+   disagree for this peptide series. Consider whether to relax `max_disagreement` in a custom
+   config (document the change and the scientific justification).
 2. Check `novelty` scores — if the reference set covers your template region well, novelty will
    be low. Consider reducing `min_novelty` for that generation run only.
 3. Check `safety` scores — if a hydrophobic template is used, many variants may have low safety.
