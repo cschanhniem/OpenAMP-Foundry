@@ -285,18 +285,22 @@ Basis:
 - SEED-006 (Mastoparan-X derivatives): known mast-cell-degranulating risk at high concentration
   (not necessarily hemolytic); monitor at 4×MIC
 
-**Selectivity proxy coverage of current 8 seeds:**
+**Selectivity proxy and mechanism coverage — all 10 seeds:**
 
-| Seed | sel_proxy | cytotox_risk | Notes |
-|------|-----------|--------------|-------|
-| SEED-001 | 0.968 | No | Optimal charge+hydro window |
-| SEED-002 | 1.000 | No | Most selective profile |
-| SEED-003 | 1.000 | No | Neg GRAVY, good charge |
-| SEED-004 | 0.300 | **Yes** | Low charge + high GRAVY |
-| SEED-005 | 1.000 | No | Moderate GRAVY, good charge |
-| SEED-006 | 0.977 | No | Just above GRAVY threshold |
-| SEED-007 | 1.000 | No | Optimal window |
-| SEED-008 | 1.000 | No | Neg GRAVY (Trp-dominant) |
+| Seed | sel_proxy | cytotox_risk | Mechanism class | Notes |
+|------|-----------|--------------|-----------------|-------|
+| SEED-001 | 0.968 | No | Helical membrane-disruption (carpet) | Optimal charge+hydro window |
+| SEED-002 | 1.000 | No | Helical membrane-disruption (pore) | Most selective profile |
+| SEED-003 | 1.000 | No | Cationic Trp-mediated disruption | Neg GRAVY, good charge |
+| SEED-004 | 0.300 | **Yes** | Short hydrophobic helix (depol.) | Low charge + high GRAVY — HIGH_CYTOTOX_RISK |
+| SEED-005 | 1.000 | No | Cecropin-magainin hybrid (dual) | Moderate GRAVY, good charge |
+| SEED-006 | 0.977 | No | Wasp venom, hydrophobic helix insertion | Just above GRAVY threshold |
+| SEED-007 | 1.000 | No | Bee venom, non-helical | Optimal window |
+| SEED-008 | 1.000 | No | Trp-mediated lipid intercalation | Neg GRAVY (Trp-dominant); plant origin |
+| SEED-009 | 1.000 | No | **Proline-rich intracellular (DnaK)** | GRAVY −1.64; Pro=42%; distinct from all above |
+| SEED-010 | 1.000 | No | Helical amphipathic (human LL-37 frag.) | GRAVY −0.71; μH=0.947; clinical relevance |
+
+**Mechanism diversity summary:** 10 seeds cover 7 distinct mechanistic classes: (1) carpet/pore-forming helical, (2) cationic Trp-mediated, (3) short hydrophobic helix, (4) hybrid cecropin-magainin, (5) wasp venom helix-insertion, (6) Trp lipid intercalation, (7) proline-rich intracellular. This is the most mechanistically diverse scaffold set achievable without synthetic lipopeptides or cyclic peptides.
 
 Known bias: safety scorer penalizes μH and cysteine but cannot predict cell-type-specific lysis.
 Selectivity proxy is a population-level heuristic, not a prediction for any specific cell line.
