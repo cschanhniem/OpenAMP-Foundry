@@ -1,6 +1,6 @@
 # Wet-Lab Handoff Guide
 
-**Version:** 0.1.0  
+**Version:** 0.5.x  
 **Status:** Working draft for expert review before synthesis ordering.
 
 ---
@@ -26,6 +26,10 @@ All scores are on a **[0, 1] scale**. Higher is better (except `disagreement`, w
 | `novelty` | Sequence distance from known AMP references | Near-duplicate of known AMP | Moderate novelty | New structural territory |
 | `ensemble` | Weighted combination of above four scores | Below priority threshold | Borderline | Priority candidate |
 | `disagreement` | |activity_likeness − boman_activity| — scorer consensus | High consensus (good) | Some divergence | Low consensus — treat cautiously |
+| `amphipathic_score` | Helix-wheel face segregation (hydrophobic vs cationic face contrast) — now in pilot_panel.csv | Non-helical AMP (SEED-008/009 by design) | Partial amphipathicity | Strong helical face contrast |
+| `charge_ph74` | Net charge at pH 7.4 (Henderson-Hasselbalch, not a [0,1] scale) — now in pilot_panel.csv | < +2 reduced membrane affinity | +2–+4 typical AMP range | > +5 may increase selectivity risk |
+
+**New in pilot_panel.csv:** `amphipathic_score` and `charge_ph74` columns allow within-family prioritization — among candidates from the same seed with similar ensemble scores, prefer higher `amphipathic_score` (helical AMPs) or, for SEED-009, check that `charge_ph74 ≥ +3` (important for intracellular transport efficiency).
 
 ### Recommended Action by Ensemble Score
 
@@ -72,6 +76,7 @@ before ordering. The report flags:
 | `LOW_CHARGE` | Reduced membrane affinity | Lower expected potency; may need higher test concentrations |
 | `LONG_PEPTIDE (>30aa)` | SPPS yield risk | Expect lower crude purity; order extra crude for purification |
 | `C_AMIDATION_RECOMMENDED` | C-terminal COOH reduces charge and serum stability | **Request "C-terminal amide (CONH₂)"** in synthesis order form — adds ~+0.7 charge, improves stability at zero extra cost |
+| `PROLINE_RICH_INTRACELLULAR (Pro=NN%)` | Standard MHB broth underestimates potency by 4–16× for proline-rich (≥25% Pro) AMPs that use intracellular DnaK/ribosome targets (e.g. all SEED-009 variants) | **Run a parallel assay in RPMI-1640 + 10% LB (pH 7.4)** alongside the standard MHB assay. If RPMI MIC is ≥4× lower than MHB MIC, annotate as "media-dependent uptake." (Krizsan et al. 2014 Angew Chem Int Ed 53:12236) |
 
 ### Synthesis Difficulty Rating
 
