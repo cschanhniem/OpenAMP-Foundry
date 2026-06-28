@@ -1,6 +1,6 @@
 # OpenAMP Foundry — Methods Appendix
 
-**Version:** 0.1.0  
+**Version:** 0.2.x (pipeline version); document updated for PRs #47–54  
 **Status:** Working draft for expert review. Not a peer-reviewed publication.
 
 ---
@@ -109,7 +109,8 @@ score = 0.24 × length_score
       + clamp01(μH / 0.8) × 0.14                  # amphipathicity_score
       + clamp01((Pα − 1.0) / 0.20) × 0.03         # helix_bonus
       + clamp01(charge_density_ph74 × μH / 0.15) × 0.02  # cross_bonus
-ceiling = min(score, 0.97)
+# Maximum achievable: 0.24+0.27+0.17+0.10+0.14+0.03+0.02 = 0.97 (arithmetic ceiling;
+# no explicit min() cap — the code returns clamp01(score) which clips to 1.0)
 ```
 
 `charge_density_ph74` is the net peptide charge at pH 7.4 (Henderson-Hasselbalch) divided
@@ -138,7 +139,7 @@ Annual Review of Immunology, 13, 61-92.
 
 ### 4.2 Safety Score
 
-Coarse hemolysis/cytotoxicity risk proxy. Higher score = safer. Computed from five risk
+Coarse hemolysis/cytotoxicity risk proxy. Higher score = safer. Computed from six risk
 signals that sum to a `risk` variable; `score = 1.0 − clamp(risk, 0, 1)`.
 
 | Risk signal | Threshold | Risk increment | Literature basis |
@@ -160,22 +161,31 @@ assay (e.g., red blood cell lysis assay) is mandatory before any safety claim.
 ### 4.3 Synthesis Feasibility Score
 
 Penalizes sequences predicted to be difficult to synthesize by solid-phase peptide synthesis
-(SPPS). Score starts at 1.0; each penalty is subtractive.
+(SPPS). Score starts at 1.0; each penalty is subtractive; final score clamped to [0, 1].
 
 | Penalty | Threshold | Deduction | Mechanism |
 |---------|-----------|-----------|-----------|
-| Long cysteine repeat run | longest_repeat_run ≥ 5 | −0.15 per additional run of 2 | On-resin aggregation |
-| High cysteine fraction | cysteine_fraction > 0.15 | −0.10 per 0.15 above threshold | Disulfide bridge complications |
-| High proline fraction | proline_fraction > 0.15 | −0.10 flat | N-terminal DKP; slow Fmoc deprotection at XP junctions |
-| Aggregation propensity | aggregation_propensity > 0.2 | −0.20 × (prop − 0.2) / 0.8 | Hydrophobic run or β-branched density drives SPPS aggregation |
+| Long sequence | length > 30 | min((length − 30) × 0.04, 0.40) | Deletion error accumulation; up to −0.40 at length ≥ 40 |
+| Very short sequence | length < 8 | −0.30 flat | Unreliable purification / characterisation |
+| Long homo-repeat run (any AA) | longest_repeat_run ≥ 5 | −0.10 flat | Coupling efficiency drops on identical-residue stretches |
+| High cysteine fraction | cysteine_fraction > 0.20 | −0.15 flat | Disulphide scrambling; side-chain protection cost |
+| Aggregation propensity | aggregation_propensity > 0 | min(prop × 0.25, 0.20) | On-resin self-association from hydrophobic runs {V,I,L,M,F,W} or β-branched density |
+| High proline fraction | proline_fraction > 0.15 | −0.10 flat | N-terminal DKP; slow coupling at XP junctions during Fmoc deprotection |
 
-**Proline penalty detail:** Proline induces incomplete coupling and N-terminal diketopiperazine
-(DKP) cyclisation during piperidine Fmoc deprotection (Fields & Noble 1990 Int J Pept Prot Res).
-At proline_fraction > 15%, a flat −0.10 is applied.
+**Proline penalty detail:** Proline's N-methylated backbone causes slow coupling at
+XP-junction positions and N-terminal diketopiperazine (DKP) cyclisation risk during
+piperidine Fmoc deprotection. References: Barlos et al. (1989) Int J Peptide Protein Res;
+Quibell et al. (1994) J Am Chem Soc; Fischer (2003) Curr Opin Drug Discov Devel.
 
-**Aggregation penalty detail:** Uses `aggregation_propensity` from `scoring/synthesis.py`,
-which itself derives from the longest consecutive run in {V,I,L,M,F,W} and the β-branched
-residue density (V,I,T). Both signals independently predict on-resin self-association.
+**Aggregation penalty detail:** `aggregation_propensity` from `features/physchem.py` uses
+two components: (1) longest consecutive run in {V,I,L,M,F,W} (ramp: 0 at run < 4, 1.0 at
+run ≥ 8) and (2) β-branched density (V,I,T > 20%). The synthesis penalty is
+`min(agg × 0.25, 0.20)` — a linear ramp from zero, capped at −0.20.
+
+**Length boundary note:** The synthesis penalty threshold (length > 30) differs from the
+pipeline's sequence validity filter (length > 35 is flagged in safety, not synthesis). A
+candidate of length 32 incurs a −0.08 synthesis deduction but is not safety-penalised for
+length.
 
 ### 4.3b Serum Stability Score
 
