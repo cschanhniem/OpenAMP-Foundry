@@ -14,10 +14,11 @@ def synthesis_feasibility_score(features: dict, valid_sequence: bool = True) -> 
     - Aggregation propensity > 0: interior hydrophobic runs (VILMFW ≥ 4) and high
       beta-branched density (Val/Ile/Thr) cause on-resin aggregation and poor solubility.
       References: Quittot et al. (2017) Protein Sci; Wurth et al. (2006) J Mol Biol.
-    - Proline fraction > 15%: N-methylated backbone requires extended activation; XP junctions
-      prone to diketopiperazine (DKP) formation during Fmoc SPPS; overall coupling efficiency
-      reduced. References: Barlos et al. (1989) Int J Peptide Protein Res; Quibell et al.
-      (1994) J Am Chem Soc; Fischer (2003) Curr Opin Drug Discov Devel.
+    - Proline fraction > 15%: N-methylated backbone requires extended activation (slow couplings
+      at XP junctions); DKP formation risk at N-terminal dipeptides containing Pro during
+      piperidine Fmoc deprotection; overall coupling efficiency reduced. References: Barlos et
+      al. (1989) Int J Peptide Protein Res; Quibell et al. (1994) J Am Chem Soc; Fischer (2003)
+      Curr Opin Drug Discov Devel.
     """
     if not valid_sequence:
         return 0.0

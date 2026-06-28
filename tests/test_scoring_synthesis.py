@@ -134,3 +134,12 @@ class TestProlinePenalty:
         feat = {"length": 15, "longest_repeat_run": 5, "cysteine_fraction": 0.25, "proline_fraction": 0.20}
         score = synthesis_feasibility_score(feat)
         assert abs(score - 0.65) < 0.001
+
+    def test_proline_stacks_with_aggregation_propensity(self):
+        # agg=0.4: min(0.4*0.25, 0.20)=0.10 penalty; pro=0.20: 0.10 penalty → 1.0-0.20=0.80
+        feat = {
+            "length": 15, "longest_repeat_run": 1, "cysteine_fraction": 0.0,
+            "aggregation_propensity": 0.4, "proline_fraction": 0.20,
+        }
+        score = synthesis_feasibility_score(feat)
+        assert abs(score - 0.80) < 0.001
