@@ -337,7 +337,7 @@ Phase 2 benchmarks verified that the pipeline:
 - Produces stable rankings under repeated runs (reproducibility)
 - Shows performance degradation when key scoring dimensions are ablated
 
-**Retrospective AUROC — pipeline.yaml (v0.8.x):** `0.8420` (95% CI: TBD, n=2000 bootstrap).
+**Retrospective AUROC — pipeline.yaml (v0.8.x):** `0.8420` (bootstrap CI₉₅: 0.76–0.91, n=87, n_bootstrap=2000).
 Positive-vs-negative separation on the 43-AMP + 44-background benchmark set using the full
 ensemble scorer with pipeline.yaml weights. Historical progression: 0.7926 → 0.8138 →
 0.8164 (PRs #48–54) → 0.8086 (PR #65: Trp-weighted aromatic bonus, safety abs() fix) →
@@ -345,8 +345,7 @@ ensemble scorer with pipeline.yaml weights. Historical progression: 0.7926 → 0
 0.8348 (PR #70: windowed mu_h + anionic guard) →
 0.8420 (PR #72: face_segregation_bonus; see below).
 
-**Retrospective AUROC — phase3.yaml (synthesis gate, v0.8.x):** `0.8266` (95% CI: TBD,
-n=2000 bootstrap). Phase3 uses re-weighted ensemble scores (activity=0.35, safety=0.30,
+**Retrospective AUROC — phase3.yaml (synthesis gate, v0.8.x):** `0.8266` (bootstrap CI₉₅: 0.74–0.90, n=87, n_bootstrap=2000). Phase3 uses re-weighted ensemble scores (activity=0.35, safety=0.30,
 synthesis=0.20, novelty=0.15 vs pipeline.yaml activity=0.40, safety=0.25, synthesis=0.15,
 novelty=0.20) and a stricter safety gate (max_safety_risk=0.40). Historical: 0.7846 (PR #66)
 → 0.8126 (PR #70) → 0.8266 (PR #72). The AUROC is lower than pipeline.yaml because the higher
