@@ -1,6 +1,6 @@
 # Broad Novelty Check — Pilot Panel vs Curated AMP Database
 
-> Generated: 2026-06-28T16:29:05.822770+00:00  
+> Generated: 2026-06-28T16:35:23.456115+00:00  
 > Panel: outputs/pilot_panel.csv  
 > Reference database: examples/known_reference/amp_curated_references.csv (72 unique sequences)  
 > Thresholds: KNOWN_VARIANT ≥ 70%, CLOSE_RELATIVE ≥ 50%
@@ -75,7 +75,7 @@ Discovery of activity in this subset would be publishable as a novel AMP class.
 ## Recommendations
 
 1. **KNOWN_VARIANT candidates** should be de-emphasised in novelty claims but retained as positive controls that validate the assay platform.
-2. **NOVEL candidates** (especially SEED-006, SEED-007, SEED-008, SEED-009 families) are the primary discovery targets. Any confirmed activity here is publishable.
+2. **NOVEL candidates** (from seeds: SEED-006, SEED-007, SEED-008, SEED-009) are the primary discovery targets. Any confirmed activity in this subset is publishable as a novel AMP.
 3. This report should be submitted with the ASSAY_PREREGISTRATION.md to document the novelty status of all candidates before wet-lab results are seen.
 
 ## Caveat

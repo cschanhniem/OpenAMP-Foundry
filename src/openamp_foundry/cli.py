@@ -1376,6 +1376,18 @@ def _run_novelty_check_broad(args: argparse.Namespace) -> int:
     thr_known = args.threshold_known
     thr_close = args.threshold_close
 
+    if thr_close >= thr_known:
+        print(json.dumps({
+            "status": "error",
+            "message": (
+                f"threshold-close ({thr_close}) must be less than threshold-known ({thr_known}); "
+                "the classification cascade would make CLOSE_RELATIVE unreachable"
+            ),
+        }))
+        return 1
+
+    import sys as _sys
+
     # Score each candidate
     results = []
     n_known = 0
@@ -1385,17 +1397,22 @@ def _run_novelty_check_broad(args: argparse.Namespace) -> int:
     for row in panel:
         cid = row.get("candidate_id", "?")
         seq = row.get("sequence", "").strip().upper()
+        if not seq:
+            print(f"WARNING: candidate {cid!r} has an empty sequence — skipping", file=_sys.stderr)
+            continue
         seed = row.get("seed", "?")
-        seed_novelty = float(row.get("novelty", 0.0))
-        ensemble = float(row.get("ensemble", 0.0))
+        seed_novelty = float(row.get("novelty") or 0.0)
+        ensemble = float(row.get("ensemble") or 0.0)
 
-        best_sim = 0.0
+        best_sim = -1.0
         best_ref: dict = {}
         for ref in refs:
             s = normalized_similarity(seq, ref["sequence"])
             if s > best_sim:
                 best_sim = s
                 best_ref = ref
+
+        best_sim = max(best_sim, 0.0)
 
         broad_novelty = round(1.0 - best_sim, 4)
 
@@ -1514,8 +1531,13 @@ def _run_novelty_check_broad(args: argparse.Namespace) -> int:
         "",
         "1. **KNOWN_VARIANT candidates** should be de-emphasised in novelty claims but retained "
         "as positive controls that validate the assay platform.",
-        "2. **NOVEL candidates** (especially SEED-006, SEED-007, SEED-008, SEED-009 families) "
-        "are the primary discovery targets. Any confirmed activity here is publishable.",
+    ]
+
+    novel_seeds = sorted({r["seed"] for r in results if r["category"] == "NOVEL"})
+    novel_seed_str = ", ".join(novel_seeds) if novel_seeds else "none"
+    lines += [
+        f"2. **NOVEL candidates** (from seeds: {novel_seed_str}) are the primary discovery "
+        "targets. Any confirmed activity in this subset is publishable as a novel AMP.",
         "3. This report should be submitted with the ASSAY_PREREGISTRATION.md to document "
         "the novelty status of all candidates before wet-lab results are seen.",
         "",
