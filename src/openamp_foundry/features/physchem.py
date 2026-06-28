@@ -23,6 +23,32 @@ _HYDROPHOBICITY: dict[str, float] = {
     "S": -0.180, "T": -0.050, "W": 0.810, "Y": 0.260, "V": 1.080,
 }
 
+# Chou-Fasman helix propensity parameters (Pα values).
+# Source: Chou PY & Fasman GD (1974) Biochemistry 13:222-245 (Table IV).
+# Values > 1.0 are helix-forming; 0.75–1.0 indifferent; < 0.75 helix-breaking.
+# Proline (0.57) and Glycine (0.57) are the canonical helix breakers.
+_HELIX_PROPENSITY: dict[str, float] = {
+    "A": 1.42, "R": 0.98, "N": 0.67, "D": 1.01, "C": 0.70,
+    "Q": 1.11, "E": 1.51, "G": 0.57, "H": 1.00, "I": 1.08,
+    "L": 1.21, "K": 1.16, "M": 1.45, "F": 1.13, "P": 0.57,
+    "S": 0.77, "T": 0.83, "W": 1.08, "Y": 0.69, "V": 1.06,
+}
+
+
+def helix_propensity_score(sequence: str) -> float:
+    """Mean Chou-Fasman alpha-helix propensity (Pα) for the sequence.
+
+    Returns the mean Pα across all residues. Values > 1.03 indicate a helix-forming
+    tendency over the full sequence. The reference midpoint is 1.0 (indifferent).
+
+    Source: Chou & Fasman (1974) Biochemistry 13:222-245.
+    Unknown residues are assigned the indifferent value (1.0).
+    """
+    if not sequence:
+        return 0.0
+    total = sum(_HELIX_PROPENSITY.get(aa, 1.0) for aa in sequence)
+    return round(total / len(sequence), 4)
+
 
 def net_charge_proxy(sequence: str) -> int:
     return sum(1 for aa in sequence if aa in POSITIVE) - sum(1 for aa in sequence if aa in NEGATIVE)
@@ -129,6 +155,7 @@ def compute_features(sequence: str) -> dict[str, float | int | dict[str, int]]:
     trypsin_density = round(n_trypsin / length if length else 0.0, 4)
     chymotrypsin_density = round(n_chymotrypsin / length if length else 0.0, 4)
     charge_ph74 = net_charge_at_ph74(sequence)
+    helix_pa = helix_propensity_score(sequence)
     return {
         "length": length,
         "net_charge_proxy": charge,
@@ -142,6 +169,7 @@ def compute_features(sequence: str) -> dict[str, float | int | dict[str, int]]:
         "proline_fraction": round(pro_fraction, 4),
         "longest_repeat_run": repeat_run,
         "hydrophobic_moment": mu_h,
+        "helix_propensity": helix_pa,
         "boman_index": boman_index(sequence),
         "gravy": gravy_score(sequence),
         "residue_counts": dict(sorted(counts.items())),
