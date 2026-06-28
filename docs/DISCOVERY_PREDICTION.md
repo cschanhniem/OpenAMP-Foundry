@@ -803,6 +803,17 @@ No biological activity has been demonstrated. The lab is the judge.*
 
 ---
 
+**Tracking note (post-PR #106):** WET_LAB_HANDOFF.md: factual correction — SEED-009 synthesis
+guidance previously stated "No Met, no Cys → standard Fmoc SPPS" for all 4 variants; corrected
+to note that VAR_033 (RRLPRPGYMPRP) has Met at position 9 (same Nle substitution + HPLC purity
+requirement as SEED-007 variants). Other 3 SEED-009 variants (VAR_027/017/039) have no Met.
+
+**Tracking note (post-PR #105):** presynth_check.py: PYROGLUTAMATE_RISK flag added for N-terminal
+Q (t½ hours–days at pH 7.4, 5–50× MIC loss); E1 excluded (acid-catalysed, negligible at
+physiological pH); Nα-acetylation or Q1→K1/R1 substitution surfaced as remediation. None of the
+20 pilot candidates are affected (no Q-terminal sequences in the pilot panel), but the check
+protects future seed generation batches.
+
 **Tracking note (post-PR #103):** ASSAY_PREREGISTRATION.md: serum stability model limitations
 block extended to cover all 5 affected families — SEED-003 (pre-existing, 11 AA length edge),
 SEED-007 (added: Met/Nle substitution + 11 AA length edge), SEED-008 (pre-existing, Trp steric,
