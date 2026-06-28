@@ -13,6 +13,8 @@ Recommended tools (free, no registration required as of 2024):
   - CAMPR4:       http://www.camp3.bicnirrh.res.in/predict.php
   - AMPScanner v2: https://www.dveltri.com/ascan/v2/ascan.html
   - dbAMP 2.0:    https://awi.cuhk.edu.cn/dbAMP/predict.php
+  - AntiCP 2.0:   https://webs.iiitd.edu.in/raghava/anticp2/
+  - Macrel:       https://macrel.readthedocs.io/ (command-line, pip install macrel)
 """
 from __future__ import annotations
 
@@ -42,6 +44,34 @@ _TOOLS = [
         "input": "Paste FASTA, click 'Predict'",
         "positive_label": "AMP",
         "note": "Also reports predicted activity spectrum (antibacterial/antifungal/etc.).",
+    },
+    {
+        "name": "AntiCP 2.0",
+        "url": "https://webs.iiitd.edu.in/raghava/anticp2/",
+        "method": "SVM trained on anticancer peptides (ACPs); Raghava lab (IIIT Delhi)",
+        "input": "Select 'Predict' tab, paste sequences one per line (not FASTA), click 'Predict'",
+        "positive_label": "ACP (anticancer peptide — NOT AMP-specific)",
+        "note": (
+            "IMPORTANT: AntiCP 2.0 predicts anticancer peptides (ACPs), not antimicrobial "
+            "peptides directly. ACP and AMP activity correlate because both classes disrupt "
+            "negatively-charged membranes, but a positive call here means 'ACP-like', not "
+            "'confirmed AMP'. Count as indirect supporting evidence only. Use 'Default' model."
+        ),
+    },
+    {
+        "name": "Macrel (command-line)",
+        "url": "https://macrel.readthedocs.io/",
+        "method": "Random Forest on 22 physicochemical + 8 predicted structural features; trained on DRAMP + UniProt",
+        "input": (
+            "pip install macrel; "
+            "macrel peptides -f pilot_panel.fasta --output macrel_out/ --log-file macrel.log"
+        ),
+        "positive_label": "AMP",
+        "note": (
+            "Command-line tool — requires Python ≥ 3.7 and pip install. "
+            "Trained on DRAMP v2 (2019 version); reports AMP probability + hemolytic probability. "
+            "The hemolytic probability provides an independent selectivity estimate."
+        ),
     },
 ]
 
@@ -102,16 +132,16 @@ def write_external_predict_checklist(
     lines += [
         "## Step 2 — Record results",
         "",
-        "Fill in the table below after running all three tools. Mark each cell Y/N.",
+        "Fill in the table below after running all five tools. Mark each cell Y/N.",
         "",
-        "| Rank | ID | Sequence | CAMPR4 | AMPScanner v2 | dbAMP | Tools Agree (≥2/3) |",
-        "|--:|---|---|:---:|:---:|:---:|:---:|",
+        "| Rank | ID | Sequence | CAMPR4 | AMPScanner | dbAMP | AntiCP2 | Macrel | Tools Agree (≥3/5) |",
+        "|--:|---|---|:---:|:---:|:---:|:---:|:---:|:---:|",
     ]
     for c in panel:
         r = c.get("pilot_rank", "?")
         cid = c.get("candidate_id", "?")
         seq = c.get("sequence", "?")
-        lines.append(f"| {r} | {cid} | `{seq}` | ? | ? | ? | ? |")
+        lines.append(f"| {r} | {cid} | `{seq}` | ? | ? | ? | ? | ? | ? |")
 
     lines += [
         "",
@@ -130,20 +160,24 @@ def write_external_predict_checklist(
         "",
         "| Outcome | Action |",
         "|---|---|",
-        "| ≥12 candidates have Tools Agree = Y | Proceed to synthesis with confident panel |",
+        "| ≥12 candidates have Tools Agree = Y (≥3/5) | Proceed to synthesis with confident panel |",
         "| 6–11 candidates have Tools Agree = Y | Synthesise only agreed candidates (wave 1) |",
         "| < 6 candidates have Tools Agree = Y | STOP — scoring model may not be reliable; revisit |",
         "",
         "## Why this matters",
         "",
         "Our internal scorer (physicochemical heuristics + Boman index) disagreed with itself",
-        "(mean |activity − boman_activity| = 0.31). Three independent published tools provide",
-        "external calibration. If 2/3 external tools agree with our nomination, confidence rises",
-        "substantially. If they disagree, it is cheaper to find out now (free) than at synthesis ($500+).",
+        "(mean |activity − boman_activity| = 0.31). Five independent published tools from different",
+        "ML paradigms (SVM ensemble, LSTM, Random Forest ×3) provide external calibration.",
+        "If ≥3/5 external tools agree, confidence rises substantially. If they disagree, it is",
+        "cheaper to find out now (free) than at synthesis ($500+ per peptide).",
+        "",
+        "Macrel additionally reports a **hemolytic probability** — an independent selectivity estimate.",
+        "Flag any candidate with Macrel hemolytic probability > 0.5 for extra HC50 scrutiny.",
         "",
         "## Disclaimer",
         "",
-        "External tool predictions are also computational — not wet-lab evidence. Even with 3/3",
+        "External tool predictions are also computational — not wet-lab evidence. Even with 5/5",
         "tool agreement, the expected in-vitro hit rate is 20–60%. Human expert review and",
         "institutional biosafety sign-off remain mandatory before synthesis.",
     ]

@@ -188,6 +188,58 @@ If fewer than 10 candidates are nominated from a batch:
 
 ---
 
+---
+
+## Negative Result Reporting Protocol
+
+**All results — active and inactive — must be reported.** Selective reporting of only positive
+results invalidates the pipeline's active-learning loop and creates publication bias.
+
+### For each inactive candidate
+
+Record the result using the schema at `schemas/lab_result.schema.json` with:
+
+```json
+{
+  "result_qualitative": "inactive",
+  "result_value": 128.0,
+  "result_unit": "µg/mL",
+  "assay_type": "MIC",
+  "notes": "No growth inhibition at 128 µg/mL (top concentration tested). MIC > 128 µg/mL."
+}
+```
+
+> `result_value` records the **highest concentration tested with no activity** (not `null`).
+> This preserves the numerical upper bound, which is required for the active-learning loop.
+
+### What to record for inactive candidates
+
+| Field | Value |
+|-------|-------|
+| `result_qualitative` | `"inactive"` |
+| `result_value` | Highest concentration tested with no activity (e.g. 128.0) |
+| `result_unit` | `"µg/mL"` |
+| `assay_date` | Date of the assay |
+| `positive_control_passed` | Must be `true` — if false, the assay is invalid |
+| `notes` | e.g. `"No activity at 128 µg/mL (top concentration). Possible hydrophobic aggregation."` |
+
+### Diagnostic questions for inactive candidates
+
+1. **Is μH > 0.55 and selectivity_proxy < 0.5?** → Likely hemolytic, not inactive
+2. **Is synthesis_feasibility < 0.7?** → Possible synthesis failure; request HPLC purity certificate
+3. **Is the seed family entirely inactive?** → Scaffold-level failure; report as family-level negative
+4. **Did external predictors (CAMPR4, AMPScanner) agree it was AMP?** → Scoring model error; update reference dataset
+5. **Was the peptide stored correctly?** → Check freeze-thaw cycles, solubility in MHB
+
+### Archiving
+
+Negative results are archived in `outputs/negative_results/` as individual JSON files named
+`<candidate_id>_<assay_date>_negative.json`. The lab_result schema hash links back to the
+evidence certificate that nominated the candidate. This creates a full traceability chain
+for the eventual publication or open data release.
+
+---
+
 ## Confidence Statement
 
 All scores are **heuristic proxies** derived from physicochemical features. They have not been
