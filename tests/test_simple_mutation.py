@@ -61,8 +61,22 @@ class TestMutateSequence:
         assert len(results) > 1
 
     def test_unseeded_calls_can_differ(self):
+        # random.Random(None) seeds from os.urandom() in CPython 3.x.
+        # With 278+ possible distinct outputs for a 15-mer, P(all 30 identical) is negligible.
         results = {mutate_sequence(_SEQ, mutations=1) for _ in range(30)}
-        assert len(results) > 1
+        assert len(results) > 1, (
+            "Expected at least 2 distinct outputs from 30 unseeded calls; "
+            "failure indicates entropy source is broken or the function is constant."
+        )
+
+    def test_single_mutation_can_produce_identity_substitution(self):
+        # mutate_sequence picks uniformly from 20 AAs including the original;
+        # at least one seed among 200 should land on an identity substitution.
+        found = any(
+            mutate_sequence(_SEQ, mutations=1, seed=s) == _SEQ
+            for s in range(200)
+        )
+        assert found, "Expected at least one seed to produce an identity substitution"
 
     def test_returns_str(self):
         assert isinstance(mutate_sequence(_SEQ), str)
