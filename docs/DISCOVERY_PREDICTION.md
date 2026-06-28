@@ -545,7 +545,7 @@ in the 20-member pilot panel, P(≥1 from family) ≈ 1 − (1 − P_candidate)^
 | 3 | SEED-006 | INWKGIAAMAKKLL vars | 0.667 | 0.643 | ~14–22% | Balanced stability+novelty; mastoparan mechanism data |
 | 4 | SEED-009 | RRLPRPPYLPRP vars | 0.80+ | 0.467 | ~12–20% | Proline-rich intracellular (DnaK); orthogonal mechanism to all other seeds; 18 selected |
 | 5 | SEED-003 | RRWQWRMKKLG vars | 0.27 | 0.182 | ~8–16% | High ensemble (0.780-0.795) but poor serum stability; 16 selected |
-| 6 | SEED-005 | KRFFKKIGSALKFA | 0.52 | 0.467 | ~8–14% | FF motif aids membrane insertion; 4 selected |
+| 6 | SEED-005 | KRLFKKIGSALKFL (seed) | 0.52 | 0.467 | ~8–14% | Cecropin-magainin hybrid; best variant VAR_009 (KRFFKKIGSALKFA, FF motif) aids membrane insertion; 4 selected |
 
 > **Excluded from synthesis** (not in synthesis pool):
 > - SEED-004 (temporin, HIGH_CYTOTOX_RISK, GRAVY=+1.81): Correctly excluded by safety+cytotox gate
@@ -671,7 +671,7 @@ Required to strengthen confidence:
 
 ### 3. Novelty Verification
 
-The 45-sequence reference set used for novelty scoring does not represent the full landscape
+The 72-sequence reference set used for novelty scoring does not represent the full landscape
 of known AMPs. Real-world novelty check required against:
 - APD3 (Antimicrobial Peptide Database v3): > 3,000 natural AMPs
 - DRAMP v3.0 (Data Repository of Antimicrobial Peptides): > 19,000 entries

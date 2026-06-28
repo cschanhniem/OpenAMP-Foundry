@@ -206,7 +206,7 @@ This score does not gate the ensemble — it is used only in the pilot panel ran
 ### 4.4 Novelty Score
 
 Novelty is computed as: `1 - max_similarity`, where max_similarity is the maximum normalized
-Levenshtein similarity between the candidate and any sequence in the 45-sequence reference set
+Levenshtein similarity between the candidate and any sequence in the 72-sequence reference set
 (`examples/known_reference/amp_curated_references.csv`).
 
 Normalized Levenshtein similarity: `1 - (edit_distance / max_length)`.
@@ -214,7 +214,7 @@ Normalized Levenshtein similarity: `1 - (edit_distance / max_length)`.
 A novelty of 0.0 means the sequence is identical to a known reference. A novelty of 1.0 means
 no sequence in the reference set is similar at all.
 
-**Limitation:** The reference set contains only 45 curated sequences. This is not a complete
+**Limitation:** The reference set contains only 72 curated sequences. This is not a complete
 survey of known AMPs. Real-world novelty should be checked against APD3, CAMP, DRAMP, and
 UniProt antimicrobial sequences.
 
@@ -375,7 +375,7 @@ power.
 |-------------|--------|--------|
 | Scoring not validated against lab data | Activity/safety scores may not correlate with assay results | Known; lab calibration needed |
 | Near-seed generation only | Misses genuinely novel AMP families | Known; future work |
-| Small reference set | Novelty may be overestimated | Partially mitigated; 45 refs used |
+| Small reference set | Novelty may be overestimated | Partially mitigated; 72 refs used |
 | Two scorers only | Disagreement is coarse uncertainty; not a calibrated posterior | Partially mitigated; Boman index added in v0.2 |
 | Helical amphipathicity assumption | Non-helical AMPs underscored | Known limitation |
 | No structural modeling | Cannot predict membrane interaction mode | Out of scope v0.1 |
