@@ -25,6 +25,8 @@ from __future__ import annotations
 
 import random
 
+from openamp_foundry.features.physchem import AGG_HYDROPHOBIC as _AGG_HYDROPHOBIC
+
 CANONICAL_AA = "ACDEFGHIKLMNPQRSTVWY"
 
 # Conservative substitution groups: within-group swaps preserve physicochemical character
@@ -38,9 +40,7 @@ CONSERVATIVE_GROUPS: list[frozenset[str]] = [
     frozenset("C"),          # cysteine — singleton; substitutions restricted
 ]
 
-# Residues that drive aggregation / on-resin clumping during SPPS.
-# Must match AGG_HYDROPHOBIC in physchem.py and the regex set [VILMFW]{4,} in presynth_check.py.
-_AGG_HYDROPHOBIC: frozenset[str] = frozenset("VILMFW")
+# _AGG_HYDROPHOBIC is imported from physchem.py (single source of truth for the VILMFW residue set).
 
 
 def _conservative_substitutes(aa: str) -> list[str]:
@@ -176,6 +176,10 @@ def generate_charge_enhanced_variants(
 
     Targets positions occupied by non-charged hydrophilic residues (S, T, N, Q)
     and replaces with K (higher charge density → better activity likeness).
+
+    Deprecated: generate_all_variants() now calls generate_balanced_charge_variants()
+    which generates both K and R for each polar position. This function is retained
+    for backward compatibility (used by existing tests and any external callers).
     """
     rng = random.Random(seed)
     targetable = [
@@ -197,7 +201,7 @@ def generate_charge_enhanced_variants(
 
 def generate_balanced_charge_variants(
     sequence: str,
-    n_samples: int = 10,
+    n_positions: int = 10,
 ) -> list[str]:
     """Generate both K and R replacements for each polar (S/T/N/Q) position.
 
@@ -208,7 +212,11 @@ def generate_balanced_charge_variants(
       - K (KD = -3.9): slightly less hydrophilic than R, slightly lower trypsin rate
       - R (KD = -4.5): more hydrophilic, marginally higher GRAVY improvement
 
-    Returns up to 2 × n_samples unique variants (K and R per position).
+    Args:
+        n_positions: maximum number of polar positions to target. Returns up to
+            2 × n_positions unique variants (one K variant and one R variant per position).
+            Named n_positions (not n_samples) to avoid confusion with other generator
+            functions where n_samples bounds the total output count directly.
     """
     targetable = [i for i, aa in enumerate(sequence) if aa in "STNQ"]
     if not targetable:
@@ -216,7 +224,7 @@ def generate_balanced_charge_variants(
 
     seen: set[str] = set()
     variants = []
-    for i in targetable[:n_samples]:
+    for i in targetable[:n_positions]:
         for replacement in ("K", "R"):
             new_seq = sequence[:i] + replacement + sequence[i + 1:]
             if new_seq not in seen:
@@ -238,11 +246,18 @@ def generate_all_variants(
 
     Double substitutions use generate_aggregation_safe_double_variants() to avoid
     creating hydrophobic runs ≥4 that would be penalised by synthesis scoring.
+    Single substitutions are also filtered for the same threshold — a conservative swap
+    of an adjacent residue can extend a near-threshold run into aggregation territory.
     Charge enhancements use generate_balanced_charge_variants() to produce both
     K and R options at each polar position, letting the scoring pipeline rank them.
     """
     variants: set[str] = set()
-    variants.update(generate_single_substitution_variants(seed_sequence))
+    # Single subs are filtered: a conservative A→L substitution adjacent to a run-of-3
+    # can create run-of-4, which would be flagged by synthesis scoring and QC.
+    variants.update(
+        v for v in generate_single_substitution_variants(seed_sequence)
+        if _max_hydrophobic_run(v) < 4
+    )
     variants.update(generate_aggregation_safe_double_variants(seed_sequence, n_double, seed))
     variants.update(generate_balanced_charge_variants(seed_sequence, n_charge_enhance))
     variants.discard(seed_sequence)

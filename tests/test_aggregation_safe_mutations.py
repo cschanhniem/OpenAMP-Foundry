@@ -111,16 +111,18 @@ class TestAggregationSafeDoubleVariants:
 
 class TestBalancedChargeVariants:
     def test_generates_both_k_and_r_per_position(self):
-        # KSSK: S at positions 1 and 2 → expect K and R variants for each
+        # KSSK: S at positions 1 and 2 → expect K and R variants for both S positions
         seq = "KSSK"
-        variants = generate_balanced_charge_variants(seq, n_samples=5)
-        replacements = set(v[1] for v in variants if v[0] == "K" and v[3] == "K")
-        # Both K and R should appear as replacements for at least one S
-        assert "K" in replacements or any(v[1] == "K" for v in variants)
-        assert "R" in replacements or any(v[1] == "R" for v in variants)
+        variant_set = set(generate_balanced_charge_variants(seq, n_positions=5))
+        # S at index 1: expect KKSK and KRSK
+        assert "KKSK" in variant_set, "Missing S1→K variant"
+        assert "KRSK" in variant_set, "Missing S1→R variant"
+        # S at index 2: "KS" + replacement + "K"
+        assert "KSKK" in variant_set, "Missing S2→K variant"
+        assert "KSRK" in variant_set, "Missing S2→R variant"
 
     def test_all_variants_same_length(self):
-        variants = generate_balanced_charge_variants(SEED, n_samples=5)
+        variants = generate_balanced_charge_variants(SEED, n_positions=5)
         for v in variants:
             assert len(v) == len(SEED)
 
@@ -130,7 +132,7 @@ class TestBalancedChargeVariants:
 
     def test_replacements_are_k_or_r_only(self):
         seq = "KWKSFKKIGAVLKVL"  # S at position 3
-        variants = generate_balanced_charge_variants(seq, n_samples=3)
+        variants = generate_balanced_charge_variants(seq, n_positions=3)
         for v in variants:
             diff_positions = [i for i, (a, b) in enumerate(zip(v, seq)) if a != b]
             assert len(diff_positions) == 1
@@ -143,16 +145,26 @@ class TestBalancedChargeVariants:
         assert seq not in variants
 
     def test_no_duplicates(self):
-        variants = generate_balanced_charge_variants(SEED, n_samples=10)
+        variants = generate_balanced_charge_variants(SEED, n_positions=10)
         assert len(variants) == len(set(variants))
 
 
 class TestGenerateAllVariantsUpdated:
     def test_no_variant_in_all_variants_has_run_ge_4(self):
-        # generate_all_variants now uses aggregation_safe_double_variants
+        # generate_all_variants filters both single- and double-substitution variants
         variants = generate_all_variants(SEED, n_double=20, n_charge_enhance=8)
         for v in variants:
             assert _max_hydrophobic_run(v) < 4, f"{v!r} has run >= 4"
+
+    def test_borderline_seed_single_sub_filtered(self):
+        # "KVLLAK": max run = 3 (VLL). Single sub A→L at pos 4 gives "KVLLLK" = run 4.
+        # generate_all_variants must NOT include "KVLLLK" (filtered by single-sub guard).
+        seed = "KVLLAK"
+        variants = set(generate_all_variants(seed, n_double=10, n_charge_enhance=3))
+        assert "KVLLLK" not in variants, "KVLLLK (run=4) should be filtered from single subs"
+        # All returned variants must respect the threshold
+        for v in variants:
+            assert _max_hydrophobic_run(v) < 4, f"{v!r} has run >= 4 from borderline seed"
 
     def test_all_variants_includes_both_k_and_r_charge_variants(self):
         # KWKSFKKIGAVLKVL has S at position 3; should produce S→K and S→R variants
