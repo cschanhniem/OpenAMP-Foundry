@@ -128,8 +128,8 @@ class TestMaxWindowedHydrophobicMoment:
         seq = "KWKLFKKIGAVLKVL"
         w7 = max_windowed_hydrophobic_moment(seq, window=7)
         w11 = max_windowed_hydrophobic_moment(seq, window=11)
-        # Smaller window can find a higher-density segment; w7 >= w11 is not guaranteed
-        # but both must be non-negative and not exceed 1.0 (normalised by window)
+        # Both must be non-negative; neither is bounded at 1.0 (Eisenberg values can
+        # be large for tightly packed hydrophobic windows — clamping happens in the scorer)
         assert w7 >= 0.0
         assert w11 >= 0.0
 
@@ -152,14 +152,30 @@ class TestComputeFeaturesMaxMuH:
             features = compute_features(seq)
             assert features["max_hydrophobic_moment"] >= 0.0
 
-    def test_max_hydrophobic_moment_ge_hydrophobic_moment(self):
-        # max_hydrophobic_moment should always be >= full-seq hydrophobic_moment
+    def test_max_hydrophobic_moment_ge_hydrophobic_moment_for_known_amps(self):
+        # For known helical AMPs with a concentrated amphipathic segment, the windowed
+        # value should be >= the full-seq value (good amphipathic signal).
+        # NOTE: this invariant does NOT hold for non-amphipathic or uniform sequences
+        # (see test_windowed_can_be_less_than_full_for_uniform_sequences below).
         for seq in ["KWKLFKKIGAVLKVL", "GIGKFLHSAKKFGKAFVGEIMNS", "LLGDFFRKSKEKIGKEFKRIVQRIKDFLRNLVPRTES"]:
             features = compute_features(seq)
             assert features["max_hydrophobic_moment"] >= features["hydrophobic_moment"] - 1e-4, (
                 f"max_mu_h ({features['max_hydrophobic_moment']:.4f}) < mu_h "
                 f"({features['hydrophobic_moment']:.4f}) for {seq}"
             )
+
+    def test_windowed_can_be_less_than_full_for_uniform_sequences(self):
+        # For non-amphipathic sequences (e.g. all-Ala, all-Glu), the windowed mu_h
+        # (normalised by window=11) can be LESS than full-seq mu_h (normalised by len>11).
+        # activity_likeness_score() handles this correctly via max(); direct callers
+        # must not assume max_hydrophobic_moment >= hydrophobic_moment.
+        seq = "AAAAAAAAAAAA"  # 12-A, uniform → no concentrated amphipathic segment
+        windowed = max_windowed_hydrophobic_moment(seq, window=11)
+        full = hydrophobic_moment(seq)
+        assert windowed < full, (
+            f"For uniform sequence {seq!r}, expected windowed ({windowed:.4f}) < "
+            f"full-seq ({full:.4f}) to document the non-invariant"
+        )
 
     def test_short_seq_max_equals_full(self):
         features = compute_features("KWKLFKK")  # 7 residues, window=11 → only one window

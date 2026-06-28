@@ -399,7 +399,7 @@ class TestAmphipathicityBonus:
         assert s_4 > s_0
 
     def test_mu_h_0_8_full_bonus(self):
-        # amphipathicity = clamp01(0.8/0.8) * 0.15 = 0.15
+        # amphipathicity = clamp01(0.8/0.8) * 0.14 = 0.14
         s_08 = activity_likeness_score(_feat(mu_h=0.8))
         s_10 = activity_likeness_score(_feat(mu_h=1.0))
         # Both give full bonus (capped)

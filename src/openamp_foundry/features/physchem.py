@@ -146,10 +146,20 @@ def max_windowed_hydrophobic_moment(
 ) -> float:
     """Maximum hydrophobic moment over any contiguous window of `window` residues.
 
-    For short sequences (len <= window), this equals the full-sequence mu_h.
-    For longer sequences the Eisenberg (1984) window=11 standard captures the best
-    amphipathic helical segment rather than averaging over the entire sequence,
-    which dilutes the amphipathicity signal for multi-segment peptides (>15 AA).
+    Returns a value in [0, ∞); NOT bounded at 1.0 — individual residue Eisenberg
+    values can be large for tightly packed hydrophobic windows.
+
+    For short sequences (len <= window), this equals the full-sequence mu_h because
+    only one window exists. For longer sequences, this captures the most concentrated
+    amphipathic helical segment (Eisenberg 1984, window=11) rather than averaging over
+    the entire chain, which dilutes the signal near non-helical termini or linkers.
+
+    NOTE: `max_windowed_hydrophobic_moment` is NOT guaranteed to be >= `hydrophobic_moment`
+    (the full-sequence value). For non-amphipathic or uniform sequences longer than the
+    window, the fixed-window value (normalised by `window`) can be LESS than the
+    full-sequence average (normalised by `len(sequence)`). `activity_likeness_score()`
+    handles this correctly via `max(hydrophobic_moment, max_hydrophobic_moment)`;
+    direct callers that read both keys from the feature dict must not assume otherwise.
 
     This value is stored as `max_hydrophobic_moment` in the feature dict and used by
     `activity_likeness_score()` to improve discrimination for longer helical AMPs such
