@@ -56,6 +56,18 @@ class TestEnsembleScore:
         result = ensemble_score(scores, {"activity": 1.0, "safety": 0.0})
         assert result == round(result, 4)
 
+    def test_missing_score_key_defaults_to_zero(self):
+        # weights has "safety" but scores doesn't — should default to 0.0, not raise KeyError
+        # weighted = (1.0*0.40 + 0.0*0.30) / (0.40+0.30) ≈ 0.5714
+        result = ensemble_score({"activity": 1.0}, {"activity": 0.40, "safety": 0.30})
+        assert abs(result - 0.5714) < 0.001
+
+    def test_extra_score_key_not_in_weights_is_ignored(self):
+        # boman_activity is in scores but not in weights — should not affect result
+        result_without = ensemble_score({"activity": 1.0}, {"activity": 1.0})
+        result_with = ensemble_score({"activity": 1.0, "boman_activity": 0.0}, {"activity": 1.0})
+        assert result_without == result_with
+
 
 class TestSelectionReasons:
     def _scores(

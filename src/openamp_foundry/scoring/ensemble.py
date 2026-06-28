@@ -3,7 +3,7 @@ from __future__ import annotations
 
 def ensemble_score(scores: dict[str, float], weights: dict[str, float]) -> float:
     total_weight = sum(weights.values()) or 1.0
-    value = sum(scores[name] * weight for name, weight in weights.items()) / total_weight
+    value = sum(scores.get(name, 0.0) * weight for name, weight in weights.items()) / total_weight
     return round(max(0.0, min(1.0, value)), 4)
 
 
