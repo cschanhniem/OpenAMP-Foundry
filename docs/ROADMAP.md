@@ -58,6 +58,7 @@ Implemented during the pre-wet-lab improvement loop (PRs #31–#54):
 
 ## v0.6.x — Scoring accuracy improvements (PRs #61–#72)
 
+- Trp-weighted aromatic bonus (1.5× Trp vs Phe/Tyr); safety abs() bug fix; AUROC 0.8164→0.8086 (PR #65)
 - Duplicate benchmark entry removed (REF-GIG-001 = REF-MAG-001); corrected AUROC 0.8086→0.8047 (PR #66)
 - Windowed hydrophobic moment (Eisenberg window=11) + anionic charge guard; AUROC 0.8047→0.8348 (PR #70)
 - Moment-oriented helix-wheel face analysis with per-face feature extraction (PR #71)
@@ -82,7 +83,7 @@ review (2026-06-28). Progress on these would materially raise breakthrough proba
 | Large-scale benchmark (≥ 500 AMPs vs composition-matched decoys, cluster-split) | Current AUROC 0.8420 measured on 43+44 demo set (n=87, CI₉₅: 0.76–0.91); may not generalise | Medium |
 | External predictor ensemble adapters (AMPScanner, AntiCP2, AMPlify, Macrel) | Independent second opinions on activity; required for scientific credibility | Medium |
 | True novelty check against APD3, DRAMP v3.0, dbAMP, UniProt | Current novelty scored against 45-sequence seed set only; may overestimate novelty | Small–Medium |
-| ~~AUPRC alongside AUROC~~ | ~~Better metric for class-imbalanced AMP datasets~~ | **Done** (PR #58) — pipeline AUPRC = 0.8627 |
+| ~~AUPRC alongside AUROC~~ | ~~Better metric for class-imbalanced AMP datasets~~ | **Done** (PR #58; updated PR #72) — pipeline AUPRC = 0.8627 |
 | Wet-lab result integration (active-learning round 2) | Required to move from 15–30% to 50%+ credible probability | Requires wet-lab |
 | Pre-registration of assay protocol before synthesis | Strengthens causal inference; reduces reporting bias | Small |
 | Public benchmark paper (replicable, cluster-split, open datasets) | Sets community standard; enables external validation | Large |
