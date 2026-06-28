@@ -290,6 +290,36 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output markdown report path.",
     )
 
+    synthesis_order = sub.add_parser(
+        "synthesis-order",
+        help=(
+            "Generate a vendor-ready synthesis order CSV and checklist from a panel CSV. "
+            "Runs pre-synthesis QC on every candidate and auto-fills N/C-term modifications, "
+            "purity spec, quantity, and special-handling notes."
+        ),
+    )
+    synthesis_order.add_argument(
+        "--panel-csv",
+        default="outputs/confident_panel.csv",
+        help="Panel CSV (candidate_id + sequence columns required).",
+    )
+    synthesis_order.add_argument(
+        "--out-csv",
+        default="outputs/synthesis_order.csv",
+        help="Output path for vendor-ready order CSV.",
+    )
+    synthesis_order.add_argument(
+        "--out-md",
+        default="outputs/synthesis_checklist.md",
+        help="Output path for synthesis checklist markdown.",
+    )
+    synthesis_order.add_argument(
+        "--quantity-mg",
+        type=float,
+        default=5.0,
+        help="Default order quantity in mg per peptide (default: 5.0). HIGH-difficulty peptides get 2×.",
+    )
+
     batch_pack = sub.add_parser(
         "batch-pack",
         help=(
@@ -365,6 +395,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "batch-pack":
         return _run_batch_pack(args)
+
+    if args.command == "synthesis-order":
+        return _run_synthesis_order(args)
 
     if args.command == "presynth-qc":
         return _run_presynth_qc(args)
@@ -626,6 +659,72 @@ def _run_generate_batch(args: argparse.Namespace) -> int:
             "Generated candidates are toy conservative-substitution variants. "
             "They have no demonstrated biological activity. "
             "Run 'rank' to score and filter them."
+        ),
+    }, indent=2))
+    return 0
+
+
+def _run_synthesis_order(args: argparse.Namespace) -> int:
+    import csv as _csv
+    from datetime import datetime, timezone
+    from openamp_foundry.features.physchem import compute_features
+    from openamp_foundry.qc.order_generator import (
+        generate_synthesis_order,
+        write_order_csv,
+        write_synthesis_checklist,
+    )
+
+    panel_path = Path(args.panel_csv)
+    if not panel_path.exists():
+        print(json.dumps({"status": "error", "message": f"File not found: {args.panel_csv}"}))
+        return 1
+
+    panel = []
+    with open(panel_path, newline="", encoding="utf-8") as f:
+        for row in _csv.DictReader(f):
+            panel.append(row)
+
+    mu_h_map = {}
+    for row in panel:
+        seq = row["sequence"].strip().upper()
+        feats = compute_features(seq)
+        mu_h_map[row["candidate_id"]] = feats.get("hydrophobic_moment", 0.0)
+
+    qty = args.quantity_mg
+    order_rows, qc_results = generate_synthesis_order(
+        panel,
+        mu_h_map=mu_h_map,
+        default_quantity_mg=qty,
+        high_difficulty_quantity_mg=qty * 2,
+    )
+
+    generated_at = datetime.now(timezone.utc).isoformat()
+    write_order_csv(order_rows, args.out_csv)
+    write_synthesis_checklist(
+        order_rows,
+        qc_results,
+        args.out_md,
+        generated_at=generated_at,
+        panel_csv=args.panel_csv,
+    )
+
+    n_acetyl = sum(1 for r in order_rows if r["n_modification"] == "Ac-")
+    n_amide = sum(1 for r in order_rows if r["c_modification"] == "NH2")
+    n_high = sum(1 for r in order_rows if r["synthesis_difficulty"] == "HIGH")
+    total_mg = sum(float(r["quantity_mg"]) for r in order_rows)
+
+    print(json.dumps({
+        "status": "ok",
+        "n_candidates": len(order_rows),
+        "n_n_terminal_acetylation": n_acetyl,
+        "n_c_terminal_amide": n_amide,
+        "n_high_difficulty": n_high,
+        "total_quantity_mg": total_mg,
+        "out_csv": args.out_csv,
+        "out_md": args.out_md,
+        "disclaimer": (
+            "This order is computationally generated. Human expert review required "
+            "before submitting to vendor. No antimicrobial activity has been demonstrated."
         ),
     }, indent=2))
     return 0

@@ -1,4 +1,4 @@
-.PHONY: demo test lint ci clean bench-leakage bench-baseline bench-hidden-active generate phase3 pilot validate-scoring validate-scoring-strict external-predict pilot-confident presynth-qc gold-standard diversity
+.PHONY: demo test lint ci clean bench-leakage bench-baseline bench-hidden-active generate phase3 pilot validate-scoring validate-scoring-strict external-predict pilot-confident presynth-qc gold-standard diversity synthesis-order
 
 PYTHON := $(shell [ -f .venv/bin/python ] && echo .venv/bin/python || echo python3)
 PYTEST  := $(shell [ -f .venv/bin/pytest ] && echo .venv/bin/pytest || echo pytest)
@@ -117,6 +117,13 @@ diversity:
 	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli diversity-check \
 		--panel-csv outputs/confident_panel.csv \
 		--out outputs/diversity_report.md
+
+synthesis-order:
+	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli synthesis-order \
+		--panel-csv outputs/confident_panel.csv \
+		--out-csv outputs/synthesis_order.csv \
+		--out-md outputs/synthesis_checklist.md \
+		--quantity-mg 5
 
 clean:
 	rm -rf outputs/*.jsonl outputs/*.md outputs/*.json outputs/evidence outputs/phase3_evidence .pytest_cache .ruff_cache
