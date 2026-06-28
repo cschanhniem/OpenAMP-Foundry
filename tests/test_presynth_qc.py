@@ -834,6 +834,17 @@ class TestProlineRichMediaFlag:
             qc = check_sequence("s9", seq)
             assert any("PROLINE_RICH" in f for f in qc.flags), f"missing flag for {seq}"
 
+    def test_seed009_var033_gets_met_and_proline_flags_simultaneously(self):
+        # VAR_033 (RRLPRPGYMPRP) is the only SEED-009 pilot with Met at position 9.
+        # Both MET×1 (Nle recommendation) and PROLINE_RICH_INTRACELLULAR must fire together.
+        # Regression guard for WET_LAB_HANDOFF correction in PR #106.
+        qc = check_sequence("SEED-009_VAR_033", "RRLPRPGYMPRP")
+        flag_texts = " ".join(qc.flags)
+        assert "MET" in flag_texts, "VAR_033 must carry Met oxidation flag"
+        assert "Nle" in flag_texts, "VAR_033 Met flag must recommend Nle substitution"
+        assert "PROLINE_RICH" in flag_texts, "VAR_033 must carry PROLINE_RICH_INTRACELLULAR flag"
+        assert qc.methionine_count == 1
+
 
 # ---------------------------------------------------------------------------
 # LONG_PEPTIDE flag (> 30 AA)
