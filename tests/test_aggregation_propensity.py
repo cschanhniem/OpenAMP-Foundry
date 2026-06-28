@@ -26,10 +26,25 @@ class TestAggregationPropensityUnit:
         # beta_density: only V = 1/6 ≈ 0.167 < 0.20 → beta_risk=0
         assert aggregation_propensity("KKVLLK") == 0.0
 
-    def test_run_of_4_triggers_risk(self):
-        # KVILL interior run of 4: run_risk = (4 - 3) / 5 = 0.2; beta_risk from V/I
+    def test_run_of_4_triggers_run_risk(self):
+        # "KKVILL": full-sequence run of 4 (VILL at pos 2-5) → run_risk = (4-3)/5 = 0.20
+        # Combined with beta component → total > 0.14 (run_risk alone = 0.7 * 0.20 = 0.14)
         score = aggregation_propensity("KKVILL")
-        assert score > 0.0
+        assert score > 0.14
+
+    def test_run_of_4_boundary_exact_run_component(self):
+        # "KVLLLK": full-sequence run exactly 4 (VLLL) → run_risk = (4-3)/5 = 0.20
+        # beta_density: V(1)/6 = 0.167 < 0.20 → beta_risk = 0
+        # Total = 0.7 * 0.20 = 0.14
+        score = aggregation_propensity("KVLLLK")
+        assert score == pytest.approx(0.14, abs=0.01)
+
+    def test_run_of_8_saturates_at_max_run_risk(self):
+        # "KVLLLLLLLK": run of 8 (VLLLLLLL) → run_risk = (8-3)/5 = 1.0 (saturated)
+        # beta_density: V(1)/10 = 0.10 < 0.20 → beta_risk = 0
+        # Total = 0.7 * 1.0 = 0.70
+        score = aggregation_propensity("KVLLLLLLLK")
+        assert score == pytest.approx(0.70, abs=0.01)
 
     def test_long_hydrophobic_run_high_risk(self):
         # Run of 8 interior hydrophobics → max run_risk (capped at 1.0)

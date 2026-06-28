@@ -190,34 +190,38 @@ def aggregation_propensity(sequence: str) -> float:
     """Heuristic aggregation propensity for short synthetic peptides [0, 1].
 
     Two-component model:
-    1. Interior hydrophobic run length: consecutive residues from {V,I,L,M,F,W}
-       drive self-association during SPPS, solubilisation, and assay buffers.
-       Risk onset at run ≥ 4 (same threshold as QC HYDROPHOBIC_RUN_RE flag).
-    2. Beta-branched residue density: Val, Ile, Thr promote β-strand over α-helix;
-       high density → intermolecular β-sheet aggregation in concentrated solutions.
+    1. Hydrophobic run length: consecutive residues from {V,I,L,M,F,W} ≥ 4 drive
+       self-association during SPPS, solubilisation, and assay buffers.
+       Risk onset at run ≥ 4 (same threshold as QC HYDROPHOBIC_RUN_RE flag; same
+       residue set AGG_HYDROPHOBIC). Ramp: 0.0 at run=4 → 1.0 at run ≥ 8.
+    2. Beta-branched residue density (Val, Ile, Thr) > 20% promotes β-strand over
+       α-helix and intermolecular β-sheet aggregation in concentrated solutions.
 
-    Returns 0.0 (no risk) to 1.0 (severe aggregation risk).
+    Limitation: Ala-rich sequences score 0.0 despite documented on-resin aggregation
+    issues (Sarin et al. 1984; Tam et al. 1988). Ala aggregation arises from apolar
+    solvation collapse rather than the hydrophobic-run / β-branched mechanisms here.
 
     References:
     - Quittot et al. (2017) Protein Sci 26:720-735 (hydrophobic run aggregation)
     - Wurth et al. (2006) J Mol Biol 355:524-536 (Val/Ile beta-strand aggregation)
+
+    Returns 0.0 (no risk) to 1.0 (severe aggregation risk).
     """
     if not sequence:
         return 0.0
     n = len(sequence)
 
-    # Component 1: longest interior hydrophobic run (run ≥4 → risk starts)
-    interior = sequence[1:-1] if n > 2 else sequence
+    # Component 1: longest hydrophobic run across full sequence (mirrors QC regex)
     max_run = 0
     current_run = 0
-    for aa in interior:
+    for aa in sequence:
         if aa in AGG_HYDROPHOBIC:
             current_run += 1
             max_run = max(max_run, current_run)
         else:
             current_run = 0
-    # Scale: 0 at run < 4, 1.0 at run ≥ 9 (smooth ramp over 5 residues)
-    run_risk = min(1.0, max(0.0, (max_run - 3) / 5.0)) if max_run >= 4 else 0.0
+    # Ramp: 0.0 at run < 4, 0.20 at run=4, …, 1.0 at run ≥ 8
+    run_risk = min(1.0, max(0.0, (max_run - 3) / 5.0))
 
     # Component 2: beta-branched residue density (Val, Ile, Thr)
     beta_branched = {"V", "I", "T"}
