@@ -23,7 +23,7 @@ Key improvements since last assessment (PRs #39–#42):
   high μH — the mechanistic prerequisite for carpet/pore-forming activity. Better candidate
   selection within each family.
 - **SEED-007 Bombolitin II (PR #41):** Novel bumblebee-venom scaffold (IKITTMLKKLG, *Bombus
-  terrestris*). Novelty 0.615, serum stability 0.636. Different mechanism from SEED-006 wasp
+  pennsylvanicus*). Novelty 0.615, serum stability 0.636. Different mechanism from SEED-006 wasp
   mastoparan — fills the "non-helical bee-venom AMP" gap in the panel.
 - **SEED-008 Puroindoline-a (PR #41):** Trp-rich wheat endosperm scaffold (FPVTWRWWKWWKG).
   Novelty 0.667 — **highest novelty of all 8 seeds**, exceeding SEED-006's 0.643 ceiling. Trp-
@@ -58,11 +58,21 @@ To be publishable as a significant advance in AMP discovery, a candidate must sa
 **Combined probability after PRs #31–38:** ~16–35%  
 **Combined probability after PRs #39–42 (current):** **~22–42%**
 
-**Stage 1 (MIC) improvement rationale (PRs #41):** Both Bombolitin II and puroindoline-a
-are literature-proven antimicrobial scaffolds. SEED-007 parent (IKITTMLKKLG) shows MIC 4–16
-μg/mL vs *S. aureus* and *E. coli* in Argiolas & Pisano (1985). SEED-008 parent (puroindoline-a
-full-length) shows antifungal and antibacterial activity in Dubreil et al. (1997). Adding 4
-candidates from each family at max_per_seed=2–4 improves the panel's expected hit rate.
+**Methodology note:** Combined probability is computed as P(≥1 from 20) under an independent-candidate
+Poisson model: P_individual = P(S0) × P(S1) × P(S2) × P(S3) × P(S4). Using gate midpoints
+(88% × 65% × 45% × 35% × 30% ≈ 2.7% per candidate), P(≥1 from 20) ≈ 1 − 0.973²⁰ ≈ 42% (upper
+bound). Using gate lower bounds (88% × 60% × 38% × 28% × 25% ≈ 1.4%), P(≥1) ≈ 22% (lower bound).
+The per-family estimates in the Highest-Probability Bets table are *per-candidate* values, not
+per-family values — each refers to the probability that a single nominee from that seed family
+passes all gates.
+
+**Stage 1 (MIC) improvement rationale (PR #41):** Both Bombolitin II and puroindoline-a
+are literature-proven antimicrobial scaffolds. SEED-007 (IKITTMLKKLG, from *Bombus pennsylvanicus*
+bumblebee venom; Argiolas & Pisano, J Biol Chem 1985) belongs to the bombolitin family with
+documented antimicrobial activity (Bozelli et al. 2017, BBA-Biomembranes); the 1985 paper
+characterised mast cell degranulation, while MIC data appeared in later work. SEED-008 parent
+(puroindoline-a full-length) shows antifungal and antibacterial activity in Dubreil et al. (1997).
+Adding up to 4 candidates from each family improves the panel's expected hit rate.
 
 **Serum stability improvement rationale (PR #42 + existing scoring):** The new QC Wave 2 guidance
 provides specific D-amino substitution positions for every candidate with interior trypsin sites.
@@ -111,8 +121,9 @@ Basis:
 - Pipeline AUROC = 0.8037 (bootstrap CI₉₅: 0.71–0.89) vs composition-matched UniProt decoys
 - Recall@20 = 43% on internal benchmark (positives recovered in top 20 ranked candidates)
 - SEED-003 family (up to 4/20): RRWQWRMKKLG is curated known AMP → variants ~65–75% hit rate
-- SEED-007 family (up to 4/20): Bombolitin II MIC 4–16 μg/mL vs ATCC strains (Argiolas 1985)
-  → variants expected ~55–65% hit rate
+- SEED-007 family (up to 4/20): Bombolitin II (*Bombus pennsylvanicus* bumblebee venom) with
+  antimicrobial activity documented in Bozelli et al. (2017) BBA-Biomembranes and subsequent
+  work → variants expected ~55–65% hit rate
 - SEED-008 family (up to 4/20): Puroindoline-a antimicrobial domain → variants ~45–55% hit rate
   (antibacterial and antifungal data; Trp-mediated disruption is potent but mechanism-specific)
 - SEED-006 family (Mastoparan-X derivatives): ~60–70% hit rate (close to parent MIC)
@@ -296,8 +307,11 @@ Despite the probability gap, the pipeline has done the following correctly:
 
 ## Highest-Probability Bets in the Current Panel
 
-| Rank | Candidate family | Exemplar | Stability | Novelty | Est P(all gates) | Why bet here |
-|------|-----------------|----------|-----------|---------|-----------------|--------------|
+*P(all gates) below is per-candidate (single nominee), not per-family. With 2–4 candidates per seed,
+P(≥1 from family) ≈ 1 − (1 − P_candidate)^n_slots — see Methodology note above.*
+
+| Rank | Candidate family | Exemplar | Stability | Novelty | Est P(all gates) per candidate | Why bet here |
+|------|-----------------|----------|-----------|---------|-------------------------------|--------------|
 | 1 | SEED-004 | ALPFIGRVLSGIL | **0.85** | 0.154 | ~18–28% | Best serum stability; no K/R interior sites |
 | 2 | SEED-008 | FPVTWRWWKWWKG vars | 0.385 | **0.667** | ~15–25% | Highest novelty + proven Trp mechanism |
 | 3 | SEED-006 | INWKGIAAMAKKLL vars | 0.667 | 0.643 | ~14–22% | Balanced stability+novelty; mastoparan data |
@@ -359,7 +373,8 @@ This assessment is based on:
 - Published serum stability data for short cationic peptides (Hilpert et al. 2006)  
 - D-amino acid t½ extension data (Wade et al. 1990, PNAS)  
 - Database cross-reference with APD3 (v3.0) and DRAMP (v3.0)  
-- Bombolitin II: Argiolas & Pisano (1985), J Biol Chem 260(3):1437–1444  
+- Bombolitin II isolation: Argiolas & Pisano (1985), J Biol Chem 260(3):1437–1444 [mast cell degranulation; species *B. pennsylvanicus*]  
+- Bombolitin II antimicrobial activity: Bozelli et al. (2017), BBA-Biomembranes  
 - Puroindoline-a: Dubreil et al. (1997), Plant J 11(5):1021–1035; Blochet et al. (1993), FEBS Lett
 
 **Key uncertainty:** The pipeline has not been prospectively validated — these are predicted,
