@@ -109,6 +109,13 @@ class TestSelectivityProxyCombined:
     def test_return_type_is_float(self):
         assert isinstance(selectivity_proxy(5.0, 0.1), float)
 
+    def test_exact_threshold_boundary_is_not_flagged(self):
+        # selectivity_proxy(1.0, 0.75) = 0.6 × 0.5 + 0.4 × 0.5 = 0.50 exactly.
+        # The predicate is strict `< 0.5`, so 0.50 must NOT trigger HIGH_CYTOTOX_RISK.
+        p = selectivity_proxy(1.0, 0.75)
+        assert p == pytest.approx(0.50, abs=1e-4)
+        assert not (p < 0.5), "Boundary value 0.50 must NOT trigger cytotox risk (predicate is strict <)"
+
     def test_output_clipped_to_unit_interval(self):
         # Cannot exceed 1.0 or go below 0.0 for any input
         for charge in [-5, 0, 5, 15]:

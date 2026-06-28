@@ -8,6 +8,10 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from openamp_foundry.features.physchem import net_charge_at_ph74 as _charge_at_ph74
+from openamp_foundry.features.physchem import selectivity_proxy as _sel_proxy
+from openamp_foundry.scoring.boman import gravy_score as _gravy
+
 
 # Trypsin cleaves after K or R (except when followed by P).
 _TRYPSIN_RE = re.compile(r"[KR](?!P)(?=.)")
@@ -124,8 +128,9 @@ class SynthQC:
     mu_h: float = 0.0
     hemolysis_start_conc: str = ""     # suggested starting concentration for hemolysis assay
 
-    # Mammalian cytotoxicity risk (selectivity proxy < 0.5)
-    selectivity_proxy: float = 1.0
+    # Mammalian cytotoxicity risk (selectivity proxy < 0.5).
+    # Default 0.0 = maximally conservative (assume cytotoxic until check_sequence() fills this).
+    selectivity_proxy: float = 0.0
     cytotox_risk: bool = False
 
     # C-terminal modification
@@ -261,12 +266,14 @@ def check_sequence(candidate_id: str, seq: str, mu_h: float = 0.0) -> SynthQC:
         qc.hemolysis_start_conc = f"Start at MIC; μH={mu_h:.2f} low risk"
 
     # Selectivity proxy (cytotoxicity risk).
-    # Computed from net charge and GRAVY to detect sequences likely to fail mammalian
-    # cytotoxicity assays. Flagged when proxy < 0.5 (high charge OR high hydrophobicity).
+    # Uses the same net_charge_at_ph74 model as compute_features() to guarantee that the
+    # selectivity_proxy value here matches the one stored in the candidate feature dict
+    # (side-chain only: K, R, H at pH 7.4 with pKa 6.5; D, E). The presynth_check
+    # _net_charge_at_ph() model includes terminal groups/Cys/Tyr, which produces a
+    # systematic offset (~0.2) and would cause divergent cytotox verdicts for the same
+    # sequence when comparing feature dicts to QC reports.
     # Literature: Dathe & Wieprecht (1999) BBA; Shai (2002) BBA; Chen et al. (2005) JBC.
-    from openamp_foundry.features.physchem import selectivity_proxy as _sel_proxy
-    from openamp_foundry.scoring.boman import gravy_score as _gravy
-    qc.selectivity_proxy = _sel_proxy(qc.charge_ph74, _gravy(seq))
+    qc.selectivity_proxy = _sel_proxy(_charge_at_ph74(seq), _gravy(seq))
     qc.cytotox_risk = qc.selectivity_proxy < 0.5
 
     # C-terminal amidation recommendation.

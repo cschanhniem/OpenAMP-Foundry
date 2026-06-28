@@ -145,7 +145,7 @@ def selectivity_proxy(charge: float, gravy: float) -> float:
     Based on Dathe & Wieprecht (1999) Biochim Biophys Acta 1462:71-87 (GRAVY/cytotox
     correlation) and Shai (2002) Biochim Biophys Acta 1462:55-70 (charge selectivity).
 
-    Selectivity optimum: net charge +3 to +7, GRAVY ≤ 0.5.
+    Selectivity optimum: net charge +2 to +7, GRAVY ≤ 0.5.
 
     - Charge < +2: insufficient electrostatic attraction to anionic bacterial membranes
       (phosphatidylglycerol, cardiolipin) → reduced bacterial killing, not cytotoxic.
