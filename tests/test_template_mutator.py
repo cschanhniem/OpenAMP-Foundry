@@ -231,3 +231,46 @@ class TestGenerateCandidatePool:
         seed2_items = [p for p in pool if p["id"].startswith("SEED-002")]
         assert len(seed1_items) > 0
         assert len(seed2_items) > 0
+
+
+MASTOPARAN_X = "INWKGIAAMAKKLL"  # SEED-006: wasp venom helical AMP, Yashida 1990
+
+
+class TestSeed006MastoparanX:
+    """Validate SEED-006 (Mastoparan-X) generates structurally valid variants."""
+
+    def test_mastoparan_x_generates_variants(self):
+        pool = generate_candidate_pool([MASTOPARAN_X], ["SEED-006"])
+        assert len(pool) > 0
+
+    def test_seed_006_source_field(self):
+        pool = generate_candidate_pool([MASTOPARAN_X], ["SEED-006"])
+        for item in pool:
+            assert item["source"] == "template_mutation_from_SEED-006"
+
+    def test_seed_006_ids_have_correct_prefix(self):
+        pool = generate_candidate_pool([MASTOPARAN_X], ["SEED-006"])
+        for item in pool:
+            assert item["id"].startswith("SEED-006_VAR_")
+
+    def test_seed_006_variants_same_length(self):
+        pool = generate_candidate_pool([MASTOPARAN_X], ["SEED-006"])
+        for item in pool:
+            assert len(item["sequence"]) == len(MASTOPARAN_X)
+
+    def test_seed_006_seed_not_in_pool(self):
+        pool = generate_candidate_pool([MASTOPARAN_X], ["SEED-006"])
+        seqs = {item["sequence"] for item in pool}
+        assert MASTOPARAN_X not in seqs, "Seed itself must not appear in its variant pool"
+
+    def test_six_seed_pool_larger_than_five(self):
+        five_seeds = [
+            "KWKLFKKIGAVLKVL", "GIGKFLHSAKKFGKAFVGEIMNS", "RRWQWRMKKLG",
+            "FLPLIGRVLSGIL", "KRLFKKIGSALKFL",
+        ]
+        five_ids = ["SEED-001", "SEED-002", "SEED-003", "SEED-004", "SEED-005"]
+        six_seeds = five_seeds + [MASTOPARAN_X]
+        six_ids = five_ids + ["SEED-006"]
+        pool5 = generate_candidate_pool(five_seeds, five_ids, rng_seed=2024)
+        pool6 = generate_candidate_pool(six_seeds, six_ids, rng_seed=2024)
+        assert len(pool6) > len(pool5), "6-seed pool must be larger than 5-seed pool"
