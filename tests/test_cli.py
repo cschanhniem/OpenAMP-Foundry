@@ -16,9 +16,9 @@ PANEL_CSV_ROW1 = "1,SEED-009_VAR_033,RRLPRPGYMPRP,12,SEED-009,0.8073,0.6385,0.59
 PANEL_CSV_ROW2 = "2,SEED-007_VAR_009,IKFTTMLRKLG,11,SEED-007,0.8493,0.6968,0.4751,0.2217,1.0,0.9818,0.7273,0.6364,1.0,0.901\n"
 
 
-def _write_panel(tmp_path, rows=2):
+def _write_panel(tmp_path, two_rows: bool = True):
     panel = tmp_path / "panel.csv"
-    rows_content = (PANEL_CSV_ROW1 + PANEL_CSV_ROW2) if rows == 2 else PANEL_CSV_ROW1
+    rows_content = (PANEL_CSV_ROW1 + PANEL_CSV_ROW2) if two_rows else PANEL_CSV_ROW1
     panel.write_text(PANEL_CSV_HEADER + rows_content, encoding="utf-8")
     return str(panel)
 
@@ -248,16 +248,11 @@ def test_synthesis_order_missing_columns_returns_error(tmp_path, capsys):
 
 
 class TestGoldStandard:
-    def test_gold_standard_returns_zero(self, tmp_path, capsys):
-        panel_csv = _write_panel(tmp_path)
-        out = str(tmp_path / "calibration.md")
-        rc = main(["gold-standard", "--panel-csv", panel_csv, "--out", out, "--config", "configs/pipeline.yaml"])
-        assert rc == 0
-
     def test_gold_standard_creates_output_file(self, tmp_path, capsys):
         panel_csv = _write_panel(tmp_path)
         out = tmp_path / "calibration.md"
-        main(["gold-standard", "--panel-csv", panel_csv, "--out", str(out), "--config", "configs/pipeline.yaml"])
+        rc = main(["gold-standard", "--panel-csv", panel_csv, "--out", str(out), "--config", "configs/pipeline.yaml"])
+        assert rc == 0
         assert out.exists()
 
     def test_gold_standard_output_has_panel_range(self, tmp_path, capsys):
@@ -277,7 +272,7 @@ class TestGoldStandard:
         assert data["status"] == "ok"
         assert "panel_range" in data
         assert "panel_mean" in data
-        assert data["n_gold_scored"] >= 4
+        assert data["n_gold_scored"] == 6  # 7 entries − Polymyxin-B1 (non-standard AA)
 
     def test_gold_standard_includes_disclaimer(self, tmp_path):
         panel_csv = _write_panel(tmp_path)
@@ -328,7 +323,7 @@ class TestExternalPredict:
         assert "SEED-009_VAR_033" in text
 
     def test_external_predict_stdout_n_candidates(self, tmp_path, capsys):
-        panel_csv = _write_panel(tmp_path, rows=2)
+        panel_csv = _write_panel(tmp_path)
         main([
             "external-predict",
             "--pilot-csv", panel_csv,
@@ -393,3 +388,5 @@ class TestDiversityCheck:
         assert out.exists()
         text = out.read_text()
         assert "Diversity" in text
+        assert "SEED-009_VAR_033" in text
+        assert "SEED-007_VAR_009" in text
