@@ -59,18 +59,23 @@ _TOOLS = [
         ),
     },
     {
-        "name": "Macrel (command-line)",
+        "name": "Macrel (web server preferred)",
         "url": "https://macrel.readthedocs.io/",
         "method": "Random Forest on 22 physicochemical + 8 predicted structural features; trained on DRAMP + UniProt",
         "input": (
-            "pip install macrel; "
-            "macrel peptides -f pilot_panel.fasta --output macrel_out/ --log-file macrel.log"
+            "Submit FASTA to the Macrel web server at https://macrel.big-data-biology.org/ "
+            "OR use the command-line: pip install macrel; "
+            "macrel peptides -f pilot_panel.fasta --output macrel_out/ --log-file macrel.log --keep-negatives"
         ),
-        "positive_label": "AMP",
+        "positive_label": "AMP (is_AMP = True in output)",
         "note": (
-            "Command-line tool — requires Python ≥ 3.7 and pip install. "
-            "Trained on DRAMP v2 (2019 version); reports AMP probability + hemolytic probability. "
-            "The hemolytic probability provides an independent selectivity estimate."
+            "IMPORTANT — Known issue with Macrel v1.6.0 local install: the ONNX model ships "
+            "log-softmax scores (range [-1, 0]) rather than probabilities, but the code "
+            "compares against 0.5, so ALL sequences are classified as NAMP locally (including "
+            "canonical AMPs like magainin-2 and LL-37). Use the official Macrel web server "
+            "(https://macrel.big-data-biology.org/) for reliable predictions, or check the "
+            "installed version and verify scores are in [0, 1] before trusting local results. "
+            "Trained on DRAMP v2 (2019 metagenome AMPs); also reports hemolytic probability."
         ),
     },
 ]
