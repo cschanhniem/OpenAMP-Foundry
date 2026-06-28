@@ -406,9 +406,14 @@ Pro ring conformational constraint (Vanhoof *et al.* 1995, *FASEB J* 9:736–744
 Pro-rich AMPs show > 2 h stability in 50% human serum (Otvos & Cudic 2002, *Curr Pharm Design*).
 
 **Synthesis guidance:**
-- No Met, no Cys → standard Fmoc SPPS.
-- Pro-rich sequences (50% Pro in some variants): use extended coupling times or double-coupling
-  at Pro positions; pseudoproline (Ψ-Pro) dipeptides at Pro-Ser/Thr junctions if yield is low.
+- No Cys in any variant → no disulfide risk.
+- **VAR_033 (RRLPRPGYMPRP) contains Met at position 9** — same oxidation risk as SEED-007:
+  request Nle (norleucine) substitution for oxidation-resistant synthesis; mandatory HPLC purity
+  at receipt; store at −80°C under inert atmosphere. The presynth QC report for VAR_033 will
+  carry both `MET×1` and `PROLINE_RICH_INTRACELLULAR` flags simultaneously.
+- VAR_027, VAR_017, VAR_039: No Met, no Cys → standard Fmoc SPPS.
+- Pro-rich sequences (33–42% Pro): use extended coupling times or double-coupling at Pro
+  positions; pseudoproline (Ψ-Pro) dipeptides at Pro-Ser/Thr junctions if yield is low.
 - C-terminal amidation optional (Pro-rich AMPs rely less on C-terminal charge).
 
 **Assay interpretation:**
