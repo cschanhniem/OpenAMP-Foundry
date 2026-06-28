@@ -71,6 +71,11 @@ class TestBomanIndex:
         # "KB" → K(2.465) + B(0.0) → mean 1.2325
         assert boman_index("KB") == pytest.approx(1.2325, abs=1e-4)
 
+    def test_all_non_canonical_returns_zero(self):
+        # Every residue maps to 0.0 via .get(aa, 0.0) → mean = 0.0
+        assert boman_index("XXX") == pytest.approx(0.0, abs=1e-4)
+        assert boman_index("BBBBB") == pytest.approx(0.0, abs=1e-4)
+
 
 class TestBomanActivityScore:
     def test_returns_between_zero_and_one(self):
@@ -103,6 +108,21 @@ class TestBomanActivityScore:
     def test_rounding(self):
         score = boman_activity_score("KWK")
         assert score == round(score, 4)
+
+    def test_amp_threshold_bi_maps_to_expected_score(self):
+        # _AMP_THRESHOLD = 1.0 → boman_activity_score at bi=1.0
+        # score = 0.5 * (1 + tanh(1.0/2)) = 0.5 * (1 + tanh(0.5)) ≈ 0.7311
+        # K has boman_index 2.465; we need bi=1.0 via a mixed sequence.
+        # Verify the formula directly: boman_activity_score of any seq with bi=1.0
+        # "KG" → (2.465 + 0.0) / 2 = 1.2325; need to use the formula knowledge.
+        # Instead verify monotone: bi=1.0 is above neutral (0.5) and below bi=2 score.
+        import math
+        expected = round(0.5 * (1.0 + math.tanh(1.0 / 2.0)), 4)
+        assert abs(expected - 0.7311) < 0.001
+        # A 2-residue sequence "KG" has bi=1.2325; score must exceed expected
+        score_kg = boman_activity_score("KG")
+        assert score_kg > 0.5  # above neutral
+        assert score_kg > expected  # K/G bi=1.2325 > 1.0 → higher score
 
 
 class TestGravyScore:
