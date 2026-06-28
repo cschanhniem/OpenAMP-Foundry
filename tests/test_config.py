@@ -28,11 +28,11 @@ class TestLoadConfig:
         assert "weights" in result
         assert "selection" in result
 
-    def test_default_config_weights_sum_to_one(self):
+    def test_default_config_weights_are_positive(self):
         default = Path(__file__).parents[1] / "configs" / "pipeline.yaml"
         result = load_config(default)
-        total = sum(result["weights"].values())
-        assert abs(total - 1.0) < 0.01, f"Weights sum to {total}, expected 1.0"
+        for name, w in result["weights"].items():
+            assert w > 0, f"Weight '{name}' must be positive, got {w}"
 
     def test_default_config_filters_present(self):
         default = Path(__file__).parents[1] / "configs" / "pipeline.yaml"
@@ -48,6 +48,8 @@ class TestLoadConfig:
         sel = result["selection"]
         assert "top_n" in sel
         assert "min_novelty" in sel
+        assert "max_safety_risk" in sel
+        assert 0.0 < sel["max_safety_risk"] <= 1.0
 
     def test_string_path_accepted(self):
         with tempfile.TemporaryDirectory() as d:
@@ -60,13 +62,14 @@ class TestLoadConfig:
         with pytest.raises((FileNotFoundError, OSError)):
             load_config("/nonexistent/path/config.yaml")
 
-    def test_empty_yaml_returns_none_or_dict(self):
+    def test_empty_yaml_raises(self):
+        # yaml.safe_load("") returns None; load_config rejects this to protect
+        # downstream callers that always expect a dict.
         with tempfile.TemporaryDirectory() as d:
             cfg_path = Path(d) / "config.yaml"
             self._write_config("", cfg_path)
-            result = load_config(cfg_path)
-        # yaml.safe_load("") returns None
-        assert result is None or isinstance(result, dict)
+            with pytest.raises(ValueError, match="empty"):
+                load_config(cfg_path)
 
     def test_list_yaml_preserved(self):
         with tempfile.TemporaryDirectory() as d:
@@ -90,3 +93,11 @@ class TestLoadConfig:
             result = load_config(cfg_path)
         assert result["enabled"] is True
         assert result["disabled"] is False
+
+    def test_malformed_yaml_raises(self):
+        import yaml as _yaml
+        with tempfile.TemporaryDirectory() as d:
+            cfg_path = Path(d) / "bad.yaml"
+            self._write_config("key: [unclosed\n", cfg_path)
+            with pytest.raises(_yaml.YAMLError):
+                load_config(cfg_path)

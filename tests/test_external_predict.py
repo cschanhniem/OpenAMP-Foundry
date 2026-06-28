@@ -49,7 +49,7 @@ class TestWritePilotFasta:
             path = Path(d) / "pilot.fasta"
             write_pilot_fasta(_PANEL, path)
             lines = path.read_text().splitlines()
-        header_lines = [l for l in lines if l.startswith(">")]
+        header_lines = [line for line in lines if line.startswith(">")]
         assert "rank=1" in header_lines[0]
 
     def test_header_contains_seed(self):
@@ -88,6 +88,18 @@ class TestWritePilotFasta:
             write_pilot_fasta(minimal, path)
             content = path.read_text()
         assert "KWKLF" in content
+
+    def test_empty_sequence_in_candidate_writes_blank_body_line(self):
+        # write_pilot_fasta writes an empty sequence line for candidates with seq="".
+        # External predictor tools may reject or misparse this — callers should
+        # validate sequences before calling write_pilot_fasta.
+        panel_with_empty = [{"candidate_id": "EMPTY", "sequence": "", "pilot_rank": 1}]
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "pilot.fasta"
+            write_pilot_fasta(panel_with_empty, path)
+            lines = path.read_text().splitlines()
+        assert lines[0].startswith(">EMPTY")
+        assert lines[1] == ""  # blank body line — documents the current contract
 
 
 class TestWriteExternalPredictChecklist:
@@ -191,7 +203,7 @@ class TestWriteExternalPredictChecklist:
             out = Path(d) / "checklist.md"
             write_external_predict_checklist(_PANEL, "pilot.fasta", out)
             content = out.read_text()
-        assert "2" in content and ("tool" in content.lower() or "≥2" in content)
+        assert "≥2" in content or "2/3" in content
 
 
 class TestWriteConfidentPanel:
@@ -247,3 +259,17 @@ class TestWriteConfidentPanel:
             result = write_confident_panel(_PANEL, ["SEED-001_VAR_001"], out)
         assert isinstance(result, list)
         assert isinstance(result[0], dict)
+
+    def test_output_order_follows_panel_not_keep_ids(self):
+        # keep_ids is converted to a set internally; output order is determined
+        # by the original panel order, NOT the order of keep_ids.
+        # This documents the current contract so any future reordering is explicit.
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / "confident"
+            result = write_confident_panel(
+                _PANEL,
+                ["SEED-003_VAR_003", "SEED-001_VAR_001"],  # reversed from panel order
+                out,
+            )
+        assert result[0]["candidate_id"] == "SEED-001_VAR_001"  # panel order wins
+        assert result[1]["candidate_id"] == "SEED-003_VAR_003"
