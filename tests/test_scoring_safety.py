@@ -114,7 +114,7 @@ class TestHydrophobicFractionPenalty:
 
 class TestChargeDensityPenalty:
     def test_charge_density_at_threshold_no_penalty(self):
-        # |cd| exactly 0.55 → no penalty (condition is > 0.55)
+        # cd exactly 0.55 → no penalty (condition is > 0.55; abs() removed)
         assert safety_score(_feat(charge_density=0.55)) == 1.0
 
     def test_negative_charge_density_no_hemolysis_penalty(self):
