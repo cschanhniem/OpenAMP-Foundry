@@ -69,9 +69,9 @@ class TestRandomRecallAtK:
         assert abs(result - 0.1) < 0.001, f"Expected 0.1, got {result}"
 
     def test_random_recall_real_benchmark_scale(self):
-        # 44 AMPs, 88 total candidates, k=8 → E[recall@8] = 8/88 ≈ 0.0909
-        result = random_recall_at_k(n_candidates=88, n_positives=44, k=8)
-        assert abs(result - 8 / 88) < 0.001, f"Expected {8/88:.4f}, got {result}"
+        # 43 AMPs + 44 background = 87 total; k=8 → E[recall@8] = 8/87 ≈ 0.0920
+        result = random_recall_at_k(n_candidates=87, n_positives=43, k=8)
+        assert abs(result - 8 / 87) < 0.001, f"Expected {8/87:.4f}, got {result}"
 
     def test_zero_candidates_returns_zero(self):
         assert random_recall_at_k(0, 2, 2) == 0.0
