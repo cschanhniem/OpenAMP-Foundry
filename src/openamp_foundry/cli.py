@@ -483,12 +483,21 @@ def _run_pilot_panel(args: argparse.Namespace) -> int:
 
     candidates = []
     with open(ranked_path, encoding="utf-8") as f:
-        for line in f:
+        for line_num, line in enumerate(f, start=1):
             line = line.strip()
-            if line:
+            if not line:
+                continue
+            try:
                 row = _json.loads(line)
-                if row.get("selected"):
-                    candidates.append(row)
+            except _json.JSONDecodeError as exc:
+                print(_json.dumps({
+                    "status": "error",
+                    "message": f"Malformed JSON on line {line_num} of {args.ranked}: {exc}",
+                    "line_preview": line[:120],
+                }))
+                return 1
+            if row.get("selected"):
+                candidates.append(row)
 
     panel = select_pilot_panel(
         candidates,
@@ -538,8 +547,12 @@ def _run_validate_scoring(args: argparse.Namespace) -> int:
         write_json(args.out, result)
     summary = {
         "status": "ok",
+        "benchmark_type": result.get("benchmark_type"),
+        "n_positives": result.get("n_positives"),
+        "n_negatives": result.get("n_negatives"),
         "auroc": result["auroc"],
         "auroc_above_random": result["auroc_above_random"],
+        "auprc": result.get("auprc"),
         "recall_at_10": result.get("recall_at_10"),
         "recall_at_20": result.get("recall_at_20"),
         "recall_at_43": result.get("recall_at_43"),
@@ -697,7 +710,17 @@ def _run_synthesis_order(args: argparse.Namespace) -> int:
 
     panel = []
     with open(panel_path, newline="", encoding="utf-8") as f:
-        for row in _csv.DictReader(f):
+        reader = _csv.DictReader(f)
+        required_cols = {"candidate_id", "sequence"}
+        if not required_cols.issubset(set(reader.fieldnames or [])):
+            missing = required_cols - set(reader.fieldnames or [])
+            print(json.dumps({
+                "status": "error",
+                "message": f"Panel CSV missing required columns: {sorted(missing)}",
+                "found_columns": list(reader.fieldnames or []),
+            }))
+            return 1
+        for row in reader:
             panel.append(row)
 
     mu_h_map = {}

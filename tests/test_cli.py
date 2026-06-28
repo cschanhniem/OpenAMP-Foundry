@@ -162,3 +162,69 @@ def test_presynth_qc_command_contains_summary_table(tmp_path):
     text = out_path.read_text()
     assert "Summary Table" in text
     assert "Candidates checked: 2" in text
+
+
+def test_validate_scoring_stdout_includes_n_and_auprc(tmp_path, capsys):
+    """validate-scoring stdout must include n_positives, n_negatives, benchmark_type, auprc."""
+    import pathlib
+    amp_csv = pathlib.Path("examples/validation/known_amps.csv")
+    bg_csv = pathlib.Path("examples/validation/random_background.csv")
+    if not amp_csv.exists() or not bg_csv.exists():
+        import pytest
+        pytest.skip("Validation data not found — run from project root")
+    out = str(tmp_path / "report.json")
+    main([
+        "validate-scoring",
+        "--amp-csv", str(amp_csv),
+        "--decoy-csv", str(bg_csv),
+        "--config", "configs/pipeline.yaml",
+        "--benchmark-type", "standard",
+        "--out", out,
+    ])
+    captured = capsys.readouterr()
+    data = json.loads(captured.out)
+    assert "n_positives" in data, "stdout missing n_positives"
+    assert "n_negatives" in data, "stdout missing n_negatives"
+    assert "benchmark_type" in data, "stdout missing benchmark_type"
+    assert "auprc" in data, "stdout missing auprc"
+    assert data["n_positives"] == 43
+    assert data["n_negatives"] == 44
+    assert data["benchmark_type"] == "standard"
+    assert 0.0 < data["auprc"] < 1.0
+
+
+def test_pilot_panel_malformed_jsonl_returns_error(tmp_path, capsys):
+    """pilot-panel must return structured error on malformed JSONL, not crash."""
+    bad_jsonl = tmp_path / "bad.jsonl"
+    bad_jsonl.write_text('{"candidate_id": "X", "selected": true}\n{BROKEN JSON LINE\n')
+    out_csv = str(tmp_path / "panel.csv")
+    out_md = str(tmp_path / "panel.md")
+    rc = main([
+        "pilot-panel",
+        "--ranked", str(bad_jsonl),
+        "--out-csv", out_csv,
+        "--out-md", out_md,
+    ])
+    assert rc == 1, "Expected non-zero exit code on malformed JSONL"
+    captured = capsys.readouterr()
+    data = json.loads(captured.out)
+    assert data["status"] == "error"
+    assert "line 2" in data["message"]
+    assert "line_preview" in data
+
+
+def test_synthesis_order_missing_columns_returns_error(tmp_path, capsys):
+    """synthesis-order must return structured error when panel CSV lacks required columns."""
+    bad_panel = tmp_path / "bad_panel.csv"
+    bad_panel.write_text("pilot_rank,candidate_id\n1,SEED-003_VAR_001\n")  # missing 'sequence'
+    out_csv = str(tmp_path / "order.csv")
+    rc = main([
+        "synthesis-order",
+        "--panel-csv", str(bad_panel),
+        "--out-csv", out_csv,
+    ])
+    assert rc == 1, "Expected non-zero exit code on missing columns"
+    captured = capsys.readouterr()
+    data = json.loads(captured.out)
+    assert data["status"] == "error"
+    assert "sequence" in data["message"]

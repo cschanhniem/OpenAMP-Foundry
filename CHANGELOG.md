@@ -9,7 +9,33 @@ All notable changes to OpenAMP Foundry are documented here.
 **Status:** Pipeline frozen for synthesis batch ordering. All changes below were quality
 improvements made before committing the ~$10k wet-lab synthesis budget.
 
-### Added
+### Latest fixes (PRs #61–67)
+
+- **PR #67** — JSONL error handling in `pilot-panel` CLI (CRITICAL: bare crash on malformed
+  line → structured error with line number and preview); synthesis-order CSV header validation;
+  `validate-scoring` stdout now includes `n_positives`, `n_negatives`, `benchmark_type`, `auprc`;
+  `check_sequence()` validates canonical AAs and minimum length before QC; WAVE2_PLAN.md SEED-008
+  Trp mechanism divergence note; CHANGELOG updated for PRs #61–66
+- **PR #66** — Removed duplicate validation entry REF-GIG-001 (magainin-2 = REF-MAG-001 counted
+  twice); corrected AUROC 0.8086→0.8047 (pipeline), 0.7890→0.7846 (phase3); config-identity
+  sentinel tightened from `< 0.83` to `< 0.795`; orphaned DECOY-GIG-001 removed from
+  scrambled_decoys.csv; default `recall_ks` updated to [10, 20, 43]; 1191 tests passing
+- **PR #65** — Trp-weighted aromatic bonus (1.5× Trp vs Phe/Tyr, PR #65); safety `abs()` bug fix
+  (negative charge_density does not cause hemolysis); Eisenberg scale comment corrected; synthesis
+  pool regenerated (SEED-006: 11→10, SEED-009: 18→19); AUROC 0.8164→0.8086
+- **PR #64** — Stale docs corrected: max_disagreement 0.30→0.40 for phase3.yaml in WET_LAB_HANDOFF;
+  reference set "45-sequence" → "72-sequence"; SEED-005 exemplar corrected (KRFFKKIGSALKFA →
+  seed KRLFKKIGSALKFL with note about VAR_009)
+- **PR #63** — Phase3.yaml AUROC regression test added: gate (>0.70), sentinel (≥0.75), config-
+  identity check (<0.83 then <0.795 in PR #66); `make validate-scoring-phase3` Makefile target
+- **PR #62** — Discovery probability updated to 10–18% (6 confirmed scaffold families; honest
+  corrected estimate replacing prior over-confident numbers)
+- **PR #61** — CRITICAL FIX: SEED-008 (puroindoline-a, Trp-rich) reinstated in synthesis pool
+  after Boman-scale artifact diagnosis; all 10 seeds generated; max_disagreement raised to 0.40
+  for both configs to accommodate mechanism-divergent Trp-rich scaffolds; SEED-004 correctly
+  excluded by safety gate; 6 mechanism-diverse scaffold families confirmed
+
+### Added (earlier sprint)
 
 - `docs/WET_LAB_HANDOFF.md` — score interpretation table, synthesis decision thresholds,
   per-flag QC remediation guide, MIC/hemolysis assay protocols, troubleshooting section
@@ -27,7 +53,7 @@ improvements made before committing the ~$10k wet-lab synthesis budget.
 - `check_panel()` missing-column error tests for `candidate_id` and `sequence`
 - `make ci` target: runs `lint` then `test` in one command
 
-### Fixed
+### Fixed (earlier sprint)
 
 - `ensemble_score()` no longer crashes with KeyError for missing weight keys; emits
   `UserWarning` listing missing names and defaults to 0.0 (PR #24)
@@ -35,13 +61,13 @@ improvements made before committing the ~$10k wet-lab synthesis budget.
 - `load_candidates_csv()` validates CSV header before iterating rows; raises descriptive
   `ValueError` instead of bare `KeyError` (PR #25)
 - Disagreement gate (`max_disagreement`) added to eligibility filter in `pipeline.py`
-  (PR #25); `pipeline.yaml: 0.40`, `phase3.yaml: 0.30`
+  (PR #25); `pipeline.yaml: 0.40`, `phase3.yaml: 0.40` (unified in PR #61)
 - `WET_LAB_HANDOFF.md` μH boundary table corrected to `> 0.55` (matching code) vs
-  closed interval; phase3 disagreement threshold (0.30) explicitly named in troubleshooting
+  closed interval; phase3 disagreement threshold correctly set to 0.40 in PR #61
 
 ### Tests
 
-- **814 tests passing** (up from initial ~400 at start of sprint)
+- **1191 tests passing** (up from initial ~400 at start of sprint; ~814 after earlier sprint)
 - All ruff lint checks passing
 
 ---

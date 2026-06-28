@@ -685,3 +685,34 @@ class TestTrpPhotolability:
         assert "trp_photolability_risk" in d
         assert d["tryptophan_count"] == 5
         assert d["trp_photolability_risk"] is True
+
+
+class TestCheckSequenceInputValidation:
+    """check_sequence() validates canonical amino acids before running QC."""
+
+    def test_canonical_sequence_accepted(self):
+        qc = check_sequence("ok", "KWKLFKKIGSALKFL")
+        assert qc.sequence == "KWKLFKKIGSALKFL"
+
+    def test_lowercase_accepted_after_normalisation(self):
+        # check_sequence uppercases before validation
+        qc = check_sequence("lower", "kwklfkk")
+        assert qc.sequence == "KWKLFKK"
+
+    def test_non_canonical_single_raises(self):
+        with pytest.raises(ValueError, match="non-canonical"):
+            check_sequence("bad", "KWKLFKKX")
+
+    def test_non_canonical_multiple_raises(self):
+        with pytest.raises(ValueError, match="non-canonical"):
+            check_sequence("bad2", "KWKXBZLFKK")
+
+    def test_error_message_names_bad_residues(self):
+        with pytest.raises(ValueError, match="X"):
+            check_sequence("bad3", "KWKLFKX")
+
+    def test_all_20_canonical_aas_accepted(self):
+        # One representative from each canonical AA — all should pass without error
+        for aa in "ACDEFGHIKLMNPQRSTVWY":
+            qc = check_sequence(f"test_{aa}", aa * 5)
+            assert qc.length == 5
