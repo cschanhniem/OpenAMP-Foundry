@@ -167,38 +167,48 @@ def test_eligibility_novelty_at_exact_minimum_passes(tmp_path):
 def test_disagreement_gate_blocks_high_uncertainty_candidate(tmp_path):
     """Candidates where activity and Boman index strongly disagree should be blocked.
 
-    max_disagreement in config caps the |activity - boman_activity| gap.
-    A perfectly safe/novel candidate is still rejected when scorer disagreement is too high.
-    Uses a sequence that naturally has high disagreement (high physchem activity but low
-    Boman potential) by setting max_disagreement=0.0 so any disagreement blocks selection.
+    max_disagreement caps the |activity - boman_activity| gap. The test proves the
+    gate is the cause of blocking by showing the SAME candidate is SELECTED when the
+    gate is relaxed to 1.0 (no restriction).
     """
-    # max_disagreement=0.0 means ONLY candidates with zero scorer disagreement pass.
-    # In practice disagreement>0 for any real sequence, so nothing should be selected.
-    strict_config = tmp_path / "strict_disagree.yaml"
-    strict_config.write_text(
+    _COMMON_CONFIG = (
         "pipeline_version: '0.1.0'\n"
         "filters:\n  min_length: 8\n  max_length: 35\n"
         "  allowed_amino_acids: 'ACDEFGHIKLMNPQRSTVWY'\n"
         "weights:\n  activity: 0.40\n  safety: 0.25\n  synthesis: 0.15\n  novelty: 0.20\n"
         "selection:\n  top_n: 100\n  min_novelty: 0.0\n  max_safety_risk: 1.0\n"
-        "  max_disagreement: 0.0\n"
     )
+    strict_config = tmp_path / "strict_disagree.yaml"
+    strict_config.write_text(_COMMON_CONFIG + "  max_disagreement: 0.0\n")
+    permissive_config = tmp_path / "permissive_disagree.yaml"
+    permissive_config.write_text(_COMMON_CONFIG + "  max_disagreement: 1.0\n")
+
+    seq = "KWKLFKKIGAVLKVL"
     csv_path = tmp_path / "candidates.csv"
     refs_path = tmp_path / "refs.csv"
-    csv_path.write_text("id,sequence,source\nTEST-001,KWKLFKKIGAVLKVL,test\n")
-    refs_path.write_text("id,sequence,source\n")  # empty refs → novelty=1.0 (passes novelty gate)
-    out = tmp_path / "ranked.jsonl"
+    csv_path.write_text(f"id,sequence,source\nTEST-001,{seq},test\n")
+    refs_path.write_text("id,sequence,source\n")  # empty refs → novelty=1.0
+
+    # Strict gate: disagreement > 0 for any real sequence → blocked
+    out_strict = tmp_path / "strict.jsonl"
     run_ranking_pipeline(
-        candidate_path=csv_path,
-        reference_path=refs_path,
-        out_path=out,
-        config_path=strict_config,
+        candidate_path=csv_path, reference_path=refs_path,
+        out_path=out_strict, config_path=strict_config,
     )
-    rows = [json.loads(line) for line in out.read_text().splitlines() if line.strip()]
-    assert len(rows) == 1
-    # disagreement > 0 for any real sequence → blocked by max_disagreement=0.0
-    assert rows[0]["selected"] is False
-    assert rows[0]["scores"]["disagreement"] > 0.0
+    rows_strict = [json.loads(ln) for ln in out_strict.read_text().splitlines() if ln.strip()]
+    assert len(rows_strict) == 1
+    assert rows_strict[0]["scores"]["disagreement"] > 0.0
+    assert rows_strict[0]["selected"] is False  # disagreement gate blocks it
+
+    # Positive control: same candidate passes when gate is off (max_disagreement=1.0)
+    out_permissive = tmp_path / "permissive.jsonl"
+    run_ranking_pipeline(
+        candidate_path=csv_path, reference_path=refs_path,
+        out_path=out_permissive, config_path=permissive_config,
+    )
+    rows_permissive = [json.loads(ln) for ln in out_permissive.read_text().splitlines() if ln.strip()]
+    assert len(rows_permissive) == 1
+    assert rows_permissive[0]["selected"] is True  # relaxed gate allows it through
 
 
 def test_disagreement_gate_config_values_documented(tmp_path):

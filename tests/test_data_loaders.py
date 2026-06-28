@@ -5,6 +5,8 @@ import csv
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from openamp_foundry.data.loaders import (
     CANONICAL_AA,
     is_valid_sequence,
@@ -146,26 +148,30 @@ class TestLoadCandidatesCsv:
         # A CSV with no 'sequence' column should give a helpful error, not a bare KeyError.
         # This guards against users passing in a wrongly-formatted file and getting
         # a cryptic crash deep in the pipeline.
-        rows = [{"id": "C1", "seq": "KWKLF", "source": "test"}]  # 'seq' not 'sequence'
         with tempfile.TemporaryDirectory() as d:
             path = Path(d) / "bad.csv"
             with path.open("w", newline="", encoding="utf-8") as f:
                 writer = csv.DictWriter(f, fieldnames=["id", "seq", "source"])
                 writer.writeheader()
-                writer.writerows(rows)
-            import pytest as _pytest
-            with _pytest.raises(ValueError, match="sequence"):
+                writer.writerow({"id": "C1", "seq": "KWKLF", "source": "test"})
+            with pytest.raises(ValueError, match="sequence"):
+                load_candidates_csv(path)
+
+    def test_missing_sequence_column_fires_on_header_only_csv(self):
+        # Header validation happens before iterating rows — zero-row files are caught too.
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "header_only.csv"
+            path.write_text("id,seq,source\n")  # header only, no data rows
+            with pytest.raises(ValueError, match="sequence"):
                 load_candidates_csv(path)
 
     def test_missing_sequence_column_error_names_found_columns(self):
         # The error message should list what columns were found to help the user.
-        rows = [{"peptide": "KWKLF"}]
         with tempfile.TemporaryDirectory() as d:
             path = Path(d) / "bad.csv"
             with path.open("w", newline="", encoding="utf-8") as f:
                 writer = csv.DictWriter(f, fieldnames=["peptide"])
                 writer.writeheader()
-                writer.writerows(rows)
-            import pytest as _pytest
-            with _pytest.raises(ValueError, match="peptide"):
+                writer.writerow({"peptide": "KWKLF"})
+            with pytest.raises(ValueError, match="peptide"):
                 load_candidates_csv(path)
