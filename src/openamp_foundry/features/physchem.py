@@ -184,6 +184,106 @@ def max_windowed_hydrophobic_moment(
     return round(best, 4)
 
 
+def helix_wheel_faces(
+    sequence: str,
+    angle_deg: float = 100.0,
+) -> dict[str, float]:
+    """Rotation-invariant amphipathic face analysis on an α-helix wheel.
+
+    Uses the hydrophobic moment vector (Eisenberg 1984) to define the hydrophobic face
+    direction for the specific peptide, so the analysis is rotation-invariant (independent
+    of which residue index is first). This is important because the "hydrophobic face" of
+    an AMP falls at different wheel orientations for different sequences.
+
+    Algorithm:
+      1. Compute the hydrophobic moment vector (mu_x, mu_y) from Eisenberg hydrophobicities
+      2. The direction of this vector is the hydrophobic face axis
+      3. Each residue i is on the "hydrophobic face" if its projection onto the moment vector
+         is positive: dot = cos(i*θ) * mu_x + sin(i*θ) * mu_y > 0
+      4. Compute mean Eisenberg hydrophobicity for each face, cationic fraction, and contrast
+
+    Returns a dict with:
+      - hydrophobic_face_mean_h: mean Eisenberg H of residues on the hydrophobic face
+      - hydrophilic_face_mean_h: mean Eisenberg H of residues on the hydrophilic face
+      - face_contrast: hydrophobic_face_mean_h − hydrophilic_face_mean_h (positive for AMPs)
+      - h_face_cationic_fraction: fraction of K/R/H on the hydrophobic face (bad for AMP design)
+      - ph_face_cationic_fraction: fraction of K/R/H on the hydrophilic face (good)
+      - amphipathic_score: normalised [0, 1] face contrast; > 0.33 is AMP-like
+
+    For sequences < 4 AA, amphipathic character is ill-defined; returns zeros.
+
+    Reference: Schiffer & Edmundson (1967) Biophys J 7(2):121-135; Eisenberg (1984).
+    """
+    if len(sequence) < 4:
+        return {
+            "hydrophobic_face_mean_h": 0.0, "hydrophilic_face_mean_h": 0.0,
+            "face_contrast": 0.0, "h_face_cationic_fraction": 0.0,
+            "ph_face_cationic_fraction": 0.0, "amphipathic_score": 0.0,
+        }
+
+    angle_rad = math.radians(angle_deg)
+    n = len(sequence)
+
+    # Step 1: compute moment vector
+    sin_sum = cos_sum = 0.0
+    for i, aa in enumerate(sequence):
+        h = _HYDROPHOBICITY.get(aa, 0.0)
+        theta = i * angle_rad
+        sin_sum += h * math.sin(theta)
+        cos_sum += h * math.cos(theta)
+    mu_x = cos_sum / n
+    mu_y = sin_sum / n
+    mu_mag = math.sqrt(mu_x ** 2 + mu_y ** 2)
+
+    # If moment is near zero, the sequence has no amphipathic character
+    if mu_mag < 1e-9:
+        return {
+            "hydrophobic_face_mean_h": 0.0, "hydrophilic_face_mean_h": 0.0,
+            "face_contrast": 0.0, "h_face_cationic_fraction": 0.0,
+            "ph_face_cationic_fraction": 0.0, "amphipathic_score": 0.0,
+        }
+
+    # Step 2: classify each residue relative to the moment vector direction
+    h_face_vals: list[float] = []
+    ph_face_vals: list[float] = []
+    h_face_pos = 0
+    ph_face_pos = 0
+
+    for i, aa in enumerate(sequence):
+        theta = i * angle_rad
+        # Dot product of residue unit vector with moment unit vector
+        dot = (math.cos(theta) * mu_x + math.sin(theta) * mu_y) / mu_mag
+        h_val = _HYDROPHOBICITY.get(aa, 0.0)
+        if dot >= 0:
+            h_face_vals.append(h_val)
+            if aa in POSITIVE:
+                h_face_pos += 1
+        else:
+            ph_face_vals.append(h_val)
+            if aa in POSITIVE:
+                ph_face_pos += 1
+
+    hf_mean = sum(h_face_vals) / len(h_face_vals) if h_face_vals else 0.0
+    phf_mean = sum(ph_face_vals) / len(ph_face_vals) if ph_face_vals else 0.0
+    contrast = hf_mean - phf_mean
+
+    h_face_cat = h_face_pos / len(h_face_vals) if h_face_vals else 0.0
+    ph_face_cat = ph_face_pos / len(ph_face_vals) if ph_face_vals else 0.0
+
+    # Normalise contrast: ideal AMP (e.g. magainin, KWKLFKK-class) has contrast ~0.7–1.2.
+    # Scale: contrast/1.2 → [0, 1]; contrast < 0 → 0.
+    amphipathic_score = round(max(0.0, min(1.0, contrast / 1.2)), 4)
+
+    return {
+        "hydrophobic_face_mean_h": round(hf_mean, 4),
+        "hydrophilic_face_mean_h": round(phf_mean, 4),
+        "face_contrast": round(contrast, 4),
+        "h_face_cationic_fraction": round(h_face_cat, 4),
+        "ph_face_cationic_fraction": round(ph_face_cat, 4),
+        "amphipathic_score": amphipathic_score,
+    }
+
+
 def interior_protease_sites(sequence: str, cleavage_set: set[str]) -> int:
     """Count interior residues susceptible to a protease (excludes C-terminal position).
 
@@ -297,6 +397,7 @@ def compute_features(sequence: str) -> dict[str, float | int | dict[str, int]]:
     repeat_run = longest_repeat_run(sequence)
     mu_h = hydrophobic_moment(sequence)
     max_mu_h = max_windowed_hydrophobic_moment(sequence)
+    hw_faces = helix_wheel_faces(sequence)
     n_trypsin = interior_protease_sites(sequence, TRYPSIN_SITES)
     n_chymotrypsin = interior_protease_sites(sequence, CHYMOTRYPSIN_SITES)
     n_elastase = interior_protease_sites(sequence, ELASTASE_SITES)
@@ -335,4 +436,10 @@ def compute_features(sequence: str) -> dict[str, float | int | dict[str, int]]:
         "interior_trypsin_sites": n_trypsin,
         "interior_chymotrypsin_sites": n_chymotrypsin,
         "interior_elastase_sites": n_elastase,
+        "helix_wheel_hydrophobic_face_h": hw_faces["hydrophobic_face_mean_h"],
+        "helix_wheel_hydrophilic_face_h": hw_faces["hydrophilic_face_mean_h"],
+        "helix_wheel_face_contrast": hw_faces["face_contrast"],
+        "helix_wheel_h_face_cationic_fraction": hw_faces["h_face_cationic_fraction"],
+        "helix_wheel_ph_face_cationic_fraction": hw_faces["ph_face_cationic_fraction"],
+        "helix_wheel_amphipathic_score": hw_faces["amphipathic_score"],
     }
