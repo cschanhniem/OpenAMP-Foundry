@@ -61,11 +61,12 @@ puroindoline-a), and SEED-009 (proline-rich Bac2A) have mechanisms that operate 
 Gram-positive; MRSA activity is the single highest-impact result achievable with this panel.
 Cost: +$200–400 per peptide at most contract labs.
 
-**Note for SEED-009 (proline-rich, ranks 1–2, 6–7):** Proline-rich cathelicidins show reduced
-activity in Mueller-Hinton Broth (protein-rich media interferes with intracellular uptake).
-Run SEED-009 variants in parallel in RPMI-1640 medium (or 2× diluted MHB) in addition to
-standard MHB. Report both; if MHB MIC is high but RPMI MIC is low, note the media effect
-explicitly in the results (Gagnon et al. 2016 Cell 167:471; Krizsan et al. 2014 Angew Chem).
+**Note for SEED-009 (proline-rich, top 4 ensemble-score ranks in pilot panel):** Proline-rich
+cathelicidins can show reduced activity in standard Mueller-Hinton Broth — media composition
+(amino acids, divalent cation concentration) affects translocation efficiency and intracellular
+availability for this AMP class (Krizsan et al. 2014 Angew Chem Int Ed 53:14546). Run SEED-009
+variants in parallel in RPMI-1640 medium in addition to standard MHB. Report both results; if
+MHB MIC is ≥4× higher than RPMI MIC, annotate as "media-dependent activity" in the results.
 
 ### Controls
 
@@ -124,14 +125,16 @@ TI = HC50 (µg/mL) / MIC (µg/mL)
   (Curr Pharm Design) and `docs/WET_LAB_HANDOFF.md` Section 4
 - **Peptide concentration:** 100 µM
 - **Time points:** 0, 30, 60, 120 min
-- **Readout:** Residual antimicrobial activity (agar dilution) or HPLC/MS peptide quantification
-- **Pass criterion:** > 50% intact peptide (or activity) remaining at 60 min
+- **Primary readout:** HPLC/MS peptide quantification (intact peptide fraction at each time point)
+- **Backup readout:** Residual antimicrobial activity by agar dilution (used only when HPLC is
+  unavailable; note in methods if backup readout is used)
+- **Pass criterion:** > 50% intact peptide remaining at 60 min (primary readout)
 
-> **Pre-registered decision (updated):** Serum stability is recommended for ALL 20 candidates
-> as a triage step BEFORE the full MIC panel, not as an optional add-on. Rationale: five of
-> seven scaffold families have model-flagged stability limitations; early attrition here saves
-> synthesis/assay cost for low-stability candidates. Serum stability data is also required
-> for any publication reporting therapeutic relevance.
+> **Pre-registered decision:** Serum stability is required for ALL 20 candidates as a triage
+> step BEFORE committing to the full MIC panel. This is the primary pre-registered plan — not an
+> amendment. Rationale: five of seven scaffold families have model-flagged stability limitations;
+> early triage saves assay cost. Serum stability data is required for therapeutic relevance claims
+> in any resulting publication.
 > 
 > Families with known model limitations (score may underestimate actual stability):
 > - SEED-003 (11 AA, <15 AA calibration edge)
@@ -184,7 +187,7 @@ A candidate is classified as a **provisional hit** if criterion 1 is met but cri
 |------|-----------|-----------------|-----------------|
 | P1: ≥1 candidate MIC ≤ 32 µg/mL | Hit count ≥ 1 | Proceed to Wave 2 (D-amino variants, MDR strains) | Re-evaluate pipeline; consider new seeds |
 | P2: ≥1 candidate TI > 10 + MIC ≤ 32 µg/mL | Hit count ≥ 1 | Proceed to serum stability gating | Return to design; re-weigh selectivity scoring |
-| P3: ≥1 candidate all-gates pass (P2 + t½ > 2h + novel scaffold) | Hit count ≥ 1 | Prepare confirmatory external lab replication | Document as negative result; publish pipeline learnings |
+| P3: ≥1 candidate all-gates pass (P2 + > 50% stability at 60 min + novel scaffold) | Hit count ≥ 1 | Prepare confirmatory external lab replication | Document as negative result; publish pipeline learnings |
 
 ---
 
