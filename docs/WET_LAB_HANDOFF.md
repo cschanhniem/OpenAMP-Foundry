@@ -132,7 +132,7 @@ Hemolysis > 10% at MIC is a fail.
 
 SEED-006 variants are derived from **Mastoparan-X** (INWKGIAAMAKKLL, Yoshida *et al.* 1990),
 a wasp (*Vespa xanthoptera*) venom calmodulin-binding helical peptide. This is structurally
-distinct from the other 5 seeds (magainin-like, cecropin-like, tachyplesin-like). 
+distinct from the other 6 seeds (magainin-like, cecropin-like, tachyplesin-like, Bac2A proline-rich, puroindoline Trp-rich). 
 
 **Mechanism:** Mastoparan-X inserts into bacterial membranes via a predominantly
 **hydrophobic helix insertion** mechanism rather than electrostatic carpet disruption.
@@ -156,17 +156,59 @@ It also activates G-proteins and has calmodulin-binding properties.
 
 ---
 
-## Serum Stability Model Limitations (SEED-003, SEED-005, SEED-008)
+## SEED-001 (Magainin-1) Special Notes
+
+SEED-001 variants are derived from **Magainin-1** (GIGKFLHSAKKFGKAFVGEIMKS, Zasloff 1987, PNAS),
+a 23-AA cationic α-helical AMP from *Xenopus laevis* (African clawed frog) skin. Our variant
+SEED-001_VAR_064 (KWKLFRKIGAVLRVL, 15 AA) is a truncated, charge-optimised N-terminal segment
+re-entered into the synthesis pool as the 7th scaffold family in PR #72 (face_segregation_bonus).
+
+**Mechanism:** Carpet model / toroidal pore — cationic helix electrostatically recruited to
+bacterial membrane (negative surface charge), then disrupts membrane continuity by reorienting
+and forming transient pores (Brogden 2005, Nat Rev Microbiol 3:238–250).
+
+**Novelty:** LOW (0.133 vs reference set). Magainin-2 is in the reference set.
+SEED-001_VAR_064 is a known-family derivative, not a novel scaffold.
+**Its primary value is as a positive control confirming helix-mechanism activity at 15 AA length.**
+
+**Expected activity profile:**
+- Gram-negative and Gram-positive coverage expected (carpet mechanism is broad-spectrum)
+- Dose-response typically sigmoidal with a clear MIC breakpoint
+- Hemolytic risk: moderate-high at high concentrations; MIC/3 starting concentration (μH = 0.53)
+
+**Synthesis guidance:**
+- No Cys, no Met → standard Fmoc SPPS, standard storage conditions
+- **N-terminal acetylation strongly recommended** (5 K/R sites including K1 at N-terminus;
+  Ac- blocks aminopeptidase entry and improves serum stability)
+- **C-terminal amidation recommended** (`CONH₂`; adds +0.7 charge, improves serum stability)
+- Serum stability model score 0.49 (borderline) — see stability section below; natural magainin
+  t½ ~15–30 min in serum; N-Ac/C-NH₂ modifications may extend this 2–3× in practice
+
+**Assay interpretation:**
+- If SEED-001_VAR_064 is inactive at ≤ 128 µg/mL: check HPLC purity (aggregation risk at
+  shorter length); retest with 0.01% BSA to prevent tube adhesion
+- If SEED-001_VAR_064 is active but MIC > 8 µg/mL: expected for a 15-mer vs. native 22-mer;
+  Wave 2 should test longer variants (17–20 AA) of the same sequence
+- **Target MIC ≤ 10 µg/mL**: below magainin-2 reference MIC (the 23-mer benchmark); if
+  achieved, the truncation to 15 AA is biologically significant and worth reporting
+- If all 6 novel seeds are inactive but SEED-001 is active: confirms the pipeline scoring
+  works mechanistically, even if the novel scaffolds failed — still a useful calibration outcome
+
+---
+
+## Serum Stability Model Limitations (SEED-001, SEED-003, SEED-005, SEED-008, SEED-009)
 
 The `serum_stability_score()` function is calibrated for medium-length cationic helices (~18–30 AA).
-All 6 pilot panel seed families have model scores below the 0.70 threshold (t½ > 2h gate).
-Three families are flagged as borderline or likely model underestimates:
+All 7 pilot panel seed families have model scores below the 0.70 threshold (t½ > 2h gate).
+Five families are flagged as borderline or carrying a known model bias:
 
 | Scaffold | Pilot score | Issue | Expected actual t½ | Action |
 |----------|-------------|-------|-------------------|--------|
 | SEED-003 (cationic helix, 11–14 AA) | 0.35–0.38 | Short peptide has fewer cleavage sites than the model's per-length baseline — systematic underestimate | **Likely > model prediction** — Radzishevsky et al. (2007, Nat Biotechnol): short AMPs show 2–5× longer t½ than length-matched controls predict | Do not exclude on serum score alone. Run assay and compare to model |
 | SEED-005 (cecropin-magainin hybrid, 14 AA) | 0.449 | Borderline score below 0.50 (t½ > 1h) threshold; only 1 pilot slot — any failure drops this family | ~30 min–1 h by model; no documented correction factor | Prioritise in early serum screen; D-Lys Wave 2 plan ready if needed |
-| SEED-008 (puroindoline-a, Trp-rich) | 0.45 | Indole ring bulk reduces chymotrypsin cleavage at Trp4 (steric interference) | **Likely > model prediction** — Wu & Ding (2016, J Pept Sci): Trp-flanked cleavage sites are cut 3–8× slower than Tyr/Phe equivalents | D-Trp Wave 2 plan stands; assay actual stability first — may not need D-modification |
+| SEED-008 (puroindoline-a, Trp-rich) | 0.43–0.47 | Indole ring bulk reduces chymotrypsin cleavage at Trp4 (steric interference) | **Likely > model prediction** — Wu & Ding (2016, J Pept Sci): Trp-flanked cleavage sites are cut 3–8× slower than Tyr/Phe equivalents | D-Trp Wave 2 plan stands; assay actual stability first — may not need D-modification |
+| SEED-001 (magainin-1 derivative, 15 AA) | 0.49 | 5 K/R sites in 15-mer; natural magainin-2 has documented serum t½ 15–30 min (Park & Hahm 2005, Curr Protein Pept Sci) — score may be accurate, not a model underestimate | ~30–60 min estimated | N-terminal acetylation (recommended in QC) partially protects K1; run early serum screen before committing MIC budget; D-Lys at K3/K7 in Wave 2 if t½ < 30 min |
+| SEED-009 (Bac2A proline-rich, 12 AA) | 0.57 | Pro-containing bonds (Pro-X, X-Pro) are cleaved 10–50× slower by serine proteases than Lys/Arg-X bonds — the trypsin-site count model cannot capture Pro-mediated protease resistance | **Likely > model prediction** — Bac2A-type Pro-rich AMPs show > 2h stability in 50% human serum (Otvos & Cudic 2002, Curr Pharm Design) | Do not penalise SEED-009 for low model score; assay confirms likely robustness |
 
 **Recommended action before full MIC panel:**
 Run a serum stability screen on all 20 pilot candidates:
@@ -175,8 +217,8 @@ Run a serum stability screen on all 20 pilot candidates:
 - Cost: ~$200–400 per batch of multiple candidates (not per individual peptide)
 
 This validates the gate assumptions directly and prevents retiring candidates that the model
-incorrectly penalises. For SEED-006 and SEED-007 (scores 0.61–0.67), the assay will
-determine whether borderline scores translate to the required t½ > 2h.
+incorrectly penalises. For SEED-006 (scores 0.61–0.67) and SEED-007 (scores 0.64–0.66), the
+assay will determine whether borderline scores translate to the required t½ > 2h.
 
 ---
 
