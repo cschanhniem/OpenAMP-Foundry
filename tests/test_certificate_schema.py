@@ -1,4 +1,10 @@
+from __future__ import annotations
+
+import json
 from pathlib import Path
+
+import jsonschema
+import pytest
 
 from openamp_foundry.evidence.certificate import build_certificate
 from openamp_foundry.evidence.schemas import validate_json_schema
@@ -19,3 +25,37 @@ def test_certificate_validates():
     )
     cert = build_certificate(scored, {"weights": {}}, [])
     validate_json_schema(cert, _SCHEMA)
+
+
+class TestValidateJsonSchemaErrors:
+    def test_invalid_payload_raises_validation_error(self, tmp_path):
+        schema = tmp_path / "test.schema.json"
+        schema.write_text(json.dumps({
+            "type": "object",
+            "required": ["candidate_id"],
+            "properties": {"candidate_id": {"type": "string"}},
+        }))
+        with pytest.raises(jsonschema.ValidationError):
+            validate_json_schema({"wrong_key": 123}, schema)
+
+    def test_missing_required_field_raises(self, tmp_path):
+        schema = tmp_path / "test.schema.json"
+        schema.write_text(json.dumps({
+            "type": "object",
+            "required": ["candidate_id", "sequence"],
+        }))
+        with pytest.raises(jsonschema.ValidationError):
+            validate_json_schema({"candidate_id": "X"}, schema)
+
+    def test_wrong_type_raises_validation_error(self, tmp_path):
+        schema = tmp_path / "test.schema.json"
+        schema.write_text(json.dumps({
+            "type": "object",
+            "properties": {"score": {"type": "number"}},
+        }))
+        with pytest.raises(jsonschema.ValidationError):
+            validate_json_schema({"score": "not-a-number"}, schema)
+
+    def test_nonexistent_schema_raises(self):
+        with pytest.raises((FileNotFoundError, OSError)):
+            validate_json_schema({"x": 1}, "/nonexistent/schema.json")
