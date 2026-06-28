@@ -379,3 +379,15 @@ def test_seed008_trp_rich_disagreement_in_mechanism_divergence_zone():
         f"activity_likeness ({act:.4f}) should score higher than boman_activity ({bom:.4f}) "
         "for Trp-rich sequences: Trp aromatic bonus + face_segregation vs W=-3.398 in Boman."
     )
+
+
+def test_out_of_length_range_candidate_appends_failure_mode_message(tmp_path):
+    """pipeline.py:85 — sequence outside length bounds should append a descriptive message."""
+    csv_path = tmp_path / "candidates.csv"
+    # 3-AA sequence is well below the min_length=8 in pipeline.yaml
+    csv_path.write_text("id,sequence,source\nTEST-SHORT,AKL,test\n")
+    scored, _config = score_candidates(csv_path, config_path="configs/pipeline.yaml")
+    assert len(scored) == 1
+    failure_modes = scored[0].known_failure_modes
+    assert any("outside filter range" in m for m in failure_modes)
+    assert any("3" in m for m in failure_modes)   # length 3 appears in the message

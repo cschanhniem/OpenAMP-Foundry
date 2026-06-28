@@ -779,3 +779,25 @@ class TestProlineRichMediaFlag:
         for seq in ("RRLPRPGYMPRP", "RRLPRGPYLPKP", "RRLPRPPYIPRG", "RRLGRPPYLGRP"):
             qc = check_sequence("s9", seq)
             assert any("PROLINE_RICH" in f for f in qc.flags), f"missing flag for {seq}"
+
+
+# ---------------------------------------------------------------------------
+# LONG_PEPTIDE flag (> 30 AA)
+# ---------------------------------------------------------------------------
+
+class TestLongPeptideFlag:
+    _LONG_32 = "KWKLFKKIGAVLKVLKKIGSALKFLKKWKLFK"   # 32 AA — triggers flag
+    _EXACT_30 = "KWKLFKKIGAVLKVLKKIGSALKFLKKWKL"    # 30 AA — at threshold, no flag
+
+    def test_long_peptide_flag_present_above_30aa(self):
+        qc = check_sequence("long", self._LONG_32)
+        assert any("LONG_PEPTIDE" in f for f in qc.flags)
+
+    def test_long_peptide_flag_mentions_length_in_aa(self):
+        qc = check_sequence("long", self._LONG_32)
+        flag_texts = " ".join(qc.flags)
+        assert "32aa" in flag_texts
+
+    def test_long_peptide_flag_absent_at_exactly_30aa(self):
+        qc = check_sequence("edge30", self._EXACT_30)
+        assert not any("LONG_PEPTIDE" in f for f in qc.flags)

@@ -10,6 +10,7 @@ from openamp_foundry.qc.order_generator import (
     write_order_csv,
     write_synthesis_checklist,
 )
+from openamp_foundry.qc.presynth_check import SynthQC
 
 
 # ---------------------------------------------------------------------------
@@ -596,3 +597,32 @@ class TestCLISynthesisOrder:
         md_content = out_md.read_text()
         assert "ALPHA1" in md_content
         assert "BETA2" in md_content
+
+
+# ---------------------------------------------------------------------------
+# write_synthesis_checklist — "QC flags: None" branch (order_generator.py:219)
+# ---------------------------------------------------------------------------
+
+class TestSynthesisChecklistQcFlagsNone:
+    def test_no_flags_shows_none_in_checklist(self, tmp_path):
+        # Directly construct a SynthQC with empty flags to exercise the
+        # "QC flags: None" branch at order_generator.py:219.
+        qc_obj = SynthQC(candidate_id="C0", sequence="AAKK", length=4)
+        qc_obj.synthesis_difficulty = "LOW"
+        row = {
+            "pilot_rank": 1,
+            "candidate_id": "C0",
+            "sequence": "AAKK",
+            "length": 4,
+            "mol_weight_da": 456.0,
+            "n_modification": "Free",
+            "c_modification": "OH",
+            "purity_spec": ">95% HPLC",
+            "quantity_mg": 5.0,
+            "synthesis_difficulty": "LOW",
+            "special_handling": "",
+        }
+        out = tmp_path / "checklist.md"
+        write_synthesis_checklist([row], [qc_obj], out)
+        content = out.read_text()
+        assert "QC flags:** None" in content
