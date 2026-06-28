@@ -405,7 +405,7 @@ class TestDiversityCheck:
         rc = main(["diversity-check", "--panel-csv", str(panel), "--out", str(out)])
         assert rc == 0
         text = out.read_text(encoding="utf-8")
-        assert "Family-Level Structural" in text or "SEED-001" in text
+        assert "Family-Level Structural" in text
 
     def test_diversity_check_redundancy_and_optimal_diff_sections(self, tmp_path):
         # Two candidates nearly identical (sim=0.889>0.60) → same cluster.
@@ -481,8 +481,9 @@ def test_pilot_panel_ranked_file_not_found_returns_error(tmp_path, capsys):
 def test_pilot_panel_blank_lines_skipped_and_output_produced(tmp_path, capsys):
     ranked = _write_ranked_jsonl(tmp_path)
     # Prepend/append blank lines to trigger the blank-line-skip branch
-    content = open(ranked, encoding="utf-8").read()
-    open(ranked, "w", encoding="utf-8").write("\n" + content + "\n\n")
+    from pathlib import Path as _Path
+    content = _Path(ranked).read_text(encoding="utf-8")
+    _Path(ranked).write_text("\n" + content + "\n\n", encoding="utf-8")
 
     out_csv = str(tmp_path / "panel.csv")
     out_md = str(tmp_path / "panel.md")
@@ -490,7 +491,7 @@ def test_pilot_panel_blank_lines_skipped_and_output_produced(tmp_path, capsys):
     assert rc == 0
     data = json.loads(capsys.readouterr().out)
     assert data["status"] == "ok"
-    assert data["n_panel"] <= 2
+    assert data["n_panel"] == 2
     assert "No antimicrobial activity" in data["disclaimer"]
     assert (tmp_path / "panel.md").exists()
 
@@ -527,7 +528,8 @@ def test_generate_batch_creates_candidate_pool(tmp_path, capsys):
     assert data["n_seeds"] == 1
     assert data["n_candidates_generated"] > 0
     import csv as _csv
-    rows = list(_csv.DictReader(open(out, encoding="utf-8")))
+    with open(out, encoding="utf-8") as fh:
+        rows = list(_csv.DictReader(fh))
     assert len(rows) == data["n_candidates_generated"]
 
 
@@ -548,8 +550,8 @@ def test_batch_pack_creates_json_output(tmp_path, capsys):
     data = json.loads(capsys.readouterr().out)
     assert data["status"] == "ok"
     assert "n_selected" in data
-    import json as _json
-    pack = _json.loads(open(out_json, encoding="utf-8").read())
+    with open(out_json, encoding="utf-8") as fh:
+        pack = json.loads(fh.read())
     assert "summary" in pack
     assert (tmp_path / "batch.md").exists()
 
