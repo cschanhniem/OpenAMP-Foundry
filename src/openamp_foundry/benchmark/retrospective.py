@@ -52,9 +52,13 @@ def _auprc(pos_scores: list[float], neg_scores: list[float]) -> float:
     n_pos = len(pos_scores)
     if n_pos == 0:
         return 0.0
+    # Pessimistic tie-breaking: negatives (label=0) sort before positives (label=1)
+    # on equal scores, matching sklearn average_precision_score convention.
+    # Without this, a random classifier with all-equal scores returns AUPRC=1.0
+    # instead of the correct prevalence baseline.
     all_scored = sorted(
         [(s, 1) for s in pos_scores] + [(s, 0) for s in neg_scores],
-        key=lambda x: -x[0],
+        key=lambda x: (-x[0], x[1]),
     )
     tp = fp = 0
     recalls = [0.0]

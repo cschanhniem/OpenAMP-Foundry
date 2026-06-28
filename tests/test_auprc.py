@@ -12,15 +12,13 @@ class TestAUPRC:
         neg = [0.3, 0.2, 0.1]
         assert _auprc(pos, neg) == pytest.approx(1.0, abs=1e-4)
 
-    def test_worst_classifier_near_prevalence(self):
-        # When all negatives score higher than all positives, AUPRC → prevalence (0.5 for 50/50)
+    def test_worst_classifier_below_prevalence(self):
+        # When all negatives score higher than all positives, AUPRC < prevalence
         pos = [0.1, 0.2, 0.3]
         neg = [0.7, 0.8, 0.9]
         result = _auprc(pos, neg)
         prevalence = 3 / 6  # 0.5
-        # Worst case AUPRC is at least equal to random-classifier prevalence baseline
-        assert result >= 0.0
-        assert result <= 1.0
+        assert result < prevalence  # worst classifier is below random baseline
 
     def test_random_classifier_near_prevalence(self):
         # Interleaved scores → AUPRC ≈ prevalence (3/8 = 0.375 for 3 pos / 5 neg)
@@ -48,6 +46,16 @@ class TestAUPRC:
         neg = [0.55, 0.45, 0.35]
         result = _auprc(pos, neg)
         assert result == round(result, 4)
+
+    def test_all_tied_scores_pessimistic_not_inflated(self):
+        # With all tied scores, pessimistic tie-breaking (negatives first)
+        # must NOT return 1.0 (which the optimistic ordering would give).
+        # It returns a conservative value well below prevalence.
+        pos = [0.5, 0.5, 0.5]
+        neg = [0.5, 0.5, 0.5, 0.5, 0.5]
+        prevalence = 3 / 8
+        result = _auprc(pos, neg)
+        assert result < prevalence  # conservative, not inflated to 1.0
 
     def test_auprc_above_random_baseline_for_good_classifier(self):
         pos = [0.9, 0.85, 0.8, 0.75]

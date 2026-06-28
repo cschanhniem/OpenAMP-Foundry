@@ -60,7 +60,7 @@ Priority order: if budget-constrained, run organisms 1 and 2 only (minimum viabl
 
 | Control | Type | Expected result | Action if fails |
 |---------|------|-----------------|-----------------|
-| Ciprofloxacin 0.004–4 µg/mL vs E. coli ATCC 25922 | Positive | MIC = 0.008–0.06 µg/mL (EUCAST QC range) | ABORT assay run; repeat |
+| Ciprofloxacin 0.004–4 µg/mL vs E. coli ATCC 25922 | Positive | MIC = 0.004–0.016 µg/mL (EUCAST v14 Table 5 QC range) | ABORT assay run; repeat |
 | PBS / vehicle only (no peptide) | Negative growth control | Full growth (OD600 > 0.15) | ABORT assay run; repeat |
 | Sterility control (broth + peptide, no bacteria) | Sterility | No growth (OD600 ≤ 0.03) | Flag contamination; repeat |
 
@@ -73,13 +73,17 @@ Priority order: if budget-constrained, run organisms 1 and 2 only (minimum viabl
 - **Cells:** Human red blood cells (hRBCs), freshly drawn (same day) from a consented donor or commercial suspension
 - **Buffer:** Phosphate-buffered saline (PBS, pH 7.4)
 - **hRBC concentration:** 0.5% v/v
-- **Peptide range:** 1, 2, 4, 8, 16, 32, 64, 128, 256 µg/mL
+- **Peptide range:** 1, 2, 4, 8, 16, 32, 64, 128, 256, 512 µg/mL
+  *(Extended to 512 µg/mL to avoid TI ambiguity at the 32 µg/mL MIC boundary:
+  a candidate at MIC=32 µg/mL with HC50>256 would be borderline TI>8, not PASS;
+  testing to 512 µg/mL disambiguates whether TI is truly >10.)*
 - **Incubation:** 37 °C, 1 h (gentle shaking, 100 rpm)
 - **Readout:** Supernatant absorbance at 541 nm after centrifugation (800 × g, 10 min)
 - **Controls:**
   - 0.1% Triton X-100 = 100% lysis (positive control)
   - PBS only = 0% lysis (negative control)
 - **HC50 definition:** Concentration producing 50% hemolysis (interpolated from sigmoidal fit or linear interpolation)
+- **Interpretation rule:** HC50 > 512 µg/mL is reported as "> 512 µg/mL" and counts as PASS for TI ≥ 10 when MIC ≤ 51.2 µg/mL
 
 ### Reporting
 
