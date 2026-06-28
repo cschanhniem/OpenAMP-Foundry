@@ -81,9 +81,10 @@ class TestPilotPriority:
         assert p1 > p2
 
     def test_missing_disagreement_defaults_to_0_5(self):
-        # stability defaults to 0.5 when absent; disagreement defaults to 0.5
+        # stability defaults to 0.5 when absent; disagreement defaults to 0.5;
+        # selectivity_proxy defaults to 1.0 (fully selective = safe assumption when absent)
         p = _pilot_priority({"ensemble": 0.70})
-        assert p == pytest.approx(0.70 - 0.3 * 0.5 + 0.05 * 0.5, abs=1e-6)
+        assert p == pytest.approx(0.70 - 0.3 * 0.5 + 0.05 * 0.5 + 0.05 * 1.0, abs=1e-6)
 
     def test_higher_stability_higher_priority(self):
         p1 = _pilot_priority({"ensemble": 0.70, "disagreement": 0.10, "serum_stability": 1.0})
@@ -101,10 +102,45 @@ class TestPilotPriority:
         assert p_absent == pytest.approx(p_zero, abs=1e-9)
 
     def test_novelty_formula_contribution(self):
-        # novelty bonus = 0.05 * 0.40 = 0.02; stability absent → 0.5
+        # novelty bonus = 0.05 * 0.40 = 0.02; stability absent → 0.5;
+        # selectivity_proxy absent → 1.0
         p = _pilot_priority({"ensemble": 0.70, "disagreement": 0.10, "novelty": 0.40})
-        expected = 0.70 - 0.3 * 0.10 + 0.05 * 0.5 + 0.05 * 0.40
+        expected = 0.70 - 0.3 * 0.10 + 0.05 * 0.5 + 0.05 * 0.40 + 0.05 * 1.0
         assert p == pytest.approx(expected, abs=1e-6)
+
+    def test_selectivity_proxy_higher_is_better(self):
+        # High selectivity (proxy=1.0) → higher priority than low selectivity (proxy=0.30)
+        p_selective = _pilot_priority(
+            {"ensemble": 0.70, "disagreement": 0.10, "selectivity_proxy": 1.0}
+        )
+        p_cytotoxic = _pilot_priority(
+            {"ensemble": 0.70, "disagreement": 0.10, "selectivity_proxy": 0.30}
+        )
+        assert p_selective > p_cytotoxic
+
+    def test_selectivity_proxy_max_delta_is_0_05(self):
+        # Full selectivity (1.0) adds 0.05; zero selectivity adds 0.00
+        # Maximum difference between any two candidates from this term alone = 0.05
+        p_max = _pilot_priority({"ensemble": 0.0, "disagreement": 0.0, "selectivity_proxy": 1.0})
+        p_min = _pilot_priority({"ensemble": 0.0, "disagreement": 0.0, "selectivity_proxy": 0.0})
+        assert p_max - p_min == pytest.approx(0.05, abs=1e-6)
+
+    def test_selectivity_proxy_absent_defaults_to_1(self):
+        # When selectivity_proxy is not in scores dict, assume fully selective (default=1.0)
+        # so that pre-PR-47 candidates aren't penalized for a missing key
+        p_absent = _pilot_priority({"ensemble": 0.70, "disagreement": 0.10})
+        p_explicit = _pilot_priority(
+            {"ensemble": 0.70, "disagreement": 0.10, "selectivity_proxy": 1.0}
+        )
+        assert p_absent == pytest.approx(p_explicit, abs=1e-9)
+
+    def test_seed004_temporin_demoted_vs_selective_equal_ensemble(self):
+        # SEED-004 (temporin, proxy=0.30) should rank below a fully selective candidate
+        # with equal ensemble/disagreement/stability/novelty
+        temporin = _pilot_priority({"ensemble": 0.72, "disagreement": 0.10, "selectivity_proxy": 0.30})
+        selective = _pilot_priority({"ensemble": 0.72, "disagreement": 0.10, "selectivity_proxy": 1.0})
+        assert selective > temporin
+        assert selective - temporin == pytest.approx(0.05 * (1.0 - 0.30), abs=1e-6)
 
 
 class TestSelectPilotPanel:
