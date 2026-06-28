@@ -186,10 +186,19 @@ class TestLoadLabResultsDir:
         results = load_lab_results_dir(results_dir)
         assert len(results) == 3
 
-    def test_sorted_by_assay_date(self, results_dir):
-        results = load_lab_results_dir(results_dir)
+    def test_sorted_by_assay_date(self, tmp_path):
+        date_map = {0: "2026-07-03", 1: "2026-07-01", 2: "2026-07-02"}
+        for i in range(3):
+            result = _valid_result(
+                result_id=f"RES-{i:03d}",
+                candidate_id=f"CAND-{i:03d}",
+                assay_date=date_map[i],
+            )
+            (tmp_path / f"RES-{i:03d}.json").write_text(json.dumps(result))
+        results = load_lab_results_dir(tmp_path)
         dates = [r["assay_date"] for r in results]
         assert dates == sorted(dates)
+        assert dates[0] == "2026-07-01"
 
     def test_sorted_by_result_id_within_same_date(self, tmp_path):
         for i in [3, 1, 2]:
@@ -224,6 +233,7 @@ class TestLoadLabResultsDir:
             warnings.simplefilter("always")
             results = load_lab_results_dir(tmp_path)
         assert len(results) == 1
+        assert results[0]["result_id"] == "GOOD-001"
         assert any("Skipped" in str(w.message) for w in caught)
 
     def test_non_json_files_ignored(self, tmp_path):

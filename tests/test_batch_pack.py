@@ -232,9 +232,8 @@ class TestToxicityHemolysisRiskReport:
         assert "long_repeat_run" in report["candidates"][0]["risk_flags"]
 
     def test_length_exceeds_35aa_flagged(self):
-        long_seq = "KWKLFKKIGAVLKVLKWKLFKKIGAVLKVLKWKLFK"  # 37 AA
+        long_seq = "KWKLFKKIGAVLKVLKWKLFKKIGAVLKVLKWKLFK"  # 36 AA (> 35 threshold)
         cand = [_make_candidate("LONG", long_seq)]
-        cand[0]["features"]["length"] = 37
         report = toxicity_hemolysis_risk_report(cand)
         assert "length_exceeds_35aa" in report["candidates"][0]["risk_flags"]
 
