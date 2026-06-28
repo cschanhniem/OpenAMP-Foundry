@@ -114,6 +114,15 @@ Expected activity: AMPs from the current scaffold classes are typically more act
 MRSA than Gram-negative MDR strains. SEED-009 (Bac2A, proline-rich) may have better
 Gram-negative activity than the membrane-disrupting seeds.
 
+> **Scoring note for SEED-008 (puroindoline-a, Trp-rich):** SEED-008 candidates show model
+> disagreement ~0.37 due to mechanistic divergence between the two scorers, NOT prediction
+> uncertainty. The Boman scale (W = −3.398 kcal/mol) penalises Trp as highly hydrophobic and
+> protein-binding, systematically under-ranking Trp-rich AMPs. The Wimley-White interfacial
+> scale (W = −1.85 kcal/mol) correctly models Trp's interfacial membrane-insertion mechanism.
+> PR #65 added a 1.5× Trp aromatic bonus to partially compensate. If SEED-008 variants are
+> active in Wave 1, Wave 2 should expand the Trp-rich scaffold with confidence — disagreement
+> is a mechanistic marker, not a model failure.
+
 #### C4 — Mechanism confirmation (priority 4, for top 1–2 hits only)
 
 If budget permits, run one mechanistic assay:

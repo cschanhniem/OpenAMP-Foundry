@@ -187,9 +187,17 @@ class SynthQC:
         }
 
 
+_CANONICAL_AAS: frozenset[str] = frozenset("ACDEFGHIKLMNPQRSTVWY")
+
+
 def check_sequence(candidate_id: str, seq: str, mu_h: float = 0.0) -> SynthQC:
     """Run all pre-synthesis QC checks on a single peptide sequence."""
     seq = seq.upper().strip()
+    bad = sorted({aa for aa in seq if aa not in _CANONICAL_AAS})
+    if bad:
+        raise ValueError(
+            f"{candidate_id}: non-canonical amino acids in sequence: {bad!r}"
+        )
     qc = SynthQC(candidate_id=candidate_id, sequence=seq, length=len(seq))
 
     qc.molecular_weight_da = _molecular_weight(seq)
