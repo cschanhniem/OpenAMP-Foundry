@@ -23,7 +23,7 @@ ci: lint test
 	@echo "CI passed: lint + test suite green"
 
 coverage:
-	$(PYTEST) -q --cov=src --cov-report=term-missing 2>&1 | grep -E "TOTAL|Name|scoring|features|qc|benchmark"
+	$(PYTEST) -q --cov=src --cov-report=term-missing --cov-fail-under=80
 
 typecheck:
 	uv run mypy src/ --ignore-missing-imports --no-error-summary 2>&1 | head -30 || true

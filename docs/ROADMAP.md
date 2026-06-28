@@ -28,7 +28,7 @@
 - negative control rejection (`test_negative_penalization.py`, `test_negative_robustness.py`);
 - novelty stress test (`test_novelty_pressure.py`);
 - toxicity penalty benchmark (`test_toxicity_penalty.py`);
-- retrospective AUROC benchmark (`validate-scoring` CLI, AUROC = 0.8164 on demo set).
+- retrospective AUROC benchmark (`validate-scoring` CLI, AUROC = 0.8420 on demo set, bootstrap CI₉₅: 0.76–0.91).
 
 ## v0.5 — Lab-batch package ✓
 
@@ -56,6 +56,15 @@ Implemented during the pre-wet-lab improvement loop (PRs #31–#54):
 - DISCOVERY_PREDICTION.md — quantified discovery probability model (internal: ~29–49% pre-correlation-correction; calibrated: ~15–30% accounting for near-seed correlation)
 - External Calibration section added (2026-06-28): acknowledges competitor landscape, corrects effective independence assumption, identifies path to higher confidence
 
+## v0.6.x — Scoring accuracy improvements (PRs #61–#72)
+
+- Trp-weighted aromatic bonus (1.5× Trp vs Phe/Tyr); safety abs() bug fix; AUROC 0.8164→0.8086 (PR #65)
+- Duplicate benchmark entry removed (REF-GIG-001 = REF-MAG-001); corrected AUROC 0.8086→0.8047 (PR #66)
+- Windowed hydrophobic moment (Eisenberg window=11) + anionic charge guard; AUROC 0.8047→0.8348 (PR #70)
+- Moment-oriented helix-wheel face analysis with per-face feature extraction (PR #71)
+- Face segregation bonus (helix_wheel_amphipathic_score × 0.05) in activity_likeness_score; AUROC 0.8348→0.8420, bootstrap CI₉₅: 0.76–0.91 (PR #72)
+- max_disagreement gate raised 0.30→0.40 (PR #61), 0.40→0.45 (PR #72) to correctly accommodate SEED-008 Trp-rich puroindoline-a mechanism class
+
 ## v1.0 — Validated dry-lab-to-wet-lab loop
 
 - independently reviewed assay batch (expert_review.yml GitHub issue template);
@@ -71,10 +80,10 @@ review (2026-06-28). Progress on these would materially raise breakthrough proba
 
 | Gap | Why it matters | Effort estimate |
 |-----|----------------|-----------------|
-| Large-scale benchmark (≥ 500 AMPs vs composition-matched decoys, cluster-split) | Current AUROC 0.8164 measured on 44+44 demo set; may not generalise | Medium |
+| Large-scale benchmark (≥ 500 AMPs vs composition-matched decoys, cluster-split) | Current AUROC 0.8420 measured on 43+44 demo set (n=87, CI₉₅: 0.76–0.91); may not generalise | Medium |
 | External predictor ensemble adapters (AMPScanner, AntiCP2, AMPlify, Macrel) | Independent second opinions on activity; required for scientific credibility | Medium |
 | True novelty check against APD3, DRAMP v3.0, dbAMP, UniProt | Current novelty scored against 45-sequence seed set only; may overestimate novelty | Small–Medium |
-| AUPRC alongside AUROC | Better metric for class-imbalanced AMP datasets | Small |
+| ~~AUPRC alongside AUROC~~ | ~~Better metric for class-imbalanced AMP datasets~~ | **Done** (PR #58; updated PR #72) — pipeline AUPRC = 0.8627 |
 | Wet-lab result integration (active-learning round 2) | Required to move from 15–30% to 50%+ credible probability | Requires wet-lab |
 | Pre-registration of assay protocol before synthesis | Strengthens causal inference; reduces reporting bias | Small |
 | Public benchmark paper (replicable, cluster-split, open datasets) | Sets community standard; enables external validation | Large |
