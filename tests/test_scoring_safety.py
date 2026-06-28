@@ -52,6 +52,17 @@ class TestSafetyScoreBaseline:
         s = safety_score(_feat(mu_h=0.6))
         assert s == round(s, 4)
 
+    def test_no_hydrophobic_moment_feature_defaults_to_zero(self):
+        feat = {
+            "length": 15, "charge_density": 0.30,
+            "hydrophobic_fraction": 0.40, "cysteine_fraction": 0.0,
+            "longest_repeat_run": 1,
+            # Note: hydrophobic_moment deliberately omitted
+        }
+        # Should default to mu_h=0.0, no crash
+        score = safety_score(feat)
+        assert score == 1.0
+
 
 class TestHydrophobicMomentPenalty:
     def test_mu_h_at_threshold_no_penalty(self):
@@ -188,14 +199,3 @@ class TestCumulativePenalties:
         # length > 35 (+0.25) + cysteine > 0.25 (+0.20) = 0.45 → score = 0.55
         score = safety_score(_feat(length=40, cys=0.30))
         assert abs(score - 0.55) < 0.001
-
-    def test_no_hydrophobic_moment_feature_defaults_to_zero(self):
-        feat = {
-            "length": 15, "charge_density": 0.30,
-            "hydrophobic_fraction": 0.40, "cysteine_fraction": 0.0,
-            "longest_repeat_run": 1,
-            # Note: hydrophobic_moment deliberately omitted
-        }
-        # Should default to mu_h=0.0, no crash
-        score = safety_score(feat)
-        assert score == 1.0

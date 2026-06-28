@@ -93,6 +93,13 @@ class TestLengthComponent:
     def test_longer_sequence_penalised_vs_optimal(self):
         assert activity_likeness_score(_feat(length=40)) < activity_likeness_score(_feat(length=18))
 
+    def test_length_30_midrange_verifies_normalization_constant(self):
+        # |30-18|/25 = 0.48 → length_score = 0.52 → 0.24*0.52 = 0.1248
+        # + 0.27*clamp01(0.35/0.55) = 0.1718 + 0.17*1.0 = 0.4666
+        # Changing the constant 25 to 20 would give |30-18|/20=0.60 → score≠0.4666
+        score = activity_likeness_score(_feat(length=30))
+        assert abs(score - 0.4666) < 0.001
+
 
 class TestChargeComponent:
     def test_negative_charge_penalised(self):
@@ -142,6 +149,13 @@ class TestHydrophobicComponent:
         s_90 = activity_likeness_score(_feat(hydrophobic=0.90))
         s_45 = activity_likeness_score(_feat(hydrophobic=0.45))
         assert s_90 < s_45
+
+    def test_hydrophobic_225_midrange_verifies_normalization_constant(self):
+        # |0.225-0.45|/0.45 = 0.5 → hydro_score = 0.5 → 0.17*0.5 = 0.085
+        # + 0.24*1.0 (length=18) + 0.27*clamp01(0.35/0.55) = 0.4968
+        # Changing the denominator 0.45 to 0.40 would give |0.225-0.45|/0.40=0.5625 → score≠0.4968
+        score = activity_likeness_score(_feat(hydrophobic=0.225))
+        assert abs(score - 0.4968) < 0.001
 
 
 class TestAromaticBonus:
