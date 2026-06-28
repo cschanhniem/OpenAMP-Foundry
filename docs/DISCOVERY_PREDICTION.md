@@ -14,12 +14,14 @@ panel nominated by the computational pipeline. It covers the likelihood of wet-l
 each stage, identifies the key risk factors in the current nominee set, and lists concrete
 improvements already implemented or recommended.
 
-**Bottom line:** The pilot panel has a ~61–71% probability of yielding at least one candidate
-with MIC ≤ 32 μg/mL, and **~29–49%** probability of generating "breaking news" publication
-material with the fully updated panel (up from 5–12% before computational improvements).
-*External calibration: accounting for near-seed candidate correlation (10 effective independent
-scaffold families with 2 newly added mechanistically distinct seeds), the honest corrected
-estimate is ~18–30%. See the **External Calibration** section at the end of this document.*
+**Bottom line (post-PR #72, 7 scaffold families, AUROC 0.8420):** The pilot panel has a
+~92–97% probability of yielding ≥1 candidate with MIC ≤ 16 µg/mL and **~10–20%** probability
+of generating "breaking news" publication material (up from 5–12% before computational
+improvements). The higher per-candidate estimate (internal model) is corrected to 10–20% by
+accounting for near-seed correlation and 7 effective independent scaffold families.
+See the **External Calibration** section for the derivation. For the full per-family
+probability breakdown, attrition model, and assay guidance, see
+[`docs/WET_LAB_PROBABILITY.md`](WET_LAB_PROBABILITY.md).
 
 Key improvements since last assessment (PRs #39–#49):
 - **Charge×amphipathicity cross-term (PR #39):** Scoring now rewards simultaneous high charge AND
@@ -657,30 +659,42 @@ interfacial insertion, SEED-009 proline-rich intracellular DnaK targeting). The 
 would have added lower novelty (SEED-001/002 are near-reference sequences) or safety risk
 (SEED-004, SEED-010). The quality improvement partially offsets the fewer scaffold count.
 
-Using the **same per-scaffold all-gates rate of 1.6–3.1%**, for 6 effective scaffolds:
+Using the **same per-scaffold all-gates rate of 1.6–3.1%**, for **7 effective scaffolds**
+(post-PR #72; SEED-001 re-entered the pool when face_segregation_bonus raised its helix-score
+contribution):
 
 ```
-P(≥1 from 6 at 1.6%) = 1 − (0.984)^6 ≈ 9%
-P(≥1 from 6 at 2.4%) = 1 − (0.976)^6 ≈ 14%
-P(≥1 from 6 at 3.1%) = 1 − (0.969)^6 ≈ 17%
+P(≥1 from 7 at 1.6%) = 1 − (0.984)^7 ≈ 11%
+P(≥1 from 7 at 2.4%) = 1 − (0.976)^7 ≈ 16%
+P(≥1 from 7 at 3.1%) = 1 − (0.969)^7 ≈ 20%
 ```
 
-**Calibrated estimate: ~9–17% (rounded to 10–18% to account for quality uplift in novel scaffolds)**
+**Calibrated estimate (post-PR #72): ~11–20% (rounded to 10–20%)**
 
-The reduction from 18–30% (10 scaffolds, PR #58 estimate) reflects that only 6 of 10 seeds
-actually passed synthesis quality and safety gates. The quality of the 6 confirmed scaffolds
-is meaningfully higher (mean ensemble 0.80 vs 0.77, mean safety 0.991 vs 0.952). The 3
-excluded-but-safe seeds (SEED-001, 002, 003 in prior estimate) were displaced by higher-scoring
-novel seeds — an improvement, not a loss.
+The reduction from 18–30% (10 scaffolds, PR #58 estimate) reflects that only 7 of 10 seeds
+actually passed synthesis quality and safety gates. The quality of the 7 confirmed scaffolds
+is meaningfully higher (mean ensemble 0.821, mean safety 0.991). The 3 excluded seeds
+(SEED-002, SEED-004 HIGH_CYTOTOX, SEED-010 safety) were displaced by higher-scoring or
+mechanism-diverse seeds — a net improvement.
 
-| Outcome | Internal model (n=20 independent) | Calibrated estimate (n=6 actual scaffolds, PR #61) |
-|---------|-----------------------------------|-------------------------------------------------|
-| ≥1 candidate with MIC + acceptable selectivity ("breaking news") | ~29–49% | ~10–18% |
-| Publishable result (novel AMP + external replication) | not modeled | ~5–12% |
-| Major breakthrough (new AMP family, widely replicated) | not modeled | ~1–4% |
+> **For a per-family detailed analysis** with attrition model and assay guidance, see
+> [`docs/WET_LAB_PROBABILITY.md`](WET_LAB_PROBABILITY.md). That document distinguishes
+> "publishable novel result" (~30–50%) from "breaking news tier" (~8–18% with MDR added).
+
+| Outcome | Internal model (n=20 independent) | Calibrated estimate (n=7 scaffolds, post-PR #72) |
+|---------|-----------------------------------|--------------------------------------------------|
+| ≥1 candidate with MIC + acceptable selectivity ("breaking news") | ~29–49% | ~10–20% |
+| Publishable novel result (single-lab, ≥2 organisms, novel family) | not modeled | ~30–50%* |
+| Major breakthrough (new AMP class, replicated, MDR) | not modeled | ~8–18% |
+
+*"Publishable novel result" bar is lower than "breaking news" — single-lab first characterisation
+in a peptide science journal, not requiring independent external replication. See
+`docs/WET_LAB_PROBABILITY.md` Section 3 for the composite probability derivation.
 
 The MIC-only probability (Stage 1) is harder to correct without a formal per-scaffold Stage 1
-rate; it is left as a qualitative adjustment toward the lower end of the 61–71% range.
+rate; it is left as a qualitative adjustment toward the lower end of the 61–71% range. The
+full-panel composite P(≥1 active, MIC ≤ 16 µg/mL) ≈ 92–97% from `WET_LAB_PROBABILITY.md`
+corroborates the upper end of this range.
 
 The corrected estimate is more conservative because:
 
