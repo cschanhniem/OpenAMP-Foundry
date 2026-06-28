@@ -152,3 +152,17 @@ class TestBuildCertificateContent:
     def test_returns_dict(self):
         cert = build_certificate(_make_scored(), {}, [])
         assert isinstance(cert, dict)
+
+    def test_empty_selection_reason_passthrough(self):
+        # The _make_scored() helper uses `or` so it cannot test selection_reason=[].
+        # This test bypasses the helper to verify the production code handles an empty list.
+        # The JSON schema allows an empty array (no minItems constraint).
+        scored = ScoredCandidate(
+            candidate=_CANDIDATE,
+            features=_FEATURES,
+            scores=_SCORES,
+            selection_reason=[],
+            known_failure_modes=["No wet-lab assay has been run."],
+        )
+        cert = build_certificate(scored, {}, [])
+        assert cert["selection_reason"] == []
