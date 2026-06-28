@@ -57,6 +57,10 @@ class TestComputeFeaturesNewKeys:
         f = compute_features("KWKLFKKIGAVLKVL")
         assert "trypsin_site_density" in f
 
+    def test_chymotrypsin_site_density_present(self):
+        f = compute_features("KWKLFKKIGAVLKVL")
+        assert "chymotrypsin_site_density" in f
+
     def test_interior_trypsin_sites_present(self):
         f = compute_features("KWKLFKKIGAVLKVL")
         assert "interior_trypsin_sites" in f
@@ -68,6 +72,17 @@ class TestComputeFeaturesNewKeys:
     def test_trypsin_density_is_float(self):
         f = compute_features("KWKLFKKIGAVLKVL")
         assert isinstance(f["trypsin_site_density"], float)
+
+    def test_chymotrypsin_density_is_float(self):
+        f = compute_features("KWKLFKKIGAVLKVL")
+        assert isinstance(f["chymotrypsin_site_density"], float)
+
+    def test_chymotrypsin_density_consistent_with_count(self):
+        # FWYGALAG: F(0) W(1) Y(2) G A L A G → 3 interior chymo sites (G is C-term, excluded)
+        # chymotrypsin_site_density = 3/8 = 0.375
+        f = compute_features("FWYAALAG")
+        expected_density = round(f["interior_chymotrypsin_sites"] / f["length"], 4)
+        assert f["chymotrypsin_site_density"] == pytest.approx(expected_density, abs=1e-4)
 
     def test_trypsin_density_in_range(self):
         for seq in ["KKKK", "LLLL", "KWKLFKKIGAVLKVL", "GALAG"]:
@@ -102,6 +117,15 @@ class TestComputeFeaturesNewKeys:
 
 
 class TestSerumStabilityScore:
+    def test_uses_chymotrypsin_site_density_key(self):
+        # If chymotrypsin_site_density is present (from compute_features), score uses it
+        # rather than re-deriving from raw count. This confirms symmetric schema.
+        f = compute_features("FWYAAAG")  # 2 interior chymo sites (W,Y), no trypsin
+        assert "chymotrypsin_site_density" in f
+        score_from_features = serum_stability_score(f)
+        # A peptide with F/W/Y interior sites should score below 1.0
+        assert score_from_features < 1.0
+
     def test_returns_float(self):
         f = compute_features("KWKLFKKIGAVLKVL")
         assert isinstance(serum_stability_score(f), float)

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+from typing import Any
 
-def clamp01(x: float) -> float:
-    return max(0.0, min(1.0, x))
+from openamp_foundry.scoring.activity import clamp01
 
 
-def serum_stability_score(features: dict) -> float:
+def serum_stability_score(features: dict[str, Any]) -> float:
     """Predict relative serum stability from interior protease-site density.
 
     Short cationic AMPs are degraded primarily by serum trypsin and chymotrypsin.
@@ -27,12 +27,12 @@ def serum_stability_score(features: dict) -> float:
     candidates that require stability engineering before clinical translation.
     """
     length = features.get("length", 0)
-    if length == 0:
+    if not length:
         return 1.0
 
     trypsin_density = features.get("trypsin_site_density", 0.0)
-    n_chymo = features.get("interior_chymotrypsin_sites", 0)
-    chymo_density = round(n_chymo / length, 4)
+    # Both densities are pre-normalised by compute_features(); no division needed here.
+    chymo_density = features.get("chymotrypsin_site_density", 0.0)
 
     # Trypsin is the primary serum protease for cationic peptides; weight 2:1 vs chymotrypsin
     combined_density = (2.0 * trypsin_density + 1.0 * chymo_density) / 3.0

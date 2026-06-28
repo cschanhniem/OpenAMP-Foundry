@@ -446,7 +446,7 @@ def _run_pilot_panel(args: argparse.Namespace) -> int:
                 if row.get("selected"):
                     candidates.append(row)
 
-    panel = select_pilot_panel(candidates, n=args.n, max_per_seed=getattr(args, "max_per_seed", None))
+    panel = select_pilot_panel(candidates, n=args.n, max_per_seed=args.max_per_seed)
     generated_at = datetime.now(timezone.utc).isoformat()
 
     write_pilot_csv(panel, args.out_csv)

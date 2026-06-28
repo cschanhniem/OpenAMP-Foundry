@@ -327,8 +327,9 @@ def generate_batch_pack(
     mean_ensemble = sum(ensemble_scores) / len(ensemble_scores) if ensemble_scores else 0.0
 
     stability_scores = [
-        serum_stability_score(r.get("features", {}))
+        serum_stability_score(r["features"])
         for r in sel
+        if r.get("features")
     ]
     mean_stability = sum(stability_scores) / len(stability_scores) if stability_scores else 0.0
     n_high_stability = sum(1 for s in stability_scores if s >= 0.50)

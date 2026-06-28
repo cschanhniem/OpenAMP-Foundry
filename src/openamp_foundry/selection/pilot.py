@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import logging
+
+_log = logging.getLogger(__name__)
+
 
 def _seed_from_source(source: str) -> str:
     """Extract seed ID from a source string like 'template_mutation_from_SEED-003'."""
@@ -81,6 +85,13 @@ def select_pilot_panel(
         seed_counts[seed] = count + 1
 
     # Phase 3 — if max_per_seed left unfilled slots, fill from remainder without cap
+    if remainder and len(selected) < n and max_per_seed is not None:
+        _log.warning(
+            "max_per_seed=%d cap could not be honoured for all slots; "
+            "filling %d remaining slot(s) from cap-overflow candidates.",
+            max_per_seed,
+            n - len(selected),
+        )
     for c in remainder:
         if len(selected) >= n:
             break

@@ -12,7 +12,7 @@ AROMATIC = set("FWY")
 CYS = "C"
 # Trypsin cleaves after K or R; chymotrypsin after F, W, Y (interior sites only)
 TRYPSIN_SITES = set("KR")
-CHYMOTRYPSIN_SITES = set("FWY")
+CHYMOTRYPSIN_SITES = set("FWY")  # identical to AROMATIC — kept separate for semantic clarity
 
 # Eisenberg consensus hydrophobicity scale (normalized, 0-centred removed, shifted to 0..1 range)
 # Source: Eisenberg et al. (1984) J Mol Biol. Used for hydrophobic moment only.
@@ -98,6 +98,7 @@ def compute_features(sequence: str) -> dict[str, float | int | dict[str, int]]:
     n_chymotrypsin = interior_protease_sites(sequence, CHYMOTRYPSIN_SITES)
     # site density: interior cleavage sites per residue (0 = stable, 1 = all residues cleave)
     trypsin_density = round(n_trypsin / length if length else 0.0, 4)
+    chymotrypsin_density = round(n_chymotrypsin / length if length else 0.0, 4)
     return {
         "length": length,
         "net_charge_proxy": charge,
@@ -113,6 +114,7 @@ def compute_features(sequence: str) -> dict[str, float | int | dict[str, int]]:
         "gravy": gravy_score(sequence),
         "residue_counts": dict(sorted(counts.items())),
         "trypsin_site_density": trypsin_density,
+        "chymotrypsin_site_density": chymotrypsin_density,
         "interior_trypsin_sites": n_trypsin,
         "interior_chymotrypsin_sites": n_chymotrypsin,
     }
