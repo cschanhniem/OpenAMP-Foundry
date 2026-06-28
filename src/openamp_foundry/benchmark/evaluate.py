@@ -89,7 +89,10 @@ def benchmark_summary(
             }
         )
 
-    any_enrichment = any(r["enrichment_factor"] > 1.0 for r in results)
+    half = max(1, len(scored) // 2)
+    top_half_results = [r for r in results if r["k"] <= half]
+    check_results = top_half_results if top_half_results else results
+    any_enrichment = any(r["enrichment_factor"] > 1.0 for r in check_results)
     verdict = "pipeline outperforms random" if any_enrichment else "pipeline does not outperform random"
 
     return {

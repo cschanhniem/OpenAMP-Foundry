@@ -164,10 +164,11 @@ def run_retrospective_benchmark(
             for row in csv.DictReader(f):
                 seq = row["sequence"].strip().upper()
                 seq_id = row["id"]
+                valid = all(aa in "ACDEFGHIKLMNPQRSTVWY" for aa in seq)
                 features = compute_features(seq)
                 act = activity_likeness_score(features)
                 safe = safety_score(features)
-                synth = synthesis_feasibility_score(features, valid_sequence=True)
+                synth = synthesis_feasibility_score(features, valid_sequence=valid)
                 nov, _ = novelty_score(seq, [])
                 boman_act = boman_activity_score(seq)
                 raw_scores = {
