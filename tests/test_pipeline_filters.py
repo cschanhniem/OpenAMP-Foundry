@@ -322,7 +322,7 @@ def test_zwitteramp_trap_blocked_by_pipeline(tmp_path):
 
 def test_all_proline_pipeline_scores_and_disagreement(tmp_path):
     """PPPPPPPP: Boman(P)=0 → boman_activity=0.5; activity_likeness ≈ 0.17 (no charge).
-    Disagreement ≈ 0.33 — below pipeline gate (0.40) but above phase3 gate (0.30).
+    Disagreement ≈ 0.33 — below both pipeline and phase3 gate (both 0.40).
     Pins this edge case so proline handling is explicit.
     """
     seq = "PPPPPPPP"
@@ -342,3 +342,36 @@ def test_all_proline_pipeline_scores_and_disagreement(tmp_path):
     phase3_max = float(load_config(repo_root / "configs" / "phase3.yaml")["selection"]["max_disagreement"])
     assert dis < pipeline_max, "PPPPPPPP should pass the pipeline disagreement gate"
     assert dis < phase3_max, "PPPPPPPP should also pass the phase3 disagreement gate (now 0.40)"
+
+
+def test_seed008_trp_rich_disagreement_in_mechanism_divergence_zone():
+    """SEED-008 (puroindoline-a) Trp-rich parent produces disagreement ~0.37.
+
+    This pins the mechanism-divergence zone that motivated raising phase3
+    max_disagreement from 0.30 to 0.40. Boman uses W=-3.398 (most hydrophobic;
+    lowest protein-interaction potential), while the physicochemical activity scorer
+    rewards Trp via the aromatic_fraction bonus. This is mechanism divergence
+    (interfacial insertion vs electrostatic membrane disruption), not prediction
+    uncertainty.
+
+    If this test fails, the threshold rationale in configs/phase3.yaml needs revision.
+    """
+    seq = "FPVTWRWWKWWKG"  # SEED-008 parent sequence (puroindoline-a Trp domain)
+    features = compute_features(seq)
+    act = activity_likeness_score(features)
+    bom = boman_activity_score(seq)
+    dis = model_disagreement(act, bom)
+
+    # Disagreement must sit in the 0.30-0.40 window — above old threshold, below new one
+    assert 0.30 <= dis <= 0.40, (
+        f"SEED-008 Trp-rich disagreement expected in 0.30-0.40 (mechanism divergence zone), "
+        f"got {dis:.4f}. Check Boman W potential and aromatic_fraction bonus in activity.py."
+    )
+    # activity scorer favours Trp aromatic bonus; Boman penalises Trp (W most hydrophobic)
+    assert act > bom, (
+        f"activity_likeness ({act:.4f}) should score higher than boman_activity ({bom:.4f}) "
+        "for Trp-rich sequences: Trp aromatic bonus in physchem vs W=-3.398 in Boman."
+    )
+    # Verify it passes the new 0.40 phase3 gate (would have been blocked at 0.30)
+    assert dis < 0.40, "SEED-008 parent should pass the updated phase3 max_disagreement=0.40"
+    assert dis > 0.30, "SEED-008 parent should have failed the old phase3 max_disagreement=0.30"
