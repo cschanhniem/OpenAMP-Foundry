@@ -196,13 +196,13 @@ class TestAmphipathicityBonus:
         assert s_08 == s_10
 
     def test_mu_h_0_4_half_bonus(self):
-        # amphipathicity = clamp01(0.4/0.8) * 0.15 = 0.5 * 0.15 = 0.075
-        # diff between mu_h=0.8 and mu_h=0.4 should be 0.075
+        # amphipathicity = clamp01(0.4/0.8) * 0.14 = 0.5 * 0.14 = 0.07
+        # diff between mu_h=0.8 and mu_h=0.4 should be 0.07
         diff = (
             activity_likeness_score(_feat(mu_h=0.8)) -
             activity_likeness_score(_feat(mu_h=0.4))
         )
-        assert abs(diff - 0.075) < 0.001
+        assert abs(diff - 0.07) < 0.001
 
     def test_mu_h_improves_score_monotonically_up_to_ceiling(self):
         scores = [activity_likeness_score(_feat(mu_h=v)) for v in [0.0, 0.2, 0.4, 0.6, 0.8]]
