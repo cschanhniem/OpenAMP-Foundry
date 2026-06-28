@@ -160,9 +160,13 @@ class TestPilotPriority:
         p_above = _pilot_priority(
             {"ensemble": 0.0, "disagreement": 0.0, "serum_stability": 0.0, "selectivity_proxy": 0.51}
         )
+        p_below = _pilot_priority(
+            {"ensemble": 0.0, "disagreement": 0.0, "serum_stability": 0.0, "selectivity_proxy": 0.49}
+        )
         # At boundary: bonus = 0.05 * 0.5 = 0.025, penalty = 0
         assert p_boundary == pytest.approx(0.025, abs=1e-6)
         assert p_above > p_boundary  # higher proxy → higher priority (no penalty)
+        assert p_boundary > p_below  # penalty kicks in just below threshold — monotonic
 
     def test_cytotox_penalty_max_value(self):
         # proxy=0.0: bonus=0, penalty=0.05*(0.5/0.5)=0.05 → net selectivity term = −0.05

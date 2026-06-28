@@ -18,7 +18,7 @@ def _pilot_priority(scores: dict) -> float:
 
     Formula:
         ensemble − 0.30×disagreement + 0.05×serum_stability + 0.05×novelty
-                 + 0.05×selectivity_proxy − 0.05×cytotox_penalty
+                 + 0.05×selectivity_proxy − cytotox_penalty
 
     The cytotox_penalty is non-zero only for candidates in the HIGH_CYTOTOX_RISK tier
     (selectivity_proxy < 0.5). It applies an additional −0.05 × (0.5 − proxy) / 0.5
