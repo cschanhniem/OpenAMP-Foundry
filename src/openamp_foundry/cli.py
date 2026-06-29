@@ -229,6 +229,81 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output path prefix (will write .csv and .md).",
     )
 
+    # Sprint 3 — External predictor consensus
+    external_consensus = sub.add_parser(
+        "external-consensus",
+        help="Aggregate external predictor results into per-candidate consensus verdicts.",
+    )
+    external_consensus.add_argument(
+        "--pilot-csv",
+        default="outputs/pilot_panel.csv",
+        help="Pilot panel CSV.",
+    )
+    external_consensus.add_argument(
+        "--results-csv",
+        required=True,
+        help="CSV with per-candidate binary results (Y/N) for each external tool.",
+    )
+    external_consensus.add_argument(
+        "--out",
+        default="outputs/external_consensus_report.md",
+        help="Output markdown report path.",
+    )
+
+    # Sprint 4 — Reviewer questionnaire
+    reviewer_questionnaire = sub.add_parser(
+        "reviewer-questionnaire",
+        help="Generate pre-populated reviewer questionnaire for each pilot candidate.",
+    )
+    reviewer_questionnaire.add_argument(
+        "--panel-csv",
+        default="outputs/confident_panel.csv",
+        help="Panel CSV.",
+    )
+    reviewer_questionnaire.add_argument(
+        "--out",
+        default="outputs/questionnaire",
+        help="Output directory (one .md per candidate).",
+    )
+
+    # Sprint 5 — Gate check
+    gate_check = sub.add_parser(
+        "gate-check",
+        help="Run pipeline decision gates and report pass/fail status.",
+    )
+    gate_check.add_argument(
+        "--gate",
+        type=int,
+        default=0,
+        help="Specific gate number to check (1-7), or 0 for all gates.",
+    )
+    gate_check.add_argument(
+        "--validation-json",
+        default="outputs/validate_scoring_report.json",
+        help="Path to validate-scoring output JSON.",
+    )
+
+    # Sprint 6 — IP report
+    ip_report = sub.add_parser(
+        "ip-report",
+        help="Generate intellectual property report with novelty claim strength analysis.",
+    )
+    ip_report.add_argument(
+        "--panel-csv",
+        default="outputs/confident_panel.csv",
+        help="Panel CSV.",
+    )
+    ip_report.add_argument(
+        "--novelty-csv",
+        default="outputs/novelty_audit_full.csv",
+        help="Novelty audit CSV (output of run_novelty_audit.py).",
+    )
+    ip_report.add_argument(
+        "--out",
+        default="outputs/ip_report.md",
+        help="Output markdown report path.",
+    )
+
     presynth_qc = sub.add_parser(
         "presynth-qc",
         help=(
@@ -440,6 +515,18 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "pilot-confident":
         return _run_pilot_confident(args)
+
+    if args.command == "external-consensus":
+        return _run_external_consensus(args)
+
+    if args.command == "reviewer-questionnaire":
+        return _run_reviewer_questionnaire(args)
+
+    if args.command == "gate-check":
+        return _run_gate_check(args)
+
+    if args.command == "ip-report":
+        return _run_ip_report(args)
 
     if args.command == "batch-pack":
         return _run_batch_pack(args)
@@ -658,6 +745,215 @@ def _run_pilot_confident(args: argparse.Namespace) -> int:
         "out_csv": args.out + ".csv",
         "out_md": args.out + ".md",
         "disclaimer": "Confident candidates still require human expert review and biosafety sign-off.",
+    }, indent=2))
+    return 0
+
+
+def _run_external_consensus(args: argparse.Namespace) -> int:
+    import json as _json
+    from openamp_foundry.reports.external_consensus import (
+        compute_consensus,
+        write_consensus_report,
+        consensus_report_to_dict,
+    )
+    results = compute_consensus(args.pilot_csv, args.results_csv)
+    write_consensus_report(results, args.out)
+    summary = consensus_report_to_dict(results)
+    summary["out"] = args.out
+    print(_json.dumps(summary, indent=2))
+    return 0
+
+
+def _run_reviewer_questionnaire(args: argparse.Namespace) -> int:
+    import csv as _csv
+    import json as _json
+    from datetime import datetime, timezone
+    from pathlib import Path
+    from openamp_foundry.qc.presynth_check import check_sequence
+
+    panel = []
+    with open(args.panel_csv, newline="", encoding="utf-8") as f:
+        for row in _csv.DictReader(f):
+            panel.append(row)
+
+    out_dir = Path(args.out)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    generated = []
+    for c in panel:
+        cid = c.get("candidate_id", "?")
+        seq = c.get("sequence", "")
+        try:
+            qc = check_sequence(cid, seq)
+        except Exception as e:
+            qc = None
+        flags = "\n".join(f"- {f}" for f in (qc.flags if qc else [])) if qc else "QC skipped"
+
+        md = (
+            f"# Reviewer Questionnaire — {cid}\n\n"
+            f"**Generated:** {now}\n\n"
+            f"## Candidate Metadata\n\n"
+            f"| Field | Value |\n"
+            f"|-------|-------|\n"
+            f"| Candidate ID | {cid} |\n"
+            f"| Sequence | `{seq}` |\n"
+            f"| Length | {len(seq)} AA |\n\n"
+            f"## QC Flags\n\n{flags if flags else '*No flags*'}\n\n"
+            f"## Reviewer Assessment\n\n"
+            f"### 1. Sequence Review\n"
+            f"- [ ] Any obvious synthesis issues?\n"
+            f"- [ ] Any motifs of concern?\n\n"
+            f"### 2. Novelty Assessment\n"
+            f"- [ ] Do you agree with the novelty classification?\n"
+            f"- [ ] Is the best-match reference appropriate?\n\n"
+            f"### 3. Safety Assessment\n"
+            f"- [ ] Hemolysis risk acceptable?\n"
+            f"- [ ] Cytotoxicity flags addressed?\n\n"
+            f"### 4. Overall Recommendation\n\n"
+            f"- [ ] **APPROVE** — proceed to synthesis\n"
+            f"- [ ] **CONDITIONAL** — proceed with noted changes\n"
+            f"- [ ] **REJECT** — do not synthesise\n\n"
+            f"### Reviewer\n\n"
+            f"| Field | Value |\n"
+            f"|-------|-------|\n"
+            f"| Name | |\n"
+            f"| Institution | |\n"
+            f"| Date | |\n"
+            f"| Signature | |\n"
+        )
+        out_path = out_dir / f"{cid}_questionnaire.md"
+        out_path.write_text(md, encoding="utf-8")
+        generated.append(cid)
+
+    print(_json.dumps({
+        "status": "ok",
+        "n_candidates": len(generated),
+        "out_dir": str(out_dir),
+    }, indent=2))
+    return 0
+
+
+def _run_gate_check(args: argparse.Namespace) -> int:
+    import json as _json
+    from openamp_foundry.gates.gate_checker import check_all_gates
+
+    with open(args.validation_json, encoding="utf-8") as f:
+        validation_data = _json.load(f)
+
+    results = check_all_gates(validation_data, args.gate)
+    print(_json.dumps({
+        "status": "ok",
+        "gates": [r._asdict() for r in results],
+        "all_pass": all(r.passed for r in results),
+    }, indent=2))
+    return 0
+
+
+def _run_ip_report(args: argparse.Namespace) -> int:
+    import csv as _csv
+    import json as _json
+    from datetime import datetime, timezone
+    from pathlib import Path
+    from collections import defaultdict
+
+    # Load novelty data
+    candidates = []
+    with open(args.novelty_csv, newline="", encoding="utf-8") as f:
+        for row in _csv.DictReader(f):
+            candidates.append(row)
+
+    # Group by category
+    by_cat = defaultdict(list)
+    for c in candidates:
+        by_cat[c.get("category", "NOVEL")].append(c)
+
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    n_strong = len(by_cat.get("HIGH_CONFIDENCE_NOVEL", []))
+    n_novel = len(by_cat.get("NOVEL", []))
+    n_control = len(by_cat.get("KNOWN_VARIANT", [])) + len(by_cat.get("CLOSE_RELATIVE", []))
+
+    lines = [
+        f"# IP Report — Novelty Claim Strength",
+        f"",
+        f"> **Generated:** {now}",
+        f"> **Panel:** {len(candidates)} candidates",
+        f"> **Novelty source:** `outputs/novelty_audit_full.csv`",
+        f"",
+        f"---",
+        f"",
+        f"## Summary",
+        f"",
+        f"| Claim tier | Count | Strategy |",
+        f"|------------|:-----:|----------|",
+        f"| **Strong** (HIGH_CONFIDENCE_NOVEL) | {n_strong} | Primary patent claims; novelty unchallenged by 120-AMP library |",
+        f"| **Moderate** (NOVEL) | {n_novel} | Conditional claims; verify mechanism distinction |",
+        f"| **Control** (KNOWN_VARIANT + CLOSE_RELATIVE) | {n_control} | SAR controls; not individually patentable |",
+        f"",
+        f"## Claim Strength by Candidate",
+        f"",
+        f"| Candidate | Category | Best ref | Similarity | Claim strength |",
+        f"|-----------|----------|----------|:----------:|:--------------:|",
+    ]
+    for c in candidates:
+        strength = {
+            "HIGH_CONFIDENCE_NOVEL": "Strong",
+            "NOVEL": "Moderate",
+            "CLOSE_RELATIVE": "Weak (mechanism-dependent)",
+            "KNOWN_VARIANT": "Not patentable (control/SAR)",
+        }.get(c.get("category", ""), "Unknown")
+        lines.append(
+            f"| {c.get('candidate_id', '')} | {c.get('category', '')} "
+            f"| {c.get('best_ref_family', '')} | {c.get('best_similarity', '')} "
+            f"| {strength} |"
+        )
+
+    lines.extend([
+        f"",
+        f"## Candidate Categories per Seed Family",
+        f"",
+        f"| Seed | Strong claims | Moderate | Controls |",
+        f"|------|:-------------:|:---------:|:--------:|",
+    ])
+    seed_groups = defaultdict(lambda: {"strong": 0, "moderate": 0, "control": 0})
+    for c in candidates:
+        seed = c.get("seed", "?")
+        cat = c.get("category", "")
+        if cat == "HIGH_CONFIDENCE_NOVEL":
+            seed_groups[seed]["strong"] += 1
+        elif cat == "NOVEL":
+            seed_groups[seed]["moderate"] += 1
+        else:
+            seed_groups[seed]["control"] += 1
+    for seed, counts in sorted(seed_groups.items()):
+        lines.append(f"| {seed} | {counts['strong']} | {counts['moderate']} | {counts['control']} |")
+
+    lines.extend([
+        f"",
+        f"## Recommendations",
+        f"",
+        f"1. **File provisional patents** for HIGH_CONFIDENCE_NOVEL candidates before public disclosure.",
+        f"2. **Sequence deposit** in patent filing for all Strong and Moderate candidates.",
+        f"3. **Freedom-to-operate** search required for all candidates before publication.",
+        f"4. Keep control sequences (KNOWN_VARIANT, CLOSE_RELATIVE) in publication as SAR context.",
+        f"5. Do not disclose exact lead sequences publicly until IP path is decided.",
+        f"",
+        f"## Limitations",
+        f"",
+        f"- This report is a **computational novelty assessment**, not a legal patentability opinion.",
+        f"- Full prior-art search (APD3, DRAMP, patent databases) is required before filing.",
+        f"- Competitor sequence database (AMP-Designer, AMPGAN v3, LSSAMP, etc.) not yet checked.",
+        f"- See `docs/NOVELTY_CHECKLIST.md` for a step-by-step external verification guide.",
+    ])
+
+    Path(args.out).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(_json.dumps({
+        "status": "ok",
+        "n_candidates": len(candidates),
+        "n_strong": n_strong,
+        "n_novel": n_novel,
+        "n_control": n_control,
+        "out": args.out,
     }, indent=2))
     return 0
 
