@@ -65,6 +65,8 @@ DB_SOURCES: list[tuple[str, Path, bool]] = [
     # UniProt
     ("uniprot_reviewed",   ROOT / "data/novelty_db/uniprot_amps_reviewed.fasta",   False),
     ("uniprot_unreviewed", ROOT / "data/novelty_db/uniprot_amps_unreviewed.fasta", False),
+    # ESCAPE benchmark (NeurIPS 2025) — 21k experimentally validated AMPs from 27 repositories
+    ("escape_amps",        ROOT / "data/novelty_db/escape_amps.fasta",             False),
 ]
 
 
@@ -238,7 +240,7 @@ def main() -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     print("=== OpenAMP Expanded Novelty Audit ===")
-    print(f"DB version: APD6 + DRAMP 3.0 (general/patent/specific) + UniProt (reviewed/unreviewed)\n")
+    print(f"DB version: APD6 + DRAMP 3.0 (general/patent/specific) + UniProt + ESCAPE NeurIPS-2025\n")
     print("Loading databases...")
     t0 = time.time()
     db = build_db(verbose=not args.quiet)

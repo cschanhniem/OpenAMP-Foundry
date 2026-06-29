@@ -115,15 +115,51 @@ def _download_uniprot_paged(
     print(f"  → {combined.count('>')} total sequences saved to {dest.name}")
 
 
+def download_escape() -> None:
+    """Download ESCAPE NeurIPS-2025 benchmark AMP sequences from Harvard Dataverse."""
+    import io
+    print("\n=== ESCAPE (Harvard Dataverse DOI:10.7910/DVN/C69MCD) ===")
+    STANDARD_AA = frozenset("ACDEFGHIKLMNPQRSTVWY")
+    FILE_IDS = [11466751, 11466752, 11467604]  # Test, Fold1, Fold2
+
+    all_seqs: set[str] = set()
+    for fid in FILE_IDS:
+        url = f"https://dataverse.harvard.edu/api/access/datafile/{fid}"
+        req = urllib.request.Request(url, headers={"User-Agent": "openamp-foundry/1.0"})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            data = r.read().decode("utf-8")
+        lines = data.strip().split("\n")
+        header = lines[0].split("\t")
+        seq_col = header.index("Sequence")
+        amp_col = header.index("Antimicrobial") if "Antimicrobial" in header else None
+        added = 0
+        for line in lines[1:]:
+            parts = line.split("\t")
+            seq = parts[seq_col].strip('"').upper()
+            is_amp = parts[amp_col].strip('"') == "1" if amp_col is not None else True
+            if is_amp and all(c in STANDARD_AA for c in seq) and 5 <= len(seq) <= 100:
+                if seq not in all_seqs:
+                    all_seqs.add(seq)
+                    added += 1
+        print(f"  Datafile {fid}: {added} new unique clean AMPs")
+
+    dest = DB_DIR / "escape_amps.fasta"
+    with open(dest, "w") as f:
+        for i, seq in enumerate(sorted(all_seqs), 1):
+            f.write(f">ESCAPE_{i:06d}\n{seq}\n")
+    print(f"  → {len(all_seqs)} total unique AMPs saved to {dest.name}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Download AMP novelty databases")
     parser.add_argument("--all",     action="store_true", help="Download all databases")
     parser.add_argument("--apd6",    action="store_true", help="Download APD6 datasets")
     parser.add_argument("--dramp",   action="store_true", help="Download DRAMP 3.0 datasets")
     parser.add_argument("--uniprot", action="store_true", help="Download UniProt AMP datasets")
+    parser.add_argument("--escape",  action="store_true", help="Download ESCAPE NeurIPS-2025 dataset")
     args = parser.parse_args()
 
-    if not any([args.all, args.apd6, args.dramp, args.uniprot]):
+    if not any([args.all, args.apd6, args.dramp, args.uniprot, args.escape]):
         args.all = True
 
     print(f"Saving to: {DB_DIR}/\n")
@@ -133,6 +169,8 @@ def main() -> None:
         download_dramp()
     if args.all or args.uniprot:
         download_uniprot()
+    if args.all or args.escape:
+        download_escape()
 
     print("\n=== DB Summary ===")
     total = 0
