@@ -108,6 +108,8 @@ data/external/*
 *.faa
 *.fa
 *.fastq
+# Allow committed novelty DB files (APD6 + DRAMP + UniProt FASTA — see docs/NOVELTY_AUDIT_GUIDE.md)
+!data/novelty_db/*.fasta
 *.fq
 *.sdf
 *.mol2
