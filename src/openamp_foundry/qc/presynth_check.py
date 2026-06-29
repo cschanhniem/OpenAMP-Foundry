@@ -364,13 +364,17 @@ def check_sequence(candidate_id: str, seq: str, mu_h: float = 0.0) -> SynthQC:
     if len(qc.trypsin_sites) > 0:
         qc.n_acetylation_recommended = True
         site_positions = [p + 1 for p in qc.trypsin_sites]
-        qc.n_acetylation_reason = (
+        trypsin_reason = (
             f"{len(qc.trypsin_sites)} interior trypsin site(s) detected at position(s) "
             f"{site_positions}. N-terminal acetylation (Nα-Ac) blocks aminopeptidase-mediated "
             "N-terminal degradation (exopeptidase entry blocked). Specify 'N-terminal acetylation "
             "(Ac-)' in synthesis order — zero extra cost. "
             "Literature: Creighton (1993); Dhankhar et al. (2023)."
         )
+        if qc.n_acetylation_reason:
+            qc.n_acetylation_reason = f"{qc.n_acetylation_reason} {trypsin_reason}"
+        else:
+            qc.n_acetylation_reason = trypsin_reason
 
     # Wave 2 D-amino acid substitution guidance.
     # For each interior trypsin cleavage site, D-Lys or D-Arg substitution blocks trypsin

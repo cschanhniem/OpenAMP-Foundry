@@ -30,7 +30,7 @@ biological predictors. No antimicrobial activity has been demonstrated in vitro 
 Do not describe any candidate as an antibiotic, drug, cure, therapy, or proven antimicrobial
 without experimental evidence. The lab is the judge.
 
-The pipeline AUROC (0.8420) is a **retrospective benchmark** on the internal 43-AMP reference
+The pipeline AUROC (0.7832) is a **retrospective benchmark** on the expanded 95-AMP / 96-decoy
 set — not an external prospective validation. It indicates the scoring can discriminate known
 AMPs from random peptides on held-out data; it does not predict any individual candidate's
 activity.
@@ -60,7 +60,7 @@ serum stability advantage from protease site model.
 **Pipeline configuration:** `configs/pipeline.yaml` and `configs/phase3.yaml`
 **Selection rule:** `docs/SELECTION_RULE.md` (locked before generation)
 **Full benchmark methodology:** `docs/BENCHMARKING.md`
-**Benchmark AUROC:** 0.8420 (bootstrap CI₉₅: 0.76–0.91, n=87: 43 AMPs + 44 background)
+**Benchmark AUROC:** 0.7832 (bootstrap CI₉₅: 0.72–0.84, n=191: 95 AMPs + 96 background)
 **Pipeline AUPRC:** 0.8627
 
 ---
@@ -306,10 +306,6 @@ The expert reviewer must be aware of these limitations:
 This document is produced by the OpenAMP Foundry computational pipeline.
 For human contact, see the repository README for contributor information.
 All decisions about synthesis, assay, or publication require human expert authorization.
-
-**No candidate may be synthesised or sent to any external party without qualified expert review
-and explicit human approval.**
-n require human expert authorization.
 
 **No candidate may be synthesised or sent to any external party without qualified expert review
 and explicit human approval.**

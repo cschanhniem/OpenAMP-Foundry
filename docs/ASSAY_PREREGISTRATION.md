@@ -143,7 +143,11 @@ TI = HC50 (µg/mL) / MIC (µg/mL)
 > - SEED-003 (11 AA, <15 AA calibration edge; model scores 0.35–0.38 likely underestimate actual t½)
 > - SEED-007 (11 AA; same length as SEED-003; Met at position 6 in all 4 pilot variants — HPLC
 >   purity mandatory at receipt; Nle substitution preferred for oxidation-resistant synthesis)
-> - SEED-008 (13 AA, model calibrated for 18–30 AA; Trp steric effect expected to improve t½)
+> - SEED-008 (13 AA, model calibrated for 18–30 AA; Trp steric effect expected to improve t½).
+>   **ALL 4 SEED-008 pilots carry F-Pro N-terminus: Nα-acetylation is REQUIRED on the synthesis
+>   order** to prevent diketopiperazine (DKP) cyclization (cyclo(F-Pro), MW≈244 Da, t½ hours–days
+>   at 37°C pH 7.4). Confirm full-length peptide by MS at receipt; MW−244 Da satellite peak
+>   indicates DKP contamination — reject batch if satellite exceeds 5% relative peak area.
 > - SEED-009 (Pro-X protease resistance not captured by model; expected to exceed model score)
 > - SEED-005 (safety score 0.845 — lowest in pilot panel; hemolysis assay at MIC/3 mandatory;
 >   if HC₅₀ < 10× MIC, exclude from Wave 2)

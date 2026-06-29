@@ -968,3 +968,16 @@ class TestDiketopiperazineRisk:
         qc = check_sequence("fp_no_kr", "FPVVAAAAA")
         assert qc.n_acetylation_recommended is True
         assert "DKP prevention" in qc.n_acetylation_reason
+
+    def test_dkp_reason_preserved_when_trypsin_sites_also_present(self):
+        # SEED-008 pilots have both F-Pro N-terminus AND interior K/R residues.
+        # The trypsin-site logic must APPEND to (not overwrite) the DKP reason.
+        # FPKWKLFK: F-Pro at N-term + interior K at pos 3, 5 (before non-terminal positions)
+        qc = check_sequence("fp_with_kr", "FPKWKLFK")
+        assert qc.n_acetylation_recommended is True
+        assert "DKP prevention" in qc.n_acetylation_reason, (
+            "DKP prevention reason must survive when trypsin sites also exist"
+        )
+        assert "trypsin" in qc.n_acetylation_reason.lower(), (
+            "Trypsin reason must also appear in combined n_acetylation_reason"
+        )

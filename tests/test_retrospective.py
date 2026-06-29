@@ -161,11 +161,11 @@ class TestRunRetrospectiveBenchmark:
         phase3.yaml shifts more weight to safety (0.30 vs 0.25) and synthesis (0.20 vs 0.15),
         which down-ranks hemolytic AMPs — correct behaviour for a synthesis gate but lowers raw
         AUROC slightly vs pipeline.yaml. Gate is still AUROC > 0.70 (STRONG).
-        Measured: AUROC=0.8266 (post PR #72 face_segregation_bonus).
-        Previous values: 0.8126 (PR #70), 0.7846 (pre-PR #70), 0.7936 (before PR #65 Trp bonus).
+        Measured: AUROC=0.7448 on expanded 95-AMP / 96-decoy benchmark (PR #110).
+        Previous values (original 43+44 demo set): 0.8266 (PR #72), 0.8126 (PR #70).
 
-        The upper-bound check (< 0.84) is a config-identity sentinel: pipeline.yaml scores
-        0.8420 which would breach it, so a silent config fallback is detectable.
+        The upper-bound check (< 0.78) is a config-identity sentinel: pipeline.yaml scores
+        0.7832 which would breach it, so a silent config fallback is detectable.
         """
         from pathlib import Path
         amp_csv = Path("examples/validation/known_amps.csv")
