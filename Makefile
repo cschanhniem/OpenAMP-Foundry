@@ -1,4 +1,4 @@
-.PHONY: help demo test lint ci clean bench-leakage bench-baseline bench-hidden-active generate phase3 pilot validate-scoring validate-scoring-phase3 validate-scoring-strict external-predict pilot-confident presynth-qc gold-standard diversity synthesis-order novelty-broad
+.PHONY: help demo test lint ci clean bench-leakage bench-baseline bench-hidden-active generate phase3 pilot validate-scoring validate-scoring-phase3 validate-scoring-strict external-predict pilot-confident presynth-qc gold-standard diversity synthesis-order novelty-broad external-consensus questionnaire gate-check ip-report benchmark-card
 
 PYTHON := $(shell [ -f .venv/bin/python ] && echo .venv/bin/python || echo python3)
 PYTEST  := $(shell [ -f .venv/bin/pytest ] && echo .venv/bin/pytest || echo pytest)
@@ -17,8 +17,13 @@ help:
 	@echo "  make diversity          Within-panel diversity report"
 	@echo "  make synthesis-order    Vendor-ready synthesis order CSV + checklist"
 	@echo "  make novelty-broad      Compare pilot panel against 72-AMP curated reference set"
+	@echo "  make external-consensus Aggregate external predictor results into consensus verdicts"
+	@echo "  make questionnaire      Generate pre-populated reviewer questionnaires"
+	@echo "  make gate-check         Run all pipeline decision gates (gates 1-7)"
+	@echo "  make ip-report          Generate IP and novelty claim strength report"
+	@echo "  make benchmark-card     Generate/update benchmark summary card"
 	@echo ""
-	@echo "  make validate-scoring         AUROC on 43 AMP + 44 background (pipeline config)"
+	@echo "  make validate-scoring         AUROC on 95 AMP + 96 decoy (pipeline config)"
 	@echo "  make validate-scoring-phase3  AUROC with phase3.yaml config"
 	@echo "  make validate-scoring-strict  AUROC with scrambled-decoy strict benchmark"
 	@echo "  make bench-leakage            Check for near-duplicates between candidates and refs"
