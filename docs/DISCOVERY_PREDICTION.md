@@ -803,6 +803,11 @@ No biological activity has been demonstrated. The lab is the judge.*
 
 ---
 
+**Tracking note (post-PR #109):** test: close remaining 1% coverage gap — 6 modules to 100%
+branch coverage (pipeline.py:105, diversity.py:73, template_mutator.py lines 51/98/144,
+evaluate.py:60, retrospective.py:92, pilot.py:173); 1321 tests total; only 6 structural CLI
+guard lines remain uncovered (all source modules at 100% branch coverage).
+
 **Tracking note (post-PR #108):** EXPERT_REVIEW_PACK.md: Pipeline Limitations table updated —
 PYROGLUTAMATE_RISK row added (N-terminal Q cyclisation at pH 7.4, none of the 20 pilot
 candidates affected); SEED-009_VAR_033 Met oxidation row added (VAR_033 carries both MET×1
