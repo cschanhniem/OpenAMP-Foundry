@@ -146,7 +146,7 @@ TI = HC50 (µg/mL) / MIC (µg/mL)
 >   on synthesis order to eliminate oxidation risk; HPLC purity mandatory at receipt; store
 >   lyophilized at −80 °C under inert atmosphere)
 > - SEED-007 (11 AA; same length as SEED-003; Met at position 6 in all 4 pilot variants — HPLC
->   purity mandatory at receipt; Nle substitution preferred for oxidation-resistant synthesis)
+>   purity mandatory at receipt; **Nle substitution REQUIRED** for oxidation-resistant synthesis)
 > - SEED-008 (13 AA, model calibrated for 18–30 AA; Trp steric effect expected to improve t½).
 >   **ALL 4 SEED-008 pilots carry F-Pro N-terminus: Nα-acetylation is REQUIRED on the synthesis
 >   order** to prevent diketopiperazine (DKP) cyclization (cyclo(F-Pro), MW≈244 Da, t½ hours–days
