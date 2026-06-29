@@ -9,7 +9,6 @@ Usage: python scripts/expand_benchmark.py
 
 import csv
 import random
-import sys
 from pathlib import Path
 
 

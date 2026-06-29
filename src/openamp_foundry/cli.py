@@ -786,7 +786,7 @@ def _run_reviewer_questionnaire(args: argparse.Namespace) -> int:
         seq = c.get("sequence", "")
         try:
             qc = check_sequence(cid, seq)
-        except Exception as e:
+        except Exception:
             qc = None
         flags = "\n".join(f"- {f}" for f in (qc.flags if qc else [])) if qc else "QC skipped"
 
@@ -874,26 +874,26 @@ def _run_ip_report(args: argparse.Namespace) -> int:
     n_control = len(by_cat.get("KNOWN_VARIANT", [])) + len(by_cat.get("CLOSE_RELATIVE", []))
 
     lines = [
-        f"# IP Report — Novelty Claim Strength",
-        f"",
+        "# IP Report — Novelty Claim Strength",
+        "",
         f"> **Generated:** {now}",
         f"> **Panel:** {len(candidates)} candidates",
-        f"> **Novelty source:** `outputs/novelty_audit_full.csv`",
-        f"",
-        f"---",
-        f"",
-        f"## Summary",
-        f"",
-        f"| Claim tier | Count | Strategy |",
-        f"|------------|:-----:|----------|",
+        "> **Novelty source:** `outputs/novelty_audit_full.csv`",
+        "",
+        "---",
+        "",
+        "## Summary",
+        "",
+        "| Claim tier | Count | Strategy |",
+        "|------------|:-----:|----------|",
         f"| **Strong** (HIGH_CONFIDENCE_NOVEL) | {n_strong} | Primary patent claims; novelty unchallenged by 120-AMP library |",
         f"| **Moderate** (NOVEL) | {n_novel} | Conditional claims; verify mechanism distinction |",
         f"| **Control** (KNOWN_VARIANT + CLOSE_RELATIVE) | {n_control} | SAR controls; not individually patentable |",
-        f"",
-        f"## Claim Strength by Candidate",
-        f"",
-        f"| Candidate | Category | Best ref | Similarity | Claim strength |",
-        f"|-----------|----------|----------|:----------:|:--------------:|",
+        "",
+        "## Claim Strength by Candidate",
+        "",
+        "| Candidate | Category | Best ref | Similarity | Claim strength |",
+        "|-----------|----------|----------|:----------:|:--------------:|",
     ]
     for c in candidates:
         strength = {
@@ -909,11 +909,11 @@ def _run_ip_report(args: argparse.Namespace) -> int:
         )
 
     lines.extend([
-        f"",
-        f"## Candidate Categories per Seed Family",
-        f"",
-        f"| Seed | Strong claims | Moderate | Controls |",
-        f"|------|:-------------:|:---------:|:--------:|",
+        "",
+        "## Candidate Categories per Seed Family",
+        "",
+        "| Seed | Strong claims | Moderate | Controls |",
+        "|------|:-------------:|:---------:|:--------:|",
     ])
     seed_groups = defaultdict(lambda: {"strong": 0, "moderate": 0, "control": 0})
     for c in candidates:
@@ -929,21 +929,21 @@ def _run_ip_report(args: argparse.Namespace) -> int:
         lines.append(f"| {seed} | {counts['strong']} | {counts['moderate']} | {counts['control']} |")
 
     lines.extend([
-        f"",
-        f"## Recommendations",
-        f"",
-        f"1. **File provisional patents** for HIGH_CONFIDENCE_NOVEL candidates before public disclosure.",
-        f"2. **Sequence deposit** in patent filing for all Strong and Moderate candidates.",
-        f"3. **Freedom-to-operate** search required for all candidates before publication.",
-        f"4. Keep control sequences (KNOWN_VARIANT, CLOSE_RELATIVE) in publication as SAR context.",
-        f"5. Do not disclose exact lead sequences publicly until IP path is decided.",
-        f"",
-        f"## Limitations",
-        f"",
-        f"- This report is a **computational novelty assessment**, not a legal patentability opinion.",
-        f"- Full prior-art search (APD3, DRAMP, patent databases) is required before filing.",
-        f"- Competitor sequence database (AMP-Designer, AMPGAN v3, LSSAMP, etc.) not yet checked.",
-        f"- See `docs/NOVELTY_CHECKLIST.md` for a step-by-step external verification guide.",
+        "",
+        "## Recommendations",
+        "",
+        "1. **File provisional patents** for HIGH_CONFIDENCE_NOVEL candidates before public disclosure.",
+        "2. **Sequence deposit** in patent filing for all Strong and Moderate candidates.",
+        "3. **Freedom-to-operate** search required for all candidates before publication.",
+        "4. Keep control sequences (KNOWN_VARIANT, CLOSE_RELATIVE) in publication as SAR context.",
+        "5. Do not disclose exact lead sequences publicly until IP path is decided.",
+        "",
+        "## Limitations",
+        "",
+        "- This report is a **computational novelty assessment**, not a legal patentability opinion.",
+        "- Full prior-art search (APD3, DRAMP, patent databases) is required before filing.",
+        "- Competitor sequence database (AMP-Designer, AMPGAN v3, LSSAMP, etc.) not yet checked.",
+        "- See `docs/NOVELTY_CHECKLIST.md` for a step-by-step external verification guide.",
     ])
 
     Path(args.out).write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -1791,8 +1791,8 @@ def _run_novelty_check_broad(args: argparse.Namespace) -> int:
             lines += [
                 f"**{r['candidate_id']}** (`{r['sequence']}`) — {r['broad_similarity']:.1%} similar "
                 f"to {r['best_match_id']} ({r['best_match_family']}; {r['best_match_reference']}).  ",
-                f"The published AMP provides strong activity precedent for this candidate.",
-                f"Wet-lab value: confirms assay platform works; novelty claim limited.",
+                "The published AMP provides strong activity precedent for this candidate.",
+                "Wet-lab value: confirms assay platform works; novelty claim limited.",
                 "",
             ]
     else:
@@ -1808,8 +1808,8 @@ def _run_novelty_check_broad(args: argparse.Namespace) -> int:
             lines += [
                 f"**{r['candidate_id']}** (`{r['sequence']}`) — {r['broad_similarity']:.1%} similar "
                 f"to {r['best_match_id']} ({r['best_match_family']}).  ",
-                f"Related to a known AMP but with meaningful sequence differences. "
-                f"Activity probability elevated; novelty moderate.",
+                "Related to a known AMP but with meaningful sequence differences. "
+                "Activity probability elevated; novelty moderate.",
                 "",
             ]
     else:

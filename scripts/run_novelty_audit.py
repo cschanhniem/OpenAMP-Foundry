@@ -119,7 +119,7 @@ def main():
 
         # Track reference hit frequency
         ref_key = f"{best_ref.get('id', '?')} ({best_ref.get('family', '?')})"
-        ref_tax = ref.get("taxonomy_class", "unknown") if "taxonomy_class" in ref else "unknown"
+
         reference_hits[ref_key] += 1
 
         audit_rows.append({
@@ -181,18 +181,18 @@ def main():
     # Generate markdown report
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     lines = [
-        f"# Full Novelty Audit",
-        f"",
+        "# Full Novelty Audit",
+        "",
         f"> **Generated:** {now}",
         f"> **Panel:** {len(panel)} candidates | **Reference set:** {len(all_refs)} sequences",
-        f"> **Thresholds:** EXACT=1.0, KNOWN_VARIANT≥0.70, CLOSE_RELATIVE≥0.50, HIGH_CONFIDENCE_NOVEL≥0.60 novelty",
-        f"",
-        f"---",
-        f"",
-        f"## Summary",
-        f"",
-        f"| Category | Count | Publication strategy |",
-        f"|----------|:-----:|---------------------|",
+        "> **Thresholds:** EXACT=1.0, KNOWN_VARIANT≥0.70, CLOSE_RELATIVE≥0.50, HIGH_CONFIDENCE_NOVEL≥0.60 novelty",
+        "",
+        "---",
+        "",
+        "## Summary",
+        "",
+        "| Category | Count | Publication strategy |",
+        "|----------|:-----:|---------------------|",
     ]
     for cat in ["HIGH_CONFIDENCE_NOVEL", "NOVEL", "CLOSE_RELATIVE", "KNOWN_VARIANT", "EXACT_MATCH"]:
         count = category_counts.get(cat, 0)
@@ -208,19 +208,19 @@ def main():
             lines.append(f"| **{cat}** | {count} | {strat} |")
 
     lines.extend([
-        f"",
-        f"**Reference hit frequency (best-match database):**",
-        f"",
+        "",
+        "**Reference hit frequency (best-match database):**",
+        "",
     ])
     for ref_key, count in sorted(reference_hits.items(), key=lambda x: -x[1]):
         lines.append(f"- {ref_key}: {count}x")
 
     lines.extend([
-        f"",
-        f"## Per-Candidate Classification",
-        f"",
-        f"| Rank | Candidate | Seed | Ensemble | Novelty | Category | Best reference | Layer |",
-        f"|:----:|-----------|:----:|:--------:|:-------:|:--------:|----------------|:----:|",
+        "",
+        "## Per-Candidate Classification",
+        "",
+        "| Rank | Candidate | Seed | Ensemble | Novelty | Category | Best reference | Layer |",
+        "|:----:|-----------|:----:|:--------:|:-------:|:--------:|----------------|:----:|",
     ])
 
     for row in audit_rows:
@@ -246,44 +246,44 @@ def main():
         )
 
     lines.extend([
-        f"",
-        f"## Family-Level Notes",
-        f"",
+        "",
+        "## Family-Level Notes",
+        "",
     ])
     for seed_key, note in family_notes.items():
         count = sum(1 for r in audit_rows if r["seed"] == seed_key)
         if count > 0:
             lines.append(f"### {seed_key} ({count} candidates)")
-            lines.append(f"")
+            lines.append("")
             lines.append(f"{note}")
-            lines.append(f"")
+            lines.append("")
 
     lines.extend([
-        f"",
-        f"## Priority for Novelty Claims",
-        f"",
-        f"| Tier | Category | Candidates | Recommendation |",
-        f"|:----:|----------|:----------:|----------------|",
+        "",
+        "## Priority for Novelty Claims",
+        "",
+        "| Tier | Category | Candidates | Recommendation |",
+        "|:----:|----------|:----------:|----------------|",
         f"| **1** | HIGH_CONFIDENCE_NOVEL (< 40% sim, no motif concern) | {category_counts.get('HIGH_CONFIDENCE_NOVEL', 0)} | Primary breakthrough targets. Lead publication. |",
         f"| **2** | NOVEL (< 50% sim) | {category_counts.get('NOVEL', 0)} | Claim as novel family. Verify mechanism unique. |",
         f"| **3** | CLOSE_RELATIVE (50-70% sim) | {category_counts.get('CLOSE_RELATIVE', 0)} | Conditional — require mechanism distinction for novelty claim. |",
         f"| **4** | KNOWN_VARIANT (≥70% sim) | {category_counts.get('KNOWN_VARIANT', 0)} | Exclude from novelty claims. Keep as SAR/assay controls. |",
         f"| **5** | EXACT_MATCH (100%) | {category_counts.get('EXACT_MATCH', 0)} | Exclude. Positive control only. |",
-        f"",
-        f"## Caveats",
-        f"",
+        "",
+        "## Caveats",
+        "",
         f"1. **Reference database:** {len(all_refs)} sequences (unified AMP library). This is not APD3 (3,000+) or DRAMP (19,000+).",
-        f"2. **Similarity metric:** Levenshtein edit distance. Does not capture structural or functional similarity.",
-        f"3. **Patent check:** Not included here — see `outputs/patent_risk_screen.csv` for manual check.",
-        f"4. **Competitor sequences:** Not included here — see `docs/COMPETITOR_NON_OVERLAP_REPORT.md`.",
-        f"5. **External predictors:** Not included — consensus gate requires ≥3/5 tools positive.",
-        f"",
-        f"## References",
-        f"",
-        f"- Curated reference set: `examples/known_reference/amp_curated_references.csv`",
-        f"- Expanded AMP set: `examples/validation/known_amps.csv`",
-        f"- Levenshtein distance: `scoring/novelty.py`",
-        f"- Tool: `scripts/run_novelty_audit.py`",
+        "2. **Similarity metric:** Levenshtein edit distance. Does not capture structural or functional similarity.",
+        "3. **Patent check:** Not included here — see `outputs/patent_risk_screen.csv` for manual check.",
+        "4. **Competitor sequences:** Not included here — see `docs/COMPETITOR_NON_OVERLAP_REPORT.md`.",
+        "5. **External predictors:** Not included — consensus gate requires ≥3/5 tools positive.",
+        "",
+        "## References",
+        "",
+        "- Curated reference set: `examples/known_reference/amp_curated_references.csv`",
+        "- Expanded AMP set: `examples/validation/known_amps.csv`",
+        "- Levenshtein distance: `scoring/novelty.py`",
+        "- Tool: `scripts/run_novelty_audit.py`",
     ])
 
     OUT_DOC.write_text("\n".join(lines) + "\n", encoding="utf-8")

@@ -125,27 +125,27 @@ def write_consensus_report(results: list[ConsensusResult], out_path: str | Path)
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     lines = [
-        f"# External Predictor Consensus Report",
-        f"",
+        "# External Predictor Consensus Report",
+        "",
         f"> **Generated:** {now}",
         f"> **Panel:** {len(results)} candidates",
         f"> **Tools:** {', '.join(TOOLS)}",
-        f"> **Consensus rule:** ≥60% positive = CONFIDENT, 40-59% = UNCERTAIN, <40% = WEAK",
-        f"",
-        f"---",
-        f"",
-        f"## Summary",
-        f"",
-        f"| Verdict | Count | Action |",
-        f"|---------|:-----:|--------|",
+        "> **Consensus rule:** ≥60% positive = CONFIDENT, 40-59% = UNCERTAIN, <40% = WEAK",
+        "",
+        "---",
+        "",
+        "## Summary",
+        "",
+        "| Verdict | Count | Action |",
+        "|---------|:-----:|--------|",
         f"| **CONFIDENT** (≥3/5) | {n_confident} | Proceed to synthesis |",
         f"| **UNCERTAIN** (2/5) | {n_uncertain} | Expert review required |",
         f"| **WEAK** (≤1/5) | {n_weak} | Do not synthesise without strong internal score |",
-        f"",
-        f"## Per-Tool Positive Rate",
-        f"",
-        f"| Tool | Positive | Total | Rate |",
-        f"|------|:--------:|:-----:|:----:|",
+        "",
+        "## Per-Tool Positive Rate",
+        "",
+        "| Tool | Positive | Total | Rate |",
+        "|------|:--------:|:-----:|:----:|",
     ]
     for tool, short in zip(TOOLS + SAFETY_TOOLS, TOOLS_SHORT + SAFETY_TOOLS_SHORT):
         pos = tool_positive.get(tool, 0)
@@ -155,11 +155,11 @@ def write_consensus_report(results: list[ConsensusResult], out_path: str | Path)
         lines.append(f"| {short} {tag} | {pos} | {tot} | {rate} |")
 
     lines.extend([
-        f"",
-        f"## Per-Candidate Results",
-        f"",
-        f"| Candidate | Sequence | CAMP | AMPscn | dbAMP | AntiCP | Macrel | HAPPN‡ | Agree | Verdict |",
-        f"|-----------|----------|:----:|:------:|:-----:|:------:|:------:|:-----:|:-----:|:--------:|",
+        "",
+        "## Per-Candidate Results",
+        "",
+        "| Candidate | Sequence | CAMP | AMPscn | dbAMP | AntiCP | Macrel | HAPPN‡ | Agree | Verdict |",
+        "|-----------|----------|:----:|:------:|:-----:|:------:|:------:|:-----:|:-----:|:--------:|",
     ])
     # Safety tool marks are shown in a separate column (not counted in consensus)
     all_col_tools = TOOLS + SAFETY_TOOLS
@@ -178,36 +178,36 @@ def write_consensus_report(results: list[ConsensusResult], out_path: str | Path)
         )
 
     lines.extend([
-        f"",
-        f"## Interpretation",
-        f"",
-        f"### CONFIDENT candidates",
-        f"At least 3 of 5 external tools predict antimicrobial activity. "
-        f"These have the highest synthesis priority.",
-        f"",
-        f"### UNCERTAIN candidates",
-        f"Only 2 of 5 tools agree. Expert review is required before synthesis. "
-        f"Consider the mechanistic basis for disagreement (e.g. AntiCP2 predicts "
-        f"anticancer peptides, not AMPs directly).",
-        f"",
-        f"### WEAK candidates",
-        f"0-1 of 5 tools predict antimicrobial activity. These should not be "
-        f"synthesised unless the internal pipeline score is exceptionally strong "
-        f"(ensemble > 0.85) with a clear mechanistic justification.",
-        f"",
-        f"## Caveats",
-        f"",
-        f"1. External tools are also computational — not wet-lab evidence.",
-        f"2. AntiCP 2.0 predicts **anticancer peptides (ACPs)**, not AMPs directly. "
-        f"ACP and AMP activity correlate but are not identical. Count ACP-positive "
-        f"as indirect supporting evidence only.",
-        f"3. Macrel has a known ONNX bug in local install (PR #77). Use the web server. "
-        f"(`big-data-biology.org/software/macrel`)",
-        f"4. **‡HAPPENN** predicts hemolysis risk, not AMP activity. HAPPENN column is shown "
-        f"but NOT counted in the consensus vote tally. HAPPENN-positive means increased "
-        f"hemolysis risk, which may conflict with the safety gate.",
-        f"5. Results not yet available for this panel — results table currently shows "
-        f"placeholder data. See `outputs/external_predict_checklist.md` for submission guide.",
+        "",
+        "## Interpretation",
+        "",
+        "### CONFIDENT candidates",
+        "At least 3 of 5 external tools predict antimicrobial activity. "
+        "These have the highest synthesis priority.",
+        "",
+        "### UNCERTAIN candidates",
+        "Only 2 of 5 tools agree. Expert review is required before synthesis. "
+        "Consider the mechanistic basis for disagreement (e.g. AntiCP2 predicts "
+        "anticancer peptides, not AMPs directly).",
+        "",
+        "### WEAK candidates",
+        "0-1 of 5 tools predict antimicrobial activity. These should not be "
+        "synthesised unless the internal pipeline score is exceptionally strong "
+        "(ensemble > 0.85) with a clear mechanistic justification.",
+        "",
+        "## Caveats",
+        "",
+        "1. External tools are also computational — not wet-lab evidence.",
+        "2. AntiCP 2.0 predicts **anticancer peptides (ACPs)**, not AMPs directly. "
+        "ACP and AMP activity correlate but are not identical. Count ACP-positive "
+        "as indirect supporting evidence only.",
+        "3. Macrel has a known ONNX bug in local install (PR #77). Use the web server. "
+        "(`big-data-biology.org/software/macrel`)",
+        "4. **‡HAPPENN** predicts hemolysis risk, not AMP activity. HAPPENN column is shown "
+        "but NOT counted in the consensus vote tally. HAPPENN-positive means increased "
+        "hemolysis risk, which may conflict with the safety gate.",
+        "5. Results not yet available for this panel — results table currently shows "
+        "placeholder data. See `outputs/external_predict_checklist.md` for submission guide.",
     ])
 
     Path(out_path).write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -230,14 +230,5 @@ def consensus_report_to_dict(results: list[ConsensusResult]) -> dict[str, Any]:
                 "votes": {t: r.votes.get(t, None) for t in TOOLS},
             }
             for r in results
-        ],
-    }
-ools": r.n_tools,
-                "votes": {t: r.votes.get(t, None) for t in TOOLS},
-            }
-            for r in results
-        ],
-    }
-     for r in results
         ],
     }
