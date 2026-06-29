@@ -650,11 +650,11 @@ incompatibility, mammalian toxicity at the seed level), most variants from that 
 together. The effective number of independent experiments is closer to the number of distinct
 scaffold families tested (6) than the number of candidates (20).
 
-**Correlation-corrected estimate for the breaking-news gate (updated after PR #61):**
+**Correlation-corrected estimate for the high-impact gate (updated after PR #61):**
 
 The internal model's per-stage probabilities, multiplied across all 5 gates, give a per-candidate
 all-gates pass rate of approximately 1.6–3.1%. With 20 assumed-independent candidates, the
-pipeline estimates P(≥1 breaking-news hit) = 1 − (1 − p)^20 ≈ 29–49%.
+pipeline estimates P(≥1 high-impact hit) = 1 − (1 − p)^20 ≈ 29–49%.
 
 **Update (PR #61):** After regenerating the phase3 synthesis pool with all 10 seeds:
 
@@ -808,8 +808,8 @@ No biological activity has been demonstrated. The lab is the judge.*
 (52 new well-characterised public-domain AMPs across 12 taxonomic classes). random_background.csv
 expanded to 96, scrambled_decoys.csv to 95. AUROC: 0.7832 (CI₉₅: 0.72–0.84, n=191). Phase3 gate:
 0.7448. All doc benchmark references updated. DKP_RISK and SHORT_PEPTIDE flags added to presynth QC.
-ASSAY_PREREGISTRATION SEED-001/SEED-006 added. "high-impact scenario" terminology replaced with
-"high-impact scenario" across all docs. Probability table toned down with honest corrections.
+ASSAY_PREREGISTRATION SEED-001/SEED-006 added. Old terminology replaced with "high-impact
+scenario" across all docs. Probability table toned down with honest corrections.
 
 **Tracking note (post-PR #109):** test: close remaining 1% coverage gap — 6 modules to 100%
 branch coverage (pipeline.py:105, diversity.py:73, template_mutator.py lines 51/98/144,

@@ -40,7 +40,6 @@ def _ignored_path(path: Path) -> bool:
         for ignore in [
             ".venv/",
             "node_modules/",
-            "outputs/synthesis_readiness_report.md",
             "outputs/gold_standard_calibration.md",
             "CHANGELOG.md",
         ]
@@ -95,7 +94,7 @@ class TestDocsConsistent:
 
     def test_doc_no_breaking_news_terminology(self):
         """'breaking news' must be replaced with 'high-impact scenario' in all docs."""
-        breaking = re.compile(r"breaking news", re.IGNORECASE)
+        breaking = re.compile(r"breaking[-\s]news", re.IGNORECASE)
         errors = []
         for md_file in _collect_md_files():
             text = md_file.read_text(encoding="utf-8")
