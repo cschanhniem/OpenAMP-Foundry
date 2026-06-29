@@ -75,15 +75,20 @@ def _isoelectric_point(seq: str) -> float:
     return round((lo + hi) / 2.0, 2)
 
 
+# Average amino acid masses (g/mol) — used for MW calculation and DKP mass estimation.
+_AA_AVG_MASS: dict[str, float] = {
+    "A": 89.09, "R": 174.20, "N": 132.12, "D": 133.10, "C": 121.16,
+    "Q": 146.15, "E": 147.13, "G": 75.03,  "H": 155.16, "I": 131.17,
+    "L": 131.17, "K": 146.19, "M": 149.20, "F": 165.19, "P": 115.13,
+    "S": 105.09, "T": 119.12, "W": 204.23, "Y": 181.19, "V": 117.15,
+}
+
+
 def _molecular_weight(seq: str) -> float:
     """Approximate MW (Da) from residue masses."""
-    mw = {
-        "A": 89.09, "R": 174.20, "N": 132.12, "D": 133.10, "C": 121.16,
-        "Q": 146.15, "E": 147.13, "G": 75.03, "H": 155.16, "I": 131.17,
-        "L": 131.17, "K": 146.19, "M": 149.20, "F": 165.19, "P": 115.13,
-        "S": 105.09, "T": 119.12, "W": 204.23, "Y": 181.19, "V": 117.15,
-    }
-    return round(sum(mw.get(aa, 110.0) for aa in seq) - 18.02 * (len(seq) - 1), 1)
+    return round(
+        sum(_AA_AVG_MASS.get(aa, 110.0) for aa in seq) - 18.02 * (len(seq) - 1), 1
+    )
 
 
 def _has_uv_chromophore(seq: str) -> bool:
@@ -246,14 +251,24 @@ def check_sequence(candidate_id: str, seq: str, mu_h: float = 0.0) -> SynthQC:
     ]
 
     # N-terminal diketopiperazine (DKP) cyclization: X-Pro at positions 1-2 → cyclo(X-Pro).
-    # The free α-NH₂ of residue 1 attacks the carbonyl between Pro (position 2) and residue 3,
-    # forming a 6-membered DKP ring and releasing a truncated peptide starting at position 3.
-    # Rates: F-Pro half-life at 37°C pH 7.4 is ~hours to 2 days; varies by residue 1.
-    # The truncated peptide (position 3 onwards) has altered charge, hydrophobicity, and
-    # structure — typically reduced antimicrobial activity.
-    # Prevention: Nα-acetylation completely blocks DKP (no free amine → cyclization impossible).
+    # The free α-NH₂ of residue 1 (primary amine) attacks the carbonyl between Pro (position 2)
+    # and residue 3, forming a 6-membered DKP ring and releasing a truncated peptide at position 3.
+    # Excluded: N-terminal Pro (Pro-Pro): Pro has a secondary amine (pyrrolidine nitrogen) with
+    # greatly reduced nucleophilicity — cyclization rate negligible at physiological pH.
+    # Rates: F-Pro t½ ~hours to 2 days at 37°C pH 7.4; varies by residue 1 identity.
+    # Prevention: Nα-acetylation completely blocks DKP (blocks free amine → no nucleophile).
     # Literature: Smyth et al. (2000) J Peptide Res 55:105; Boddy et al. (2016) J Pept Sci.
-    qc.diketopiperazine_risk = len(seq) >= 2 and seq[1] == "P"
+    qc.diketopiperazine_risk = len(seq) >= 2 and seq[1] == "P" and seq[0] != "P"
+    if qc.diketopiperazine_risk:
+        dkp_reason = (
+            f"DKP prevention: N-terminal {seq[0]}-Pro requires Nα-Ac to block free amine "
+            "(cyclo(X-Pro) formation at physiological pH, t½ hours–days at 37°C)."
+        )
+        if qc.n_acetylation_reason:
+            qc.n_acetylation_reason = f"{qc.n_acetylation_reason} {dkp_reason}"
+        else:
+            qc.n_acetylation_recommended = True
+            qc.n_acetylation_reason = dkp_reason
 
     # N-terminal pyroglutamate cyclization: Q at position 1 cyclises spontaneously to
     # pyroglutamic acid (pGlu) at physiological pH (t½ hours–days at 37°C, 5–50× MIC loss).
@@ -388,12 +403,14 @@ def check_sequence(candidate_id: str, seq: str, mu_h: float = 0.0) -> SynthQC:
         qc.flags.append(f"ISOMERIZATION_RISK: {', '.join(qc.isomerization_sites)} — Asp→β-Asp rearrangement at neutral pH; store lyophilized at −20°C")
     if qc.diketopiperazine_risk:
         truncated_from = seq[2:] if len(seq) > 2 else "(empty)"
+        dkp_mass = round(_AA_AVG_MASS.get(seq[0], 110.0) + _AA_AVG_MASS["P"] - 2 * 18.02, 0)
         qc.flags.append(
             f"DKP_RISK: N-terminal {seq[0]}-Pro dipeptide cyclises to cyclo({seq[0]}-Pro) "
-            f"(diketopiperazine) at physiological pH (t½ hours–days at 37°C); "
+            f"(diketopiperazine, MW≈{dkp_mass:.0f} Da) at physiological pH (t½ hours–days at 37°C); "
             f"truncates peptide to '{truncated_from}' — specify N-terminal Ac (Nα-acetylation) "
             "in synthesis order (zero extra cost) to block free amine and prevent DKP formation; "
-            "confirm identity by MS at receipt (MW-218 Da indicates DKP product); "
+            f"confirm identity by MS at receipt (full-length peptide peak should dominate; "
+            f"MW−{dkp_mass:.0f} Da satellite = DKP contamination); "
             "Literature: Smyth et al. (2000) J Peptide Res 55:105"
         )
     if qc.pyroglutamate_risk:

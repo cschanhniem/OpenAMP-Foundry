@@ -895,6 +895,13 @@ class TestDiketopiperazineRisk:
         qc = check_sequence("p1", "PKWKLFKKIG")
         assert qc.diketopiperazine_risk is False
 
+    def test_pro_pro_nterminus_no_risk(self):
+        # PP: N-terminal Pro has a secondary amine (pyrrolidine N) — no DKP cyclization.
+        # Even though position 2 is Pro, the secondary amine at pos-1 cannot attack the carbonyl.
+        qc = check_sequence("pp", "PPWKLFKKIG")
+        assert qc.diketopiperazine_risk is False
+        assert not any("DKP_RISK" in f for f in qc.flags)
+
     def test_single_residue_no_risk(self):
         qc = check_sequence("single", "K")
         assert qc.diketopiperazine_risk is False
@@ -917,8 +924,15 @@ class TestDiketopiperazineRisk:
 
     def test_flag_text_mentions_ms_verification(self):
         qc = check_sequence("fp", "FPVTWRFWRWWKG")
-        flag_texts = " ".join(qc.flags)
-        assert "MS" in flag_texts
+        dkp_flags = [f for f in qc.flags if "DKP_RISK" in f]
+        assert dkp_flags, "DKP_RISK flag must be present"
+        assert "MS" in dkp_flags[0], "DKP flag must mention MS receipt check"
+
+    def test_flag_text_shows_correct_dkp_mass_for_fpro(self):
+        # cyclo(Phe-Pro): Phe=165.19 + Pro=115.13 - 2*18.02 = 244.28 ≈ 244 Da
+        qc = check_sequence("fp", "FPVTWRFWRWWKG")
+        dkp_flag = next(f for f in qc.flags if "DKP_RISK" in f)
+        assert "244" in dkp_flag, f"F-Pro DKP mass should be ~244 Da in flag; got: {dkp_flag!r}"
 
     def test_dkp_risk_in_to_dict(self):
         qc = check_sequence("fp", "FPVTWRFWRWWKG")
@@ -939,7 +953,18 @@ class TestDiketopiperazineRisk:
             assert qc.diketopiperazine_risk, f"DKP risk missed for {res1}-Pro N-terminus"
 
     def test_dkp_increases_synthesis_difficulty(self):
-        # FP with no other flags should trigger MODERATE (1 flag)
-        # Use a minimal-risk body: no Met, no Cys, no hydrophobic run, positive charge
+        # FP with no other risk flags → 1 synthesis flag (DKP_RISK) → MODERATE.
+        # Body chosen to avoid all other flags: no Met/Cys, no hydrophobic run, positive charge,
+        # no deamidation/isomerization, no Q1/E1 → only DKP_RISK counts toward difficulty.
         qc = check_sequence("fp_min", "FPKWKK")
-        assert qc.synthesis_difficulty in ("MODERATE", "HIGH")
+        assert qc.synthesis_difficulty == "MODERATE", (
+            f"Expected MODERATE from DKP_RISK alone; "
+            f"got {qc.synthesis_difficulty!r} (flags: {qc.flags!r})"
+        )
+
+    def test_dkp_no_risk_sets_n_acetylation_when_no_trypsin_sites(self):
+        # Sequence with X-Pro N-terminus but no interior K/R: DKP should set
+        # n_acetylation_recommended=True even without a trypsin site trigger.
+        qc = check_sequence("fp_no_kr", "FPVVAAAAA")
+        assert qc.n_acetylation_recommended is True
+        assert "DKP prevention" in qc.n_acetylation_reason
