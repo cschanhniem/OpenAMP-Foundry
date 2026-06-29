@@ -866,3 +866,80 @@ class TestLongPeptideFlag:
     def test_long_peptide_flag_absent_at_exactly_30aa(self):
         qc = check_sequence("edge30", self._EXACT_30)
         assert not any("LONG_PEPTIDE" in f for f in qc.flags)
+
+
+# ---------------------------------------------------------------------------
+# DKP_RISK flag (N-terminal X-Pro diketopiperazine cyclization)
+# ---------------------------------------------------------------------------
+
+class TestDiketopiperazineRisk:
+    # SEED-008 pilot sequences all start with F-P — the canonical DKP-susceptible motif.
+    _SEED008_VARIANTS = [
+        "FPVTWRFWRWWKG",   # rank 13
+        "FPITWRWFKWWKG",   # rank 14
+        "FPVSWRWWKFWKG",   # rank 15
+        "FPVTWRWWKWYRG",   # rank 18
+    ]
+
+    def test_xpro_nterminus_sets_risk(self):
+        qc = check_sequence("fp", "FPVTWRFWRWWKG")
+        assert qc.diketopiperazine_risk is True
+
+    def test_no_proline_at_pos2_no_risk(self):
+        # Standard AMP: F at pos 1 but not P at pos 2
+        qc = check_sequence("no_dkp", "FKWKLFKKIG")
+        assert qc.diketopiperazine_risk is False
+
+    def test_proline_at_pos1_not_pos2_no_risk(self):
+        # P at position 1 does not cause DKP (needs N-terminal free amine + Pro at pos 2)
+        qc = check_sequence("p1", "PKWKLFKKIG")
+        assert qc.diketopiperazine_risk is False
+
+    def test_single_residue_no_risk(self):
+        qc = check_sequence("single", "K")
+        assert qc.diketopiperazine_risk is False
+
+    def test_all_seed008_pilots_get_dkp_flag(self):
+        for seq in self._SEED008_VARIANTS:
+            qc = check_sequence("s8", seq)
+            assert qc.diketopiperazine_risk, f"DKP_RISK missing for SEED-008 sequence {seq!r}"
+            assert any("DKP_RISK" in f for f in qc.flags), f"DKP_RISK flag text missing for {seq!r}"
+
+    def test_flag_text_mentions_truncation(self):
+        qc = check_sequence("fp", "FPVTWRFWRWWKG")
+        flag_texts = " ".join(qc.flags)
+        assert "truncates" in flag_texts.lower() or "truncat" in flag_texts.lower()
+
+    def test_flag_text_mentions_acetylation(self):
+        qc = check_sequence("fp", "FPVTWRFWRWWKG")
+        flag_texts = " ".join(qc.flags)
+        assert "Nα-acetylation" in flag_texts or "acetylation" in flag_texts.lower()
+
+    def test_flag_text_mentions_ms_verification(self):
+        qc = check_sequence("fp", "FPVTWRFWRWWKG")
+        flag_texts = " ".join(qc.flags)
+        assert "MS" in flag_texts
+
+    def test_dkp_risk_in_to_dict(self):
+        qc = check_sequence("fp", "FPVTWRFWRWWKG")
+        d = qc.to_dict()
+        assert "diketopiperazine_risk" in d
+        assert d["diketopiperazine_risk"] is True
+
+    def test_dkp_false_in_to_dict_when_absent(self):
+        qc = check_sequence("no_dkp", "KWKLFKKIG")
+        d = qc.to_dict()
+        assert d["diketopiperazine_risk"] is False
+
+    def test_various_xpro_residue1s_all_flagged(self):
+        # DKP susceptibility does not depend on which residue is at position 1
+        for res1 in "AKLRWIG":
+            seq = f"{res1}PKWKLFK"
+            qc = check_sequence("xp", seq)
+            assert qc.diketopiperazine_risk, f"DKP risk missed for {res1}-Pro N-terminus"
+
+    def test_dkp_increases_synthesis_difficulty(self):
+        # FP with no other flags should trigger MODERATE (1 flag)
+        # Use a minimal-risk body: no Met, no Cys, no hydrophobic run, positive charge
+        qc = check_sequence("fp_min", "FPKWKK")
+        assert qc.synthesis_difficulty in ("MODERATE", "HIGH")

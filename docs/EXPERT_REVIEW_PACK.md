@@ -1,7 +1,7 @@
 # OpenAMP Foundry — Expert Review Pack
 
 **Phase 3 Pilot Panel — Wave 1 Candidates**
-**Pipeline version:** 0.5.x (AUROC 0.8420 on 43-AMP / 44-decoy benchmark)
+**Pipeline version:** 0.5.x (AUROC 0.7832 on expanded 95-AMP / 96-decoy benchmark; original demo set 0.8420 on 43+44)
 **Generated:** 2026-06-28 (updated from 2026-06-27 original)
 **Batch ID:** See `outputs/phase3_manifest.json`
 **Candidate selection manifest SHA-256:** `outputs/phase3_manifest.json`
@@ -211,7 +211,7 @@ Please advise on the following:
 
 ### 6.1 Scientific credibility
 - [ ] Is the physicochemical scoring approach defensible for pre-screening short AMPs (11–15 AA)?
-- [ ] Is the AUROC (0.8420 on 43+44, CI₉₅: 0.76–0.91) sufficient to justify synthesis investment?
+- [ ] Is the AUROC (0.7832 on expanded 95+96 benchmark, CI₉₅: 0.72–0.84) sufficient to justify synthesis investment?
 - [ ] Do you agree that SEED-008 (Trp-rich, non-helical) warrants a different calibration than helical AMPs?
 - [ ] Does the face segregation bonus (helix-wheel moment analysis) reflect a mechanistically sound distinction?
 - [ ] Is the Boman index (2003) a defensible second scorer for the mix of helical and non-helical families?
@@ -306,6 +306,10 @@ The expert reviewer must be aware of these limitations:
 This document is produced by the OpenAMP Foundry computational pipeline.
 For human contact, see the repository README for contributor information.
 All decisions about synthesis, assay, or publication require human expert authorization.
+
+**No candidate may be synthesised or sent to any external party without qualified expert review
+and explicit human approval.**
+n require human expert authorization.
 
 **No candidate may be synthesised or sent to any external party without qualified expert review
 and explicit human approval.**

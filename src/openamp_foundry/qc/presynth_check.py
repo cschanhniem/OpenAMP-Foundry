@@ -118,6 +118,9 @@ class SynthQC:
     deamidation_sites: list[str] = field(default_factory=list)  # e.g. ["N3G", "Q5S"]
     isomerization_sites: list[str] = field(default_factory=list)  # e.g. ["D2G", "D9S"]
 
+    # N-terminal diketopiperazine cyclization
+    diketopiperazine_risk: bool = False  # N-terminal X-Pro dipeptide → cyclo(X-Pro) + truncation
+
     # N-terminal pyroglutamate cyclization
     pyroglutamate_risk: bool = False   # N-terminal Q or E → pGlu (activity loss)
 
@@ -172,6 +175,7 @@ class SynthQC:
             "chymotrypsin_sites": self.chymotrypsin_sites,
             "deamidation_sites": self.deamidation_sites,
             "isomerization_sites": self.isomerization_sites,
+            "diketopiperazine_risk": self.diketopiperazine_risk,
             "pyroglutamate_risk": self.pyroglutamate_risk,
             "tryptophan_count": self.tryptophan_count,
             "trp_photolability_risk": self.trp_photolability_risk,
@@ -240,6 +244,16 @@ def check_sequence(candidate_id: str, seq: str, mu_h: float = 0.0) -> SynthQC:
         f"{m.group()[0]}{m.start() + 1}{m.group()[1]}"
         for m in _ISOMERIZATION_RE.finditer(seq)
     ]
+
+    # N-terminal diketopiperazine (DKP) cyclization: X-Pro at positions 1-2 → cyclo(X-Pro).
+    # The free α-NH₂ of residue 1 attacks the carbonyl between Pro (position 2) and residue 3,
+    # forming a 6-membered DKP ring and releasing a truncated peptide starting at position 3.
+    # Rates: F-Pro half-life at 37°C pH 7.4 is ~hours to 2 days; varies by residue 1.
+    # The truncated peptide (position 3 onwards) has altered charge, hydrophobicity, and
+    # structure — typically reduced antimicrobial activity.
+    # Prevention: Nα-acetylation completely blocks DKP (no free amine → cyclization impossible).
+    # Literature: Smyth et al. (2000) J Peptide Res 55:105; Boddy et al. (2016) J Pept Sci.
+    qc.diketopiperazine_risk = len(seq) >= 2 and seq[1] == "P"
 
     # N-terminal pyroglutamate cyclization: Q at position 1 cyclises spontaneously to
     # pyroglutamic acid (pGlu) at physiological pH (t½ hours–days at 37°C, 5–50× MIC loss).
@@ -372,6 +386,16 @@ def check_sequence(candidate_id: str, seq: str, mu_h: float = 0.0) -> SynthQC:
         qc.flags.append(f"DEAMIDATION_RISK: {', '.join(qc.deamidation_sites)} — avoid >pH 7.5 storage; use pH 5–6 lyophilization buffer")
     if qc.isomerization_sites:
         qc.flags.append(f"ISOMERIZATION_RISK: {', '.join(qc.isomerization_sites)} — Asp→β-Asp rearrangement at neutral pH; store lyophilized at −20°C")
+    if qc.diketopiperazine_risk:
+        truncated_from = seq[2:] if len(seq) > 2 else "(empty)"
+        qc.flags.append(
+            f"DKP_RISK: N-terminal {seq[0]}-Pro dipeptide cyclises to cyclo({seq[0]}-Pro) "
+            f"(diketopiperazine) at physiological pH (t½ hours–days at 37°C); "
+            f"truncates peptide to '{truncated_from}' — specify N-terminal Ac (Nα-acetylation) "
+            "in synthesis order (zero extra cost) to block free amine and prevent DKP formation; "
+            "confirm identity by MS at receipt (MW-218 Da indicates DKP product); "
+            "Literature: Smyth et al. (2000) J Peptide Res 55:105"
+        )
     if qc.pyroglutamate_risk:
         qc.flags.append(
             "PYROGLUTAMATE_RISK: N-terminal Q cyclises to pGlu (t½ hours–days at 37°C, pH 7.4); "

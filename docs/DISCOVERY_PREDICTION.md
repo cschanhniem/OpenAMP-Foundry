@@ -482,7 +482,7 @@ Despite the probability gap, the pipeline has done the following correctly:
 2. **Consistent synthesis feasibility:** All pilot candidates are MODERATE SPPS difficulty
    except one HIGH (SEED-002 23-mer). Zero synthesis-impossible candidates nominated.
 
-3. **Strong AUROC:** 0.8420 (bootstrap CI₉₅: 0.76–0.91, n=87, n_bootstrap=2000; PR #72 face_segregation_bonus) — the ensemble correctly separates
+3. **Strong AUROC:** 0.7832 (expanded 95-AMP + 96-decoy benchmark, CI₉₅: 0.72–0.84, n=191, n_bootstrap=2000; original demo set 0.8420 on 43+44; PR #110) — the ensemble correctly separates
    AMP-like from random-sequence background ~84% of the time.
 
 4. **Dual-scorer consensus:** All phase3 nominees have disagreement ≤ 0.45 (physicochemical and
@@ -851,6 +851,10 @@ best serum stability 0.636–0.662, primary breakthrough candidate VAR_009 at en
 SEED-005 (cecropin-magainin hybrid, CLOSE_RELATIVE, safety note), SEED-008 (puroindoline-a
 Trp-rich, non-helical aromatic mechanism, disagreement explanation), SEED-009 (Bac2A
 proline-rich, RPMI-1640 requirement restated, Pro-bond serine-protease resistance note).
+Serum stability section header updated to "All 7 Seeds" with SEED-006 and SEED-007 rows
+added to the per-seed table. All 7 families now have equal documentation depth in the
+wet-lab handoff package.
+.
 Serum stability section header updated to "All 7 Seeds" with SEED-006 and SEED-007 rows
 added to the per-seed table. All 7 families now have equal documentation depth in the
 wet-lab handoff package.
