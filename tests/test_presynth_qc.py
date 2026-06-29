@@ -106,6 +106,23 @@ class TestOxidationRisk:
         assert len(met_flags) == 1
         assert "Nle" in met_flags[0], "Met flag must recommend Nle substitution (regression guard for PR #102)"
 
+    def test_seed006_all_pilots_have_met_at_position9(self):
+        # ALL 4 SEED-006 pilot variants inherit Met at position 9 from mastoparan-X.
+        # Regression guard for WET_LAB_HANDOFF correction in PR #111 (previously "No Met").
+        seed006_pilots = [
+            ("SEED-006_VAR_059", "INWKPIAAMAKKLV"),
+            ("SEED-006_VAR_071", "IQWKGIAAMAKRLL"),
+            ("SEED-006_VAR_062", "INWRGIAAMAKKFL"),
+            ("SEED-006_VAR_006", "INFKGIALMAKKLL"),
+        ]
+        for cid, seq in seed006_pilots:
+            assert seq[8] == "M", f"{cid}: Met expected at position 9 (index 8), found '{seq[8]}'"
+            qc = check_sequence(cid, seq)
+            assert qc.methionine_count == 1, f"{cid}: expected Met×1, got {qc.methionine_count}"
+            flag_texts = " ".join(qc.flags)
+            assert "MET" in flag_texts, f"{cid}: MET flag missing (synthesis guidance error)"
+            assert "Nle" in flag_texts, f"{cid}: Nle recommendation missing for Met oxidation"
+
 
 # ---------------------------------------------------------------------------
 # Pyroglutamate risk

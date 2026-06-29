@@ -149,7 +149,14 @@ It also activates G-proteins and has calmodulin-binding properties.
 - Hemolytic risk: moderate (assay at MIC/3 per QC guidance)
 
 **Synthesis guidance:**
-- No Cys, no Met → standard Fmoc SPPS, standard storage
+- **⚠️ ALL 4 SEED-006 pilots contain Met at position 9** (inherited from mastoparan-X template
+  INWKGIAA**M**AKKLL): INWKPIAAMAKKLV, IQWKGIAAMAKRLL, INWRGIAAMAKKFL, INFKGIALMAKKLL.
+  Met oxidation (Met→MetO) at position 9 replaces the hydrophobic side chain with a sulfinyl
+  group, disrupts helix hydrophobic face packing, and typically causes 5–20× MIC loss.
+  **Request Nle (norleucine) substitution at position 9** in the synthesis order — zero extra
+  cost at most SPPS suppliers. Specify "M9Nle" (norleucine at position 9). Store lyophilized
+  at −80°C under inert atmosphere. Mandatory HPLC purity check at receipt.
+- No Cys → standard Fmoc SPPS otherwise
 - **C-terminal amidation strongly recommended**: SEED-006_VAR_xxx candidates end in LL (hydrophobic),
   neutral C-terminus. Request `CONH₂` to add +0.7 charge and improve serum stability
 - SEED-006 variants have 2–3 interior Lys → serum t½ estimated ~2–4 h
