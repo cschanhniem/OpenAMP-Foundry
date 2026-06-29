@@ -174,7 +174,7 @@ not a claim that they are inactive.
 | SEED-007 (bombolitin) | 4 | Short amphipathic helix | Genuine (✓ NOVEL) | Low (11 AA; good) | ~70–82% | Novel short helix |
 | SEED-008 (Trp-rich) | 4 | Indole ring stacking; not helical | Genuine (✓ NOVEL) | Moderate (13 AA model edge) | ~70–82% | Novel mechanism; high disagreement |
 | SEED-009 (Pro-rich) | 4 | Ribosome exit + DnaK | Genuine (✓ NOVEL) | **Best** (Pro-X bonds resist protease) | ~60–75% | Novel; run RPMI parallel |
-| SEED-019/020 (Arg-Ile/Val/Leu) | 3 | Cationic amphipathic helix | CLOSE_RELATIVE + ⚠ patent risk for all 3 (DRAMP05502/05504); CLEAR alternative: VAR_008 | Short (12 AA model edge) | **~75–85%** (activity unchanged); IP clearance required before any synthesis | Best ext.-predictor confirmed leads; VAR_008 is the publication-safe option |
+| SEED-019/020 (Arg-Ile/Val/Leu) | 3 | Cationic amphipathic helix | CLOSE_RELATIVE + ⚠ patent risk for all 3 (VAR_004/VAR_019→DRAMP05502; VAR_002→DRAMP05504); CLEAR alternative: VAR_008 | Short (12 AA model edge) | **~75–85%** (activity unchanged); IP clearance required before any synthesis | Best ext.-predictor confirmed leads; VAR_008 is the publication-safe option |
 
 > **Wave 0.5b addendum (2026-06-29; novelty corrected 2026-06-29):** External predictor
 > screening (CAMPR4 × 4 votes, AMPScanner v2, Macrel, AMPActiPred, HemoFinder, AntiCP2) of

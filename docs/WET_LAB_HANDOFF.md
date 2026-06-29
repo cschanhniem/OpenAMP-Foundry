@@ -454,7 +454,7 @@ confirmed by external predictor screening (wave 0.5b; 2026-06-29).
 |-----------|----------|:----------:|:----------:|:------:|:-------------:|:---:|
 | SEED-020_VAR_004 | RLRIRVLKRLLK | 0.9928 (AMP) | LOW | Non-AntiCP 0.29 | NOVEL (41.7% max) | ⚠ CLOSE_RELATIVE 75% to DRAMP05502 (patent) |
 | SEED-020_VAR_002 | KVRIRVLKRLLK | 0.9960 (AMP) | LOW | Non-AntiCP 0.32 | NOVEL (37.5% max) | ⚠ CLOSE_RELATIVE 67% to DRAMP05504 (patent) |
-| SEED-020_VAR_008 | RVRIKVLKRLLK | ext. pred. confirmed | LOW | — | — | CLOSE_RELATIVE 67% to DRAMP31150 (**CLEAR** — public DB, no patent) |
+| SEED-020_VAR_008 *(fallback — see IP NOTE)* | RVRIKVLKRLLK | ext. pred. confirmed | LOW | — | — | CLOSE_RELATIVE 67% to DRAMP31150 (**CLEAR** — public DRAMP entry, no patent sub-database hit) |
 | SEED-019_VAR_004 | RVRIRLVKRLLK | panel anchor | LOW | Non-AntiCP | 38.1% max vs non-patent AMPs | **CLOSE_RELATIVE ⚠ patent risk** (66.7% to DRAMP05502) |
 
 > **IP NOTE — SEED-020_VAR_004, SEED-020_VAR_002, and SEED-019_VAR_004:**
@@ -487,8 +487,8 @@ NOVEL for SEED-020_VAR_004 and VAR_002, but this database does not include paten
 The full BLOSUM62 audit (27,234 sequences including DRAMP patent DB) classifies VAR_004 and
 VAR_002 as **CLOSE_RELATIVE with POSSIBLE_PATENT_RISK** (75% to DRAMP05502 and 67% to
 DRAMP05504 respectively). Activity confirmed at wet-lab would require patent search and IP
-clearance before publication. SEED-020_VAR_008 (RVRIKVLKRLLK; CLEAR, no patent DB match)
-is the publication-safe fallback within this scaffold class. SEED-019_VAR_004 also carries
+clearance before publication. SEED-020_VAR_008 (RVRIKVLKRLLK; CLEAR — public DRAMP entry,
+no patent sub-database hit) is the publication-safe fallback within this scaffold class. SEED-019_VAR_004 also carries
 a patent proximity flag (see IP NOTE above).
 
 **Mechanism:** Cationic amphipathic helix — alternating hydrophobic (Leu/Val/Ile) and cationic
