@@ -443,45 +443,55 @@ Pro-rich AMPs show > 2 h stability in 50% human serum (Otvos & Cudic 2002, *Curr
 
 ## SEED-019/SEED-020 (Arg-Ile/Val/Leu Alternating Scaffold) Special Notes
 
-SEED-019 and SEED-020 form a tight SAR cluster of short cationic amphipathic helices with the
-motif **R-X-R-I-R-V-L-K-R-L-L-K** (X = V, L, K). All candidates in this cluster are 12 AA.
-SEED-020 variants are design-inspired mutations of SEED-019_VAR_004 (RVRIRLVKRLLK) confirmed
-by external predictor screening (wave 0.5b; 2026-06-29).
+SEED-019 and SEED-020 form a tight SAR cluster of short cationic amphipathic helices sharing
+the alternating Arg-Ile/Val/Leu pattern. All candidates are 12 AA with 5–6 combined Lys/Arg
+residues. SEED-020 variants are design-inspired mutations of SEED-019_VAR_004 (RVRIRLVKRLLK)
+confirmed by external predictor screening (wave 0.5b; 2026-06-29).
 
 **Best candidates added to final panel (wave 0.5b, external predictor confirmed):**
 
-| Candidate | Sequence | AMPScanner | HemoFinder | AntiCP | Broad novelty |
-|-----------|----------|:----------:|:----------:|:------:|:-------------:|
-| SEED-020_VAR_004 | RLRIRVLKRLLK | 0.9928 (AMP) | LOW | Non-AntiCP 0.29 | NOVEL (41.7% max) |
-| SEED-020_VAR_002 | KVRIRVLKRLLK | 0.9960 (AMP) | LOW | Non-AntiCP 0.32 | NOVEL (37.5% max) |
-| SEED-019_VAR_004 | RVRIRLVKRLLK | panel anchor | LOW | Non-AntiCP | NOVEL (38.1% max) |
+| Candidate | Sequence | AMPScanner | HemoFinder | AntiCP | Broad novelty (72-AMP DB) | Full-DB novelty |
+|-----------|----------|:----------:|:----------:|:------:|:-------------:|:---:|
+| SEED-020_VAR_004 | RLRIRVLKRLLK | 0.9928 (AMP) | LOW | Non-AntiCP 0.29 | NOVEL (41.7% max) | NOVEL |
+| SEED-020_VAR_002 | KVRIRVLKRLLK | 0.9960 (AMP) | LOW | Non-AntiCP 0.32 | NOVEL (37.5% max) | NOVEL |
+| SEED-019_VAR_004 | RVRIRLVKRLLK | panel anchor | LOW | Non-AntiCP | 38.1% max vs non-patent AMPs | **CLOSE_RELATIVE ⚠ patent risk** |
+
+> **IP NOTE — SEED-019_VAR_004:** Full 27,234-sequence novelty audit v2 (APD6, DRAMP general,
+> DRAMP patent, UniProt) classifies SEED-019_VAR_004 as **CLOSE_RELATIVE (66.7% identity to
+> DRAMP patent sequence DRAMP05502)**. **IP clearance is required before ordering synthesis
+> or publishing results for SEED-019_VAR_004.** The SEED-020 pair (VAR_004 and VAR_002) were
+> not flagged in the patent database and carry no identified IP risk.
 
 SEED-020_VAR_004 is the **best safety-activity tradeoff in the entire wave 0.5b batch** by
 combined external predictor consensus. SEED-020_VAR_002 has the highest AMPScanner score (0.9960)
 of any candidate in the batch.
 
-**Novelty:** All 3 confirmed NOVEL by broad novelty check (72-AMP curated reference database;
-< 50% similarity to any known published AMP). Closest match is REF-RLK-001 (cationic helix
-class) or REF-LL37-003 (LL-37 fragment) — sequence identity is low enough that confirmed
-activity would be publishable as a novel amphipathic helix subclass.
+**Novelty:** SEED-020_VAR_004 and SEED-020_VAR_002 confirmed NOVEL by broad novelty check
+(72-AMP curated reference database; < 50% similarity). Closest matches are in the REF-RLK-001
+(cationic helix) and REF-LL37-003 (LL-37 fragment) classes — confirmed activity in either
+would be publishable. SEED-019_VAR_004 carries a patent proximity flag (see IP NOTE above);
+publishability claims for SEED-019_VAR_004 require IP clearance.
 
 **Mechanism:** Cationic amphipathic helix — alternating hydrophobic (Leu/Val/Ile) and cationic
 (Arg/Lys) faces interact with anionic bacterial membranes, causing rapid membrane depolarization.
-Expected to be Gram-negative and Gram-positive active (broad-spectrum). The high Arg density
-(≥4 Arg in 12 AA) creates a charge density of +4 to +5 at pH 7.4, which is above the minimum
-required for E. coli outer membrane permeation.
+Expected to be Gram-negative and Gram-positive active (broad-spectrum). Each sequence carries
+3–4 Arg plus 2–3 Lys, for a combined Lys/Arg density of 6 in 12 AA; net charge at pH 7.4
+is approximately **+5 to +6** depending on terminal modifications — well above the +3 threshold
+for E. coli outer membrane permeation.
 
-**Hemolysis warning:** Macrel hemolysis predictor scores 0.93 for all SEED-020 variants. However,
-**Macrel hemolysis is known to flag all cationic helices as hemolytic regardless of actual activity**
-(systematic bias documented in the pipeline; Melittin false-negative caveat in `EXPERT_REVIEW_PACK.md`).
-HemoFinder (a separate predictor) classifies all SEED-019/020 variants as LOW hemolysis risk.
+**Hemolysis warning:** Macrel hemolysis predictor scores 0.93 for all SEED-020 variants.
+However, **Macrel hemolysis is non-discriminating in this dataset — 60/60 wave 0.5 candidates
+were flagged regardless of sequence class** (documented in evidence JSONs; see
+`docs/METRICS_CURRENT.md`). HemoFinder (a separate predictor) classifies all SEED-019/020
+variants as LOW hemolysis risk.
 **Run empirical HC50 assay — do not exclude on Macrel score alone.**
 
 **Synthesis guidance:**
 - No Met, no Cys → standard Fmoc SPPS, no oxidation risk, no disulfide risk.
-- **N-terminal acetylation (Nα-Ac) REQUIRED** on all variants: 5 interior Lys/Arg trypsin sites;
-  acetylation blocks aminopeptidase exopeptidase entry (specify "N-terminal acetylation (Ac-)"
-  in synthesis order — zero extra cost).
+- **N-terminal acetylation (Nα-Ac) REQUIRED**: blocks N-terminal aminopeptidase (exopeptidase)
+  from degrading the free α-amine terminus (specify "N-terminal acetylation (Ac-)" in synthesis
+  order — zero extra cost). Note: Nα-Ac does NOT protect against endopeptidase (trypsin) cleavage
+  at the 5 interior K/R sites; endoproteolytic protection requires D-amino substitution (Wave 2).
 - **C-terminal amidation (CONH₂) RECOMMENDED**: adds +0.5 net charge, improves serum exopeptidase
   resistance, standard for short cationic helices (specify "C-terminal amide" in synthesis order).
 - SHORT_PEPTIDE (12 AA): serum stability model calibrated for 18–30 AA — model score likely
