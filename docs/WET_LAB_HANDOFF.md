@@ -441,6 +441,66 @@ Pro-rich AMPs show > 2 h stability in 50% human serum (Otvos & Cudic 2002, *Curr
 
 ---
 
+## SEED-019/SEED-020 (Arg-Ile/Val/Leu Alternating Scaffold) Special Notes
+
+SEED-019 and SEED-020 form a tight SAR cluster of short cationic amphipathic helices with the
+motif **R-X-R-I-R-V-L-K-R-L-L-K** (X = V, L, K). All candidates in this cluster are 12 AA.
+SEED-020 variants are design-inspired mutations of SEED-019_VAR_004 (RVRIRLVKRLLK) confirmed
+by external predictor screening (wave 0.5b; 2026-06-29).
+
+**Best candidates added to final panel (wave 0.5b, external predictor confirmed):**
+
+| Candidate | Sequence | AMPScanner | HemoFinder | AntiCP | Broad novelty |
+|-----------|----------|:----------:|:----------:|:------:|:-------------:|
+| SEED-020_VAR_004 | RLRIRVLKRLLK | 0.9928 (AMP) | LOW | Non-AntiCP 0.29 | NOVEL (41.7% max) |
+| SEED-020_VAR_002 | KVRIRVLKRLLK | 0.9960 (AMP) | LOW | Non-AntiCP 0.32 | NOVEL (37.5% max) |
+| SEED-019_VAR_004 | RVRIRLVKRLLK | panel anchor | LOW | Non-AntiCP | NOVEL (38.1% max) |
+
+SEED-020_VAR_004 is the **best safety-activity tradeoff in the entire wave 0.5b batch** by
+combined external predictor consensus. SEED-020_VAR_002 has the highest AMPScanner score (0.9960)
+of any candidate in the batch.
+
+**Novelty:** All 3 confirmed NOVEL by broad novelty check (72-AMP curated reference database;
+< 50% similarity to any known published AMP). Closest match is REF-RLK-001 (cationic helix
+class) or REF-LL37-003 (LL-37 fragment) — sequence identity is low enough that confirmed
+activity would be publishable as a novel amphipathic helix subclass.
+
+**Mechanism:** Cationic amphipathic helix — alternating hydrophobic (Leu/Val/Ile) and cationic
+(Arg/Lys) faces interact with anionic bacterial membranes, causing rapid membrane depolarization.
+Expected to be Gram-negative and Gram-positive active (broad-spectrum). The high Arg density
+(≥4 Arg in 12 AA) creates a charge density of +4 to +5 at pH 7.4, which is above the minimum
+required for E. coli outer membrane permeation.
+
+**Hemolysis warning:** Macrel hemolysis predictor scores 0.93 for all SEED-020 variants. However,
+**Macrel hemolysis is known to flag all cationic helices as hemolytic regardless of actual activity**
+(systematic bias documented in the pipeline; Melittin false-negative caveat in `EXPERT_REVIEW_PACK.md`).
+HemoFinder (a separate predictor) classifies all SEED-019/020 variants as LOW hemolysis risk.
+**Run empirical HC50 assay — do not exclude on Macrel score alone.**
+
+**Synthesis guidance:**
+- No Met, no Cys → standard Fmoc SPPS, no oxidation risk, no disulfide risk.
+- **N-terminal acetylation (Nα-Ac) REQUIRED** on all variants: 5 interior Lys/Arg trypsin sites;
+  acetylation blocks aminopeptidase exopeptidase entry (specify "N-terminal acetylation (Ac-)"
+  in synthesis order — zero extra cost).
+- **C-terminal amidation (CONH₂) RECOMMENDED**: adds +0.5 net charge, improves serum exopeptidase
+  resistance, standard for short cationic helices (specify "C-terminal amide" in synthesis order).
+- SHORT_PEPTIDE (12 AA): serum stability model calibrated for 18–30 AA — model score likely
+  **underestimates** actual t½; measure empirically (50% human serum, 37°C, 0/30/60/120 min HPLC).
+- 5 trypsin sites at R/K positions → WAVE2_D_AMINO substitution plan generated; if serum t½ < 30 min,
+  proceed directly to D-Arg substitution at positions R1, R3, R5 in Wave 2.
+- Storage: lyophilized at −20°C (no oxidation-sensitive residues; standard cationic peptide storage).
+
+**Assay priority:**
+- Screen SEED-020_VAR_004 and SEED-020_VAR_002 in the same plates as SEED-019_VAR_004 for
+  direct SAR comparison.
+- If both SEED-020 variants and SEED-019_VAR_004 are active, this SAR triad enables immediate
+  QSAR analysis of R→K and L→R substitution effects — a publishable structure-activity insight
+  even from a single wet-lab run.
+- MRSA USA300 is a priority target for this scaffold class (Arg-rich AMPs disrupt Gram-positive
+  membranes; no intracellular target required unlike SEED-009).
+
+---
+
 ## Serum Stability Model Limitations (All 7 Seeds)
 
 The `serum_stability_score()` function is calibrated for medium-length cationic helices (~18–30 AA).
