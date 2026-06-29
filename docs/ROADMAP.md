@@ -94,6 +94,7 @@ Implemented during the pre-wet-lab improvement loop (PRs #31–#54):
 - test(qc): SEED-009_VAR_033 regression guard — asserts both MET×1 (Nle) and PROLINE_RICH_INTRACELLULAR fire simultaneously for RRLPRPGYMPRP; 1312 tests total (PR #107)
 - EXPERT_REVIEW_PACK.md: Pipeline Limitations table updated — PYROGLUTAMATE_RISK row added (N-terminal Q, physiological pH, none of 20 pilot candidates affected); SEED-009_VAR_033 Met row added (PR #108)
 - test: close remaining 1% coverage gap — 6 modules to 100% branch coverage; 1321 tests total; only 6 structural CLI guard lines remain uncovered; all source modules at 100% branch coverage (PR #109)
+- feat(bench+qc): expanded benchmark (95 AMPs + 96 decoys, n=191, AUROC=0.7832, CI₉₅: 0.72–0.84); 52 new public-domain AMPs across 12 classes (defensins, proline-rich, lantibiotics); DKP_RISK flag for N-terminal X-Pro diketopiperazine cyclization — all 4 SEED-008 pilots (F-Pro) flagged with dynamic mass (244 Da), MS receipt check, Nα-Ac REQUIRED; WET_LAB_HANDOFF.md SEED-008 synthesis guidance updated; ASSAY_PREREGISTRATION.md SEED-008 DKP note added; 1337 tests (PR #110)
 
 ## v1.0 — Validated dry-lab-to-wet-lab loop
 

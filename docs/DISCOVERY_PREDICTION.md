@@ -854,3 +854,14 @@ proline-rich, RPMI-1640 requirement restated, Pro-bond serine-protease resistanc
 Serum stability section header updated to "All 7 Seeds" with SEED-006 and SEED-007 rows
 added to the per-seed table. All 7 families now have equal documentation depth in the
 wet-lab handoff package.
+
+**Tracking note (post-PR #110):** Benchmark expanded from 43+44 to 95 AMPs + 96 decoys
+(n=191). AUROC updates: pipeline.yaml 0.8420 → 0.7832 (CI₉₅: 0.72–0.84); phase3.yaml
+0.8266 → 0.7448. The lower point estimate on the larger, class-diverse benchmark is
+expected — the helix-centric scorer was not calibrated for defensins, proline-rich peptides,
+or lantibiotics. The synthesis gate (AUROC > 0.70) still holds with comfortable margin.
+DKP_RISK QC flag added: all 4 SEED-008 pilots (F-Pro N-terminus) require Nα-acetylation
+in the synthesis order to prevent cyclo(F-Pro) (MW≈244 Da) truncation. ASSAY_PREREGISTRATION
+and WET_LAB_HANDOFF SEED-008 sections updated with REQUIRED Nα-Ac guidance and MS receipt
+rejection criterion (satellite > 5% → reject batch). EXPERT_REVIEW_PACK and
+DISCOVERY_PREDICTION doc corruption artifacts corrected. 1337 tests.

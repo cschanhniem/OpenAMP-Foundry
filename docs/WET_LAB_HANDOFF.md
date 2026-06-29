@@ -369,7 +369,16 @@ correct** for this non-helical AMP class. See the Helix-Wheel Amphipathic Face A
 sites are cut 3–8× slower (Wu & Ding 2016, *J Pept Sci*). Assay before committing to D-Trp Wave 2.
 
 **Synthesis guidance:**
-- No Met, no Cys → standard Fmoc SPPS; no special modifications.
+- **⚠️ ALL 4 SEED-008 pilots start with F-Pro: Nα-acetylation (Ac-) REQUIRED** on the synthesis
+  order. The N-terminal Phe-Pro dipeptide spontaneously cyclizes to a diketopiperazine (DKP,
+  cyclo(F-Pro), MW≈244 Da) at physiological pH (t½ hours–days at 37°C). DKP formation truncates
+  the peptide at position 3 (losing the key Phe residue), likely abolishing activity.
+  Nα-acetylation (zero extra cost — specify "Nα-acetyl / Ac-" in the order form) blocks the
+  free amine completely.
+- **MS identity check mandatory at receipt:** confirm full-length peptide by ESI-MS or MALDI;
+  a peak at MW−244 Da indicates DKP contamination — reject the batch if satellite exceeds 5%
+  relative peak area. (Literature: Smyth *et al.* 2000 *J Peptide Res* 55:105.)
+- No Met, no Cys in VAR_009/VAR_019/VAR_044 (3/4 pilots) → standard Fmoc SPPS otherwise.
 - High Trp content (3–4 Trp/13 AA): dissolve in DMSO (≤ 10% final), then dilute to assay
   concentration. Use 0.01% BSA to prevent Trp-driven tube adhesion.
 
