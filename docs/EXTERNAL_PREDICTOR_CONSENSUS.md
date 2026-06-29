@@ -26,8 +26,26 @@ classified as **CONFIDENT** and recommended for synthesis.
 
 ## Current Status
 
-**PENDING** — Results not yet obtained. All 5 tools require manual web submission.
-See `outputs/external_predict_checklist.md` for the submission guide.
+**PENDING** — Results require manual web submission for all 5 tools.
+Macrel v1.6.0 CLI has a known ONNX bug (all candidates classified NAMP — see PR #77);
+use the web server at `big-data-biology.org/software/macrel` instead.
+
+### How to Fill
+
+1. Submit `outputs/pilot_panel.fasta` to each tool's web interface
+2. Record Y/N per candidate in `outputs/external_predict_results.csv`
+3. Run: `make external-consensus RESULTS=outputs/external_predict_results.csv`
+4. Gate 6 (`gate-check --gate 6`) will then pass/fail for real
+
+### Tool URLs
+
+| Tool | URL |
+|------|-----|
+| CAMPR4 | http://www.camp3.bicnirrh.res.in/predict.php |
+| AMPScanner v2 | https://www.dveltri.com/ascan/v2/ascan.html |
+| dbAMP 2.0 | https://awi.cuhk.edu.cn/dbAMP/predict.php |
+| AntiCP 2.0 | https://webs.iiitd.edu.in/raghava/anticp2/ |
+| Macrel | https://big-data-biology.org/software/macrel (web server) |
 
 ## CLI Usage
 
