@@ -40,52 +40,88 @@ def load_csv(path: Path, source_label: str, dedup: set) -> list[dict]:
 
 
 def _infer_taxonomy(family: str, id_str: str) -> str:
+    """Infer taxonomic origin from family string and ID using substring matching.
+
+    Order matters: more specific keywords must come before generic ones
+    (e.g. 'tenecin' in insect BEFORE 'bactenecin' in mammalian; but 'bactenecin'
+    is explicitly added to mammalian to override the substring collision).
+    """
     f = family.lower()
     i = id_str.lower()
-    if any(x in f for x in ["human", "hbd", "defensin", "histatin", "hepcidin", "dermcidin", "ll37", "ll-37", "cathelicidin"]):
+
+    # Human
+    if any(x in f for x in ["human_defensin", "hbd-1", "hbd-2", "hbd-3",
+                             "beta_defensin_human", "histatin",
+                             "hepcidin", "dermcidin", "cathelicidin"]):
         return "human"
-    if any(x in f for x in ["magainin", "pexiganan", "temporin", "brevinin", "esculentin",
-                             "gaegurin", "ranalexin", "japonicin", "phylloseptin", "dermaseptin",
-                             "nigrocin", "rugosin", "aurein", "caerin", "maculatin", "bombinin",
-                             "uperin", "frog"]):
+
+    # Frog (buforin (toad), maximin)
+    if any(x in f for x in ["magainin", "pexiganan", "temporin", "brevinin",
+                             "esculentin", "gaegurin", "ranalexin", "japonicin",
+                             "phylloseptin", "dermaseptin", "nigrocin", "rugosin",
+                             "aurein", "caerin", "maculatin", "bombinin", "uperin",
+                             "buforin", "maximin"]):
         return "frog"
-    if any(x in f for x in ["apidaecin", "drosocin", "formaecin", "thanatin", "defensin_a",
-                             "tenecin", "hymenoptaecin", "insect", "scorpion"]):
+
+    # Insect — note: 'tenecin' catches 'tenecin_1' (Tenebrio) but also
+    # matches 'bactenecin'. 'bactenecin' is added to mammalian to override.
+    if any(x in f for x in ["apidaecin", "drosocin", "formaecin", "thanatin",
+                             "defensin_a", "hymenoptaecin",
+                             "melittin", "scorpion", "pyrrhocoricin",
+                             "oncocin", "cecropin", "silkworm"]):
         return "insect"
-    if any(x in f for x in ["bmaps", "bmap", "smap", "pmap", "oabac", "bac7", "bac5",
-                             "protegrin", "pr_39", "pr-39", "bactenecin", "indolicidin",
-                             "cathelicidin", "bovine", "sheep", "porcine", "goat", "pig"]):
+    # tenecin (insect) must be after bactenecin exclusion
+    if "tenecin" in f and "bactenecin" not in f:
+        return "insect"
+
+    # Mammalian — 'bactenecin' must be here (overrides 'tenecin' causing false insect match)
+    if any(x in f for x in ["bactenecin", "bac7", "bac5",
+                             "bmaps", "bmap_27", "bmap_28", "smap_29",
+                             "pmap_23", "pmap_36", "oabac_5", "oabac_11",
+                             "protegrin", "pr_39", "indolicidin",
+                             "cathelicidin", "bovine", "sheep", "porcine",
+                             "murine", "cramp", "hlp", "smap", "bmap"]):
         return "mammalian"
-    if any(x in f for x in ["rsafp", "ace-amp", "snakin", "thionin", "plant"]):
+
+    # Defensin (generic — after insect defensin_a and human defensins)
+    if "defensin" in f:
+        return "mammalian"
+
+    # Human LL-37 / cathelicidin (already handled above)
+    if any(x in f for x in ["ll37", "ll-37", "human"]):
+        return "human"
+
+    # Plant
+    if any(x in f for x in ["rsafp", "ace-amp", "ace_amp1", "snakin", "thionin", "plant"]):
         return "plant"
-    if any(x in f for x in ["plectasin", "eurocin", "fungal", "fungus"]):
+
+    # Fungal
+    if any(x in f for x in ["plectasin", "eurocin", "fungal"]):
         return "fungal"
+
+    # Fish
     if any(x in f for x in ["pleurocidin", "piscidin", "moronecidin", "fish"]):
         return "fish"
-    if any(x in f for x in ["tachyplesin", "polyphemusin", "arenicin", "horseshoe", "marine"]):
+
+    # Marine invertebrate
+    if any(x in f for x in ["tachyplesin", "polyphemusin", "arenicin",
+                             "horseshoe", "marine", "clavanin"]):
         return "marine_invertebrate"
-    if any(x in f for x in ["nisin", "lantibiotic", "bacteriocin", "bacterial"]):
+
+    # Bacterial
+    if any(x in f for x in ["nisin", "lantibiotic", "bacteriocin", "gramicidin", "bacterial"]):
         return "bacterial"
-    if any(x in f for x in ["defensin", "linear"]):
-        return "mammalian"
-    if any(x in f for x in ["tryptophan_rich", "template_seed", "klaklak", "short_cationic",
-                             "ala_lys_repeat", "cecropin_core", "omiganan"]):
+
+    # Synthetic / designed
+    if any(x in f for x in ["tryptophan_rich", "template_seed", "klaklak",
+                             "short_cationic", "ala_lys_repeat", "cecropin_core",
+                             "omiganan", "bp100", "chimera", "designed",
+                             "engineered", "cm15", "cationic_tryptophan"]):
         return "synthetic"
-    if any(x in f for x in ["cecropin", "silkworm"]):
-        return "insect"
-    if any(x in f for x in ["buforin", "toad"]):
-        return "frog"
-    if any(x in f for x in ["melittin", "bee"]):
-        return "insect"
-    if any(x in f for x in ["gramicidin", "bacteria"]):
-        return "bacterial"
-    if any(x in f for x in ["hlp", "smap", "bmap"]):
+
+    # Linear (generic catch-all)
+    if "linear" in f:
         return "mammalian"
-    if any(x in f for x in ["bp100", "chimera", "designed", "engineered", "cm15"]):
-        return "synthetic"
-    if any(x in f for x in ["clavanin"]):
-        return "marine_invertebrate"
-    if any(x in f for x in ["maximin"]):
         return "frog"
     if any(x in f for x in ["msi", "msi_594"]):
         return "frog"

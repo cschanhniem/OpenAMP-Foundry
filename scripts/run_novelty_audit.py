@@ -16,7 +16,6 @@ Usage: python scripts/run_novelty_audit.py
 """
 
 import csv
-import json
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -97,6 +96,8 @@ def main():
                     "ref_sequence": ref_seq,
                     "similarity": round(sim, 4),
                 })
+        if all_pairs:
+            detail_rows.extend(all_pairs)
 
             if sim > best_sim:
                 best_sim = sim
@@ -110,7 +111,7 @@ def main():
         # 5-layer classification
         novelty = round(1.0 - best_sim, 4)
         category = classify(best_sim)
-        if category == "NOVEL" and novelty > HIGH_CONFIDENCE:
+        if category == "NOVEL" and novelty >= HIGH_CONFIDENCE:
             refined = "HIGH_CONFIDENCE_NOVEL"
         else:
             refined = category
