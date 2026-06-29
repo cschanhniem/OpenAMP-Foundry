@@ -466,6 +466,20 @@ def check_sequence(candidate_id: str, seq: str, mu_h: float = 0.0) -> SynthQC:
             "D-amino acid substitution in Wave 2 (see wave2_d_substitutions)"
         )
 
+    # Serum stability model calibration gap: model trained on 18–30 AA helical/cationic
+    # sequences. For short peptides (< 14 AA), the model likely UNDERESTIMATES stability
+    # because (a) fewer total cleavage sites reduces the density term disproportionately
+    # per residue; (b) short peptides in solution adopt less protease-accessible extended
+    # conformations; (c) Trp-rich sequences (SEED-008 class) gain steric chymotrypsin
+    # protection from indole bulk not captured by the site-count model.
+    # Literature: Radzishevsky et al. (2007) Nat Biotechnol 25:657; Wu & Ding (2016) J Pept Sci 22:223.
+    if len(seq) < 14:
+        qc.flags.append(
+            f"SHORT_PEPTIDE ({len(seq)} AA): serum stability model calibrated for 18–30 AA; "
+            "model may UNDERESTIMATE actual t½ — measure empirically (50% human serum, 37°C, "
+            "0/30/60/120 min time points, HPLC quantification) instead of relying on model score"
+        )
+
     # Proline-rich intracellular mechanism: recommend RPMI-1640 parallel assay.
     # Proline-rich AMPs (>= 30% Pro) like Bac2A target intracellular DnaK and require
     # cell penetration for activity. Standard MHB/MHBII broth underestimates potency because

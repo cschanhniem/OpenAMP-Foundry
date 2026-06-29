@@ -58,8 +58,11 @@ non-reporting of negative results.
 Priority order: if budget-constrained, run organisms 1, 2, and 3 (minimum viable screen + MDR
 impact). MRSA USA300 is priority 3 because SEED-007 (bombolitin-II), SEED-008 (Trp-rich
 puroindoline-a), and SEED-009 (proline-rich Bac2A) have mechanisms that operate well against
-Gram-positive; MRSA activity is the single highest-impact result achievable with this panel.
-Cost: +$200–400 per peptide at most contract labs.
+Gram-positive. SEED-006 (mastoparan-X, wasp-venom helix insertion) operates against both Gram-
+negative and Gram-positive membranes and provides Gram-negative coverage even in the MRSA-only
+panel. SEED-001_VAR_064 serves as the positive control (magainin-1 derivative, known active).
+MRSA activity is the single highest-impact result achievable with this panel. Cost: +$200–400
+per peptide at most contract labs.
 
 **Note for SEED-009 (proline-rich, top 4 ensemble-score ranks in pilot panel):** Proline-rich
 cathelicidins can show reduced activity in standard Mueller-Hinton Broth — media composition

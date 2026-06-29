@@ -271,10 +271,10 @@ The expert reviewer must be aware of these limitations:
 | Limitation | Impact |
 |-----------|--------|
 | Level 0–2 evidence only | Scores are physicochemical heuristics, not validated ML predictions |
-| AUROC = 0.8420 on n=87 | CI₉₅: 0.76–0.91; may not generalise to novel AMP classes outside training distribution |
+| AUROC = 0.7832 on n=191 (expanded) | CI₉₅: 0.72–0.84; 52 new AMPs from 12 taxonomic classes now included (defensins, proline-rich, lantibiotics) — more honest estimate but broader AMP classes still challenge the helic-centric scorer |
 | Safety model blind spot | Melittin scores Safety=1.0; curvature-mediated hemolysis not captured; hemolysis assay mandatory |
 | SEED-008 high disagreement (0.41–0.44) | Boman index penalises Trp; activity_likeness more appropriate for Trp-rich sequences |
-| Serum stability model calibrated for 18–30 AA | SEED-003 (11 AA) and SEED-008 (13 AA) scores may underestimate actual stability |
+| Serum stability model calibrated for 18–30 AA | SEED-003 (11 AA), SEED-007 (11 AA), and SEED-008 (13 AA) scores may underestimate actual stability (short-peptide steric/flexibility effects) |
 | Pro-rich serum stability not in model | SEED-009 model scores (0.572) expected to underestimate actual stability; Pro-X bond resistance is mechanistic |
 | SEED-007 Met oxidation (all 4 pilot variants) | Met at position 6 in all SEED-007 pilot sequences; oxidised Met loses amphipathicity; Nle substitution or inert atmosphere storage required |
 | SEED-009_VAR_033 Met oxidation | VAR_033 (RRLPRPGYMPRP) has Met at position 9 — unique among SEED-009 variants; carries both MET×1 and PROLINE_RICH_INTRACELLULAR QC flags simultaneously; Nle substitution + HPLC purity mandatory at receipt |
