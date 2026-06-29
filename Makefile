@@ -140,6 +140,33 @@ external-predict: pilot
 		--out-fasta outputs/pilot_panel.fasta \
 		--out-checklist outputs/external_predict_checklist.md
 
+# ── Sprint 3-6 targets ─────────────────────────────────────────────────
+
+external-consensus:
+	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli external-consensus \
+		--pilot-csv outputs/pilot_panel.csv \
+		--results-csv $$(or $$(RESULTS),outputs/external_predict_results.csv) \
+		--out outputs/external_consensus_report.md
+
+questionnaire:
+	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli reviewer-questionnaire \
+		--panel-csv outputs/confident_panel.csv \
+		--out outputs/questionnaire
+
+gate-check:
+	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli gate-check \
+		--validation-json outputs/validate_scoring_report.json
+
+ip-report:
+	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli ip-report \
+		--panel-csv outputs/confident_panel.csv \
+		--novelty-csv outputs/novelty_audit_full.csv \
+		--out outputs/ip_report.md
+
+benchmark-card: validate-scoring
+	@echo "Benchmark card is a static document at docs/BENCHMARK_CARD.md"
+	@echo "Run 'make validate-scoring' to update outputs/validate_scoring_report.json"
+
 pilot-confident:
 	@if [ -z "$(KEEP)" ]; then \
 		echo "Usage: make pilot-confident KEEP=ID1,ID2,..."; \

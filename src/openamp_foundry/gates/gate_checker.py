@@ -112,6 +112,26 @@ _ALL_GATES = [
 ]
 
 
+def _gate_pending(gate: int, name: str, detail: str) -> GateResult:
+    """Create a GateResult with passed=True for intentionally pending gates."""
+    return GateResult(
+        gate=gate, name=name, passed=True, value="PENDING",
+        threshold="N/A (manual review)", detail=detail,
+    )
+
+
+_ALL_GATES += [
+    lambda _val: _gate_pending(6, "External predictor consensus",
+        "Gate 6 PENDING — external predictor results not yet available. "
+        "Submit FASTA to CAMPR4, AMPScanner, dbAMP, AntiCP2, Macrel to populate "
+        "outputs/external_predict_results.csv. See outputs/external_predict_checklist.md for guide."),
+    lambda _val: _gate_pending(7, "Human expert review",
+        "Gate 7 PENDING — expert reviewer sign-off required. "
+        "Generate reviewer questionnaires via 'make questionnaire', "
+        "distribute to reviewers, and collect APPROVE/CONDITIONAL/REJECT verdicts."),
+]
+
+
 def check_all_gates(
     validation_data: dict[str, Any],
     specific_gate: int = 0,

@@ -13,8 +13,12 @@ from pathlib import Path
 from typing import Any
 
 
-TOOLS = ["CAMPR4", "AMPScanner", "dbAMP", "AntiCP2", "Macrel", "HAPPENN"]
-TOOLS_SHORT = ["CAMP", "AMPscn", "dbAMP", "AntiCP", "Macrel", "HAPPN"]
+TOOLS = ["CAMPR4", "AMPScanner", "dbAMP", "AntiCP2", "Macrel"]
+TOOLS_SHORT = ["CAMP", "AMPscn", "dbAMP", "AntiCP", "Macrel"]
+
+# Safety-only predictors (hemolysis, toxicity) — tracked but not counted as AMP votes.
+SAFETY_TOOLS = ["HAPPENN"]
+SAFETY_TOOLS_SHORT = ["HAPPN"]
 
 
 @dataclass
@@ -143,23 +147,26 @@ def write_consensus_report(results: list[ConsensusResult], out_path: str | Path)
         f"| Tool | Positive | Total | Rate |",
         f"|------|:--------:|:-----:|:----:|",
     ]
-    for tool, short in zip(TOOLS, TOOLS_SHORT):
+    for tool, short in zip(TOOLS + SAFETY_TOOLS, TOOLS_SHORT + SAFETY_TOOLS_SHORT):
         pos = tool_positive.get(tool, 0)
         tot = tool_total.get(tool, 0)
+        tag = "(AMP)" if tool in TOOLS else "(safety)"
         rate = f"{pos}/{tot} ({100*pos/tot:.0f}%)" if tot else "N/A"
-        lines.append(f"| {short} | {pos} | {tot} | {rate} |")
+        lines.append(f"| {short} {tag} | {pos} | {tot} | {rate} |")
 
     lines.extend([
         f"",
         f"## Per-Candidate Results",
         f"",
-        f"| Candidate | Sequence | CAMP | AMPscn | dbAMP | AntiCP | Macrel | HAPPN | Agree | Verdict |",
+        f"| Candidate | Sequence | CAMP | AMPscn | dbAMP | AntiCP | Macrel | HAPPN‡ | Agree | Verdict |",
         f"|-----------|----------|:----:|:------:|:-----:|:------:|:------:|:-----:|:-----:|:--------:|",
     ])
+    # Safety tool marks are shown in a separate column (not counted in consensus)
+    all_col_tools = TOOLS + SAFETY_TOOLS
     for r in results:
         tool_marks = "".join(
             "Y" if r.votes.get(t, False) else ("N" if t in r.votes else ".")
-            for t in TOOLS
+            for t in all_col_tools
         )
         agree = f"{r.n_positive}/{r.n_tools}"
         seq_short = r.sequence[:25] + ("..." if len(r.sequence) > 25 else "")
@@ -196,8 +203,9 @@ def write_consensus_report(results: list[ConsensusResult], out_path: str | Path)
         f"as indirect supporting evidence only.",
         f"3. Macrel has a known ONNX bug in local install (PR #77). Use the web server. "
         f"(`big-data-biology.org/software/macrel`)",
-        f"4. HAPPENN predicts hemolysis risk, not AMP activity. HAPPENN-positive means "
-        f"increased hemolysis risk, which may conflict with the safety gate.",
+        f"4. **‡HAPPENN** predicts hemolysis risk, not AMP activity. HAPPENN column is shown "
+        f"but NOT counted in the consensus vote tally. HAPPENN-positive means increased "
+        f"hemolysis risk, which may conflict with the safety gate.",
         f"5. Results not yet available for this panel — results table currently shows "
         f"placeholder data. See `outputs/external_predict_checklist.md` for submission guide.",
     ])
@@ -222,5 +230,14 @@ def consensus_report_to_dict(results: list[ConsensusResult]) -> dict[str, Any]:
                 "votes": {t: r.votes.get(t, None) for t in TOOLS},
             }
             for r in results
+        ],
+    }
+ools": r.n_tools,
+                "votes": {t: r.votes.get(t, None) for t in TOOLS},
+            }
+            for r in results
+        ],
+    }
+     for r in results
         ],
     }
