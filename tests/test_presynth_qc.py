@@ -845,6 +845,22 @@ class TestProlineRichMediaFlag:
         assert "PROLINE_RICH" in flag_texts, "VAR_033 must carry PROLINE_RICH_INTRACELLULAR flag"
         assert qc.methionine_count == 1
 
+    def test_seed006_all_pilots_have_met_at_position9(self):
+        # ALL 4 SEED-006 pilot variants inherit Met at position 9 from mastoparan-X.
+        # Regression guard for WET_LAB_HANDOFF correction in this PR (previously "No Met").
+        seed006_pilots = [
+            ("SEED-006_VAR_059", "INWKPIAAMAKKLV"),
+            ("SEED-006_VAR_071", "IQWKGIAAMAKRLL"),
+            ("SEED-006_VAR_062", "INWRGIAAMAKKFL"),
+            ("SEED-006_VAR_006", "INFKGIALMAKKLL"),
+        ]
+        for cid, seq in seed006_pilots:
+            qc = check_sequence(cid, seq)
+            assert qc.methionine_count == 1, f"{cid}: expected Met×1, got {qc.methionine_count}"
+            flag_texts = " ".join(qc.flags)
+            assert "MET" in flag_texts, f"{cid}: MET flag missing (synthesis guidance error)"
+            assert "Nle" in flag_texts, f"{cid}: Nle recommendation missing for Met oxidation"
+
 
 # ---------------------------------------------------------------------------
 # LONG_PEPTIDE flag (> 30 AA)
