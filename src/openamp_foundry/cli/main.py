@@ -194,8 +194,8 @@ def build_parser() -> argparse.ArgumentParser:
     external_predict = sub.add_parser(
         "external-predict",
         help=(
-            "Generate FASTA and submission checklist for external AMP prediction tools "
-            "(CAMPR4, AMPScanner v2, dbAMP). Must be submitted manually — no API calls made."
+            "Automates Playwright execution of external AMP predictors "
+            "(CAMPR4, AMPScanner v2, AntiCP2, HemoFinder) and consolidates results."
         ),
     )
     external_predict.add_argument(
