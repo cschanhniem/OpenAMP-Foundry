@@ -1,7 +1,7 @@
 # Benchmark Card — OpenAMP Foundry v0.5.x
 
 > **Purpose:** Single-page summary of benchmark methodology, data, and metrics.
-> **Last updated:** 2026-06-29 (PR #110 expanded benchmark)
+> **Last updated:** 2026-07-01 (cluster-split benchmark added)
 
 ---
 
@@ -44,6 +44,33 @@
 AUROC computed via Wilcoxon-Mann-Whitney statistic (concordant-pair enumeration).
 AUPRC via trapezoidal integration of precision-recall curve (pessimistic tie-breaking).
 Confidence intervals: percentile bootstrap (2000 resamples, seed=0).
+
+
+## Cluster-Split Analysis
+
+> Added 2026-07-01. 33 of 95 AMPs fall into 14 near-duplicate clusters (sim >= 0.70).
+
+| Metric | Pipeline | Phase3 |
+|--------|:--------:|:------:|
+| Full AUROC | 0.7832 | 0.7448 |
+| Standard CI₉₅ | 0.717–0.8423 | 0.6741–0.8118 |
+| **Cluster-aware CI₉₅** | **0.7061–0.8526** | **0.6591–0.8237** |
+| Representative AUROC (76 clusters) | 0.7607 | 0.7196 |
+| Representative CI₉₅ | 0.6854–0.8301 | 0.6372–0.7985 |
+| Held-out AUROC (19 near-dup AMPs) | 0.8734 | 0.8454 |
+
+The cluster-aware bootstrap resamples clusters (not individual sequences), producing
+an honest CI when near-duplicate families exist in the positive set. The standard
+bootstrap underestimates variance by treating near-identical sequences as independent.
+
+**Verdict:** Signal survives de-inflation. Cluster-aware CI lower bound (0.7061)
+stays above 0.65. Representative-only CI lower bound (0.6854) dips below 0.70 —
+an honest limitation. The pipeline has real but modest discriminative power.
+
+Near-duplicate clusters: magainin-1/2/3, protegrin-1/2/3, tachyplesin-I/II/polyphemusin-I,
+indolicidin/analog/lys-analog, BMAP-27/PMAP-36/bmap-fragment, aurein-1/3, cecropin-A/B,
+apidaecin-Ia/Ib, RsAFP-1/2, plectasin/eurocin, piscidin-1/3, buforin/buforin-II,
+dermaseptin-S1/S3-fragment, KWK-template/WKL.
 
 ## Known Biases
 

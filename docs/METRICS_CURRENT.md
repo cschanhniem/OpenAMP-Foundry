@@ -3,7 +3,7 @@
 > **Purpose:** One authoritative table of current pipeline metrics. If any doc disagrees
 > with this file, this file wins. Updated whenever benchmark/benchmark config changes.
 >
-> **Last updated:** 2026-06-29 (PR #110 expanded benchmark)
+> **Last updated:** 2026-07-01 (cluster-split benchmark added)
 > **Pipeline version:** v0.5.x
 > **Branch:** main
 
@@ -26,6 +26,44 @@
 | Recall@20 | 0.2105 | 20/95 positives in top 20 |
 | Recall@43 | 0.4211 | 40/95 positives in top 43 |
 | Interpretation | **STRONG** | AUROC > 0.70 gate passed |
+
+
+### Cluster-Split Benchmark (near-duplicate de-inflation)
+
+> Added 2026-07-01. The standard benchmark treats all 95 AMPs as independent samples.
+> 33 of 95 AMPs are in 14 near-duplicate clusters (sim >= 0.70): magainin-1/2/3,
+> protegrin-1/2/3, tachyplesin-I/II/polyphemusin-I, indolicidin/analog/lys-analog, etc.
+> The cluster-aware bootstrap resamples clusters (not sequences) to produce an honest CI.
+
+| Metric | Pipeline (pipeline.yaml) | Phase3 (phase3.yaml) |
+|--------|:-----------------------:|:-------------------:|
+| Full AUROC | 0.7832 | 0.7448 |
+| Standard CI₉₅ | 0.717–0.8423 | 0.6741–0.8118 |
+| **Cluster-aware CI₉₅** | **0.7061–0.8526** | **0.6591–0.8237** |
+| Representative AUROC (1/cluster) | 0.7607 | 0.7196 |
+| Representative CI₉₅ | 0.6854–0.8301 | 0.6372–0.7985 |
+| Held-out AUROC (19 near-dup AMPs) | 0.8734 | 0.8454 |
+| Independent clusters | 76 / 95 | 76 / 95 |
+| AMPs in multi-member clusters | 33 / 95 | 33 / 95 |
+| Multi-member clusters | 14 | 14 |
+
+**Key finding:** The cluster-aware CI (0.7061–0.8526) is wider than the standard CI
+(0.717–0.8423) on the upper end but the lower bound drops below the standard CI
+(0.7061 vs 0.717). The representative-only AUROC (0.7607, CI: 0.6854–0.8301) confirms
+the signal is not entirely driven by near-duplicate redundancy — but the CI lower
+bound (0.6854) dips below the 0.70 synthesis gate threshold. The pipeline passes the
+cluster-aware gate (CI lo > 0.65) but with less margin than the standard benchmark
+suggested. The held-out AUROC (0.8734) is high because held-out near-duplicates share
+composition features with their cluster representatives — this is expected and not
+evidence of generalisation to novel sequence space.
+
+**Verdict:** Signal survives near-duplicate de-inflation. The synthesis gate (AUROC >
+0.70) holds on the full set and the cluster-aware CI lower bound stays above 0.65.
+The representative-only CI lower bound (0.6854) crossing below 0.70 is an honest
+limitation: the pipeline has real but modest discriminative power, and the headline
+CI was slightly overconfident.
+
+Run: `openamp-foundry bench cluster-split`
 
 ### Historical baselines
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from openamp_foundry.cli.commands.core import _run_generate_batch
-from openamp_foundry.cli.commands.benchmark import _run_bench, _run_validate_scoring
+from openamp_foundry.cli.commands.benchmark import _run_bench, _run_validate_scoring, _run_cluster_split_bench
 from openamp_foundry.cli.commands.selection import _run_pilot_panel, _run_pilot_confident, _run_diversity_check
 from openamp_foundry.cli.commands.external import _run_external_predict, _run_external_consensus
 from openamp_foundry.cli.commands.qc import _run_synthesis_order, _run_presynth_qc
@@ -63,6 +63,47 @@ def build_parser() -> argparse.ArgumentParser:
     )
     baseline.add_argument("--config", default="configs/pipeline.yaml")
     baseline.add_argument("--out", required=False, help="Optional JSON output path.")
+
+    cluster_split = bench_sub.add_parser(
+        "cluster-split",
+        help=(
+            "Cluster-split retrospective AUROC benchmark with honest CI. "
+            "Clusters near-duplicate AMPs, reports cluster-aware bootstrap CI "
+            "(wider than standard CI when near-duplicates exist), and held-out "
+            "recovery AUROC for near-duplicate cluster members."
+        ),
+    )
+    cluster_split.add_argument(
+        "--amp-csv",
+        default="examples/validation/known_amps.csv",
+        help="CSV of known AMPs (id, sequence, family, reference, label).",
+    )
+    cluster_split.add_argument(
+        "--decoy-csv",
+        default="examples/validation/random_background.csv",
+        help="CSV of decoy peptides.",
+    )
+    cluster_split.add_argument(
+        "--config",
+        default="configs/pipeline.yaml",
+    )
+    cluster_split.add_argument(
+        "--threshold",
+        type=float,
+        default=0.70,
+        help="Similarity threshold for clustering (default: 0.70).",
+    )
+    cluster_split.add_argument(
+        "--n-bootstrap",
+        type=int,
+        default=2000,
+        help="Bootstrap resample count (default: 2000).",
+    )
+    cluster_split.add_argument(
+        "--out",
+        required=False,
+        help="Optional JSON output path.",
+    )
 
     generate = sub.add_parser(
         "generate-batch",
@@ -507,6 +548,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "bench":
+        if args.bench_command == "cluster-split":
+            return _run_cluster_split_bench(args)
         return _run_bench(args)
 
     if args.command == "generate-batch":

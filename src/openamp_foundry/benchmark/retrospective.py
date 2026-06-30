@@ -248,3 +248,310 @@ def run_retrospective_benchmark(
             "controls. Wet-lab validation remains mandatory."
         ),
     }
+
+
+def _cluster_aware_bootstrap_auroc_ci(
+    pos_scores: list[float],
+    neg_scores: list[float],
+    cluster_assignments: list[int],
+    n_bootstrap: int = 2000,
+    seed: int = 0,
+) -> dict:
+    """Bootstrap 95% CI for AUROC that resamples clusters, not individual sequences.
+
+    Standard bootstrap resampling treats every sample as independent. When the
+    positive set contains near-duplicate sequences (e.g. magainin-1, magainin-2,
+    magainin-3), this underestimates variance and produces artificially narrow CIs.
+
+    Cluster-aware bootstrap:
+      1. Group positive scores by cluster ID.
+      2. Resample clusters with replacement (not individual scores).
+      3. Flatten the resampled cluster scores into a new positive score list.
+      4. Compute AUROC on the resampled set.
+
+    Args:
+        pos_scores: ensemble scores of positive (AMP) sequences.
+        neg_scores: ensemble scores of negative (decoy) sequences.
+        cluster_assignments: cluster ID for each positive sequence (same order as pos_scores).
+            Negative sequences are always treated as independent (random decoys have no
+            near-duplicate clusters by construction).
+        n_bootstrap: number of bootstrap resamples.
+        seed: RNG seed for reproducibility.
+
+    Returns:
+        Dict with mean, ci_lo, ci_hi, n_bootstrap.
+    """
+    import random as _random
+    rng = _random.Random(seed)
+    n_pos = len(pos_scores)
+    n_neg = len(neg_scores)
+    if n_pos == 0 or n_neg == 0:
+        return {"mean": 0.5, "ci_lo": 0.5, "ci_hi": 0.5, "n_bootstrap": 0}
+
+    # Group positive scores by cluster
+    clusters: dict[int, list[float]] = {}
+    for score, cid in zip(pos_scores, cluster_assignments):
+        clusters.setdefault(cid, []).append(score)
+
+    unique_cluster_ids = list(clusters.keys())
+    n_clusters = len(unique_cluster_ids)
+
+    samples = []
+    for _ in range(n_bootstrap):
+        # Resample clusters with replacement
+        resampled_pos: list[float] = []
+        for _ in range(n_clusters):
+            cid = rng.choice(unique_cluster_ids)
+            resampled_pos.extend(clusters[cid])
+        # Resample negatives normally (they are independent)
+        neg_s = [rng.choice(neg_scores) for _ in range(n_neg)]
+        samples.append(_auc_wilcoxon(resampled_pos, neg_s))
+
+    samples.sort()
+    lo_idx = int(0.025 * n_bootstrap)
+    hi_idx = int(0.975 * n_bootstrap)
+    return {
+        "mean": round(sum(samples) / len(samples), 4),
+        "ci_lo": round(samples[lo_idx], 4),
+        "ci_hi": round(samples[hi_idx], 4),
+        "n_bootstrap": n_bootstrap,
+    }
+
+
+def run_cluster_split_benchmark(
+    amp_csv: str | Path,
+    decoy_csv: str | Path,
+    config_path: str | Path = "configs/pipeline.yaml",
+    similarity_threshold: float = 0.70,
+    n_bootstrap: int = 2000,
+) -> dict:
+    """Cluster-split retrospective benchmark: honest AUROC with leakage control.
+
+    The standard benchmark (run_retrospective_benchmark) scores all AMPs against
+    all decoys and computes AUROC + bootstrap CI. This is the primary synthesis gate.
+
+    However, the standard benchmark treats near-duplicate AMPs as independent
+    samples. When the positive set contains families of nearly identical sequences
+    (e.g. magainin-1/2/3 at 91-96% identity, protegrin-1/2/3 at 89-94% identity),
+    two problems arise:
+
+    1. **Inflated AUROC**: near-duplicates that share composition features will
+       all score similarly, so getting one right means getting all right. This
+       inflates the apparent concordance count.
+    2. **Artificially narrow CI**: bootstrap resampling treats each sequence as
+       an independent draw. Resampling a cluster of 3 near-identical magainins
+       as 3 independent observations underestimates the true variance.
+
+    This benchmark addresses both:
+
+    - **Cluster-aware AUROC**: scores all AMPs and decoys, but computes the
+      bootstrap CI by resampling clusters (not individual sequences).
+    - **Held-out recovery**: clusters the AMP set, holds out near-duplicate
+      members, and reports AUROC on the held-out set vs decoys. This tests
+      whether the scorer generalises beyond the cluster representatives.
+
+    The cluster-aware CI is the primary honesty improvement. The held-out
+    recovery is a secondary diagnostic.
+
+    Args:
+        amp_csv: CSV of known AMPs (id, sequence, family, reference, label).
+        decoy_csv: CSV of decoy peptides (id, sequence, ...).
+        config_path: Pipeline config for scoring weights.
+        similarity_threshold: Normalized similarity threshold for clustering (default 0.70).
+        n_bootstrap: Bootstrap resample count.
+
+    Returns:
+        Dict with full cluster-split benchmark results.
+    """
+    from openamp_foundry.benchmark.splits import cluster_by_similarity
+    from openamp_foundry.features.physchem import compute_features
+    from openamp_foundry.scoring.activity import activity_likeness_score
+    from openamp_foundry.scoring.boman import boman_activity_score
+    from openamp_foundry.scoring.ensemble import ensemble_score
+    from openamp_foundry.scoring.novelty import novelty_score
+    from openamp_foundry.scoring.safety import safety_score
+    from openamp_foundry.scoring.synthesis import synthesis_feasibility_score
+    from openamp_foundry.config import load_config
+
+    config = load_config(config_path)
+    weights = config["weights"]
+
+    # Load and score all AMPs
+    amp_rows = []
+    with open(amp_csv, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            seq = row["sequence"].strip().upper()
+            seq_id = row["id"]
+            valid = all(aa in "ACDEFGHIKLMNPQRSTVWY" for aa in seq)
+            features = compute_features(seq)
+            act = activity_likeness_score(features)
+            safe = safety_score(features)
+            synth = synthesis_feasibility_score(features, valid_sequence=valid)
+            nov, _ = novelty_score(seq, [])
+            boman_act = boman_activity_score(seq)
+            raw_scores = {
+                "activity": act, "safety": safe,
+                "synthesis": synth, "novelty": nov,
+                "boman_activity": boman_act,
+                "disagreement": abs(act - boman_act),
+            }
+            raw_scores["ensemble"] = ensemble_score(raw_scores, weights)
+            amp_rows.append({
+                "id": seq_id,
+                "sequence": seq,
+                "family": row.get("family", ""),
+                "label": 1,
+                "ensemble": raw_scores["ensemble"],
+            })
+
+    # Load and score all decoys
+    decoy_rows = []
+    with open(decoy_csv, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            seq = row["sequence"].strip().upper()
+            seq_id = row["id"]
+            valid = all(aa in "ACDEFGHIKLMNPQRSTVWY" for aa in seq)
+            features = compute_features(seq)
+            act = activity_likeness_score(features)
+            safe = safety_score(features)
+            synth = synthesis_feasibility_score(features, valid_sequence=valid)
+            nov, _ = novelty_score(seq, [])
+            boman_act = boman_activity_score(seq)
+            raw_scores = {
+                "activity": act, "safety": safe,
+                "synthesis": synth, "novelty": nov,
+                "boman_activity": boman_act,
+                "disagreement": abs(act - boman_act),
+            }
+            raw_scores["ensemble"] = ensemble_score(raw_scores, weights)
+            decoy_rows.append({
+                "id": seq_id,
+                "sequence": seq,
+                "label": 0,
+                "ensemble": raw_scores["ensemble"],
+            })
+
+    # Cluster the AMP set
+    amp_seqs = [r["sequence"] for r in amp_rows]
+    clusters = cluster_by_similarity(amp_seqs, threshold=similarity_threshold)
+
+    # Map each AMP index to its cluster ID
+    index_to_cluster: dict[int, int] = {}
+    for cluster_id, cluster_members in enumerate(clusters):
+        for member_idx in cluster_members:
+            index_to_cluster[member_idx] = cluster_id
+
+    n_clusters = len(clusters)
+    multi_member_clusters = [c for c in clusters if len(c) > 1]
+    n_in_multi = sum(len(c) for c in multi_member_clusters)
+
+    # Cluster-aware AUROC: full set, but CI resamples clusters
+    all_pos_scores = [r["ensemble"] for r in amp_rows]
+    all_neg_scores = [r["ensemble"] for r in decoy_rows]
+    full_auroc = round(_auc_wilcoxon(all_pos_scores, all_neg_scores), 4)
+    cluster_assignments = [index_to_cluster[i] for i in range(len(amp_rows))]
+    cluster_aware_ci = _cluster_aware_bootstrap_auroc_ci(
+        all_pos_scores, all_neg_scores, cluster_assignments,
+        n_bootstrap=n_bootstrap,
+    )
+
+    # Standard CI for comparison (to show the inflation)
+    standard_ci = _bootstrap_auroc_ci(all_pos_scores, all_neg_scores, n_bootstrap=n_bootstrap)
+
+    # Held-out recovery: non-representative cluster members vs decoys
+    ref_indices = [c[0] for c in clusters]
+    test_indices = [i for c in clusters for i in c[1:]]
+
+    held_out_auroc = None
+    held_out_ci = None
+    held_out_n_pos = 0
+    if test_indices:
+        held_out_pos = [amp_rows[i]["ensemble"] for i in test_indices]
+        held_out_auroc = round(_auc_wilcoxon(held_out_pos, all_neg_scores), 4)
+        held_out_ci = _bootstrap_auroc_ci(held_out_pos, all_neg_scores, n_bootstrap=n_bootstrap)
+        held_out_n_pos = len(test_indices)
+
+    # Representative-only AUROC: one per cluster vs decoys
+    rep_pos = [amp_rows[i]["ensemble"] for i in ref_indices]
+    rep_auroc = round(_auc_wilcoxon(rep_pos, all_neg_scores), 4)
+    rep_ci = _bootstrap_auroc_ci(rep_pos, all_neg_scores, n_bootstrap=n_bootstrap)
+
+    # Interpretation based on cluster-aware CI lower bound
+    ci_lo = cluster_aware_ci["ci_lo"]
+    if full_auroc >= 0.70 and ci_lo >= 0.65:
+        interpretation = (
+            "STRONG — AUROC > 0.70 and cluster-aware CI lower bound > 0.65. "
+            "Signal survives near-duplicate de-inflation."
+        )
+    elif full_auroc >= 0.70:
+        interpretation = (
+            "STRONG-AUROC-BUT-WIDE-CI — point estimate > 0.70 but cluster-aware CI "
+            f"lower bound = {ci_lo:.4f} < 0.65. Near-duplicate clusters inflate apparent "
+            "precision. Signal is real but less certain than standard CI suggests."
+        )
+    elif full_auroc >= 0.55:
+        interpretation = (
+            "WEAK — AUROC 0.55-0.70. Modest signal; proceed with caution."
+        )
+    else:
+        interpretation = (
+            "POOR — AUROC < 0.55. Model is near-random. Do NOT proceed to synthesis."
+        )
+
+    return {
+        "benchmark": "cluster_split_retrospective",
+        "n_positives": len(amp_rows),
+        "n_negatives": len(decoy_rows),
+        "n_total": len(amp_rows) + len(decoy_rows),
+        "similarity_threshold": similarity_threshold,
+        "n_clusters": n_clusters,
+        "n_multi_member_clusters": len(multi_member_clusters),
+        "n_amps_in_multi_member_clusters": n_in_multi,
+        "n_independent_amps": n_clusters,
+        "n_held_out_amps": held_out_n_pos,
+        # Full-set AUROC (same as standard benchmark)
+        "full_auroc": full_auroc,
+        # Standard bootstrap CI (treats all sequences as independent — inflated)
+        "standard_ci95_lo": standard_ci["ci_lo"],
+        "standard_ci95_hi": standard_ci["ci_hi"],
+        "standard_ci_note": (
+            "Standard bootstrap treats near-duplicate sequences as independent. "
+            "When the positive set contains near-duplicate clusters, this CI is "
+            "artificially narrow."
+        ),
+        # Cluster-aware bootstrap CI (resamples clusters, not sequences)
+        "cluster_aware_ci95_lo": cluster_aware_ci["ci_lo"],
+        "cluster_aware_ci95_hi": cluster_aware_ci["ci_hi"],
+        "cluster_aware_ci_mean": cluster_aware_ci["mean"],
+        "cluster_aware_ci_note": (
+            "Cluster-aware bootstrap resamples clusters (not individual sequences). "
+            "This is the honest CI when the positive set contains near-duplicate families."
+        ),
+        # Held-out recovery: near-duplicate AMPs held out, scored vs decoys
+        "held_out_auroc": held_out_auroc,
+        "held_out_ci95_lo": held_out_ci["ci_lo"] if held_out_ci else None,
+        "held_out_ci95_hi": held_out_ci["ci_hi"] if held_out_ci else None,
+        "held_out_n_positives": held_out_n_pos,
+        # Representative-only: one AMP per cluster vs decoys
+        "representative_auroc": rep_auroc,
+        "representative_ci95_lo": rep_ci["ci_lo"],
+        "representative_ci95_hi": rep_ci["ci_hi"],
+        "representative_n_positives": n_clusters,
+        "interpretation": interpretation,
+        "near_duplicate_clusters": [
+            {
+                "cluster_id": idx,
+                "size": len(c),
+                "members": [amp_rows[i]["id"] for i in c],
+                "families": [amp_rows[i]["family"] for i in c],
+            }
+            for idx, c in enumerate(clusters) if len(c) > 1
+        ],
+        "disclaimer": (
+            "Cluster-split benchmark controls for near-duplicate contamination in the "
+            "positive set. The cluster-aware CI is the honest confidence interval. "
+            "The standard CI is shown for comparison to reveal the inflation. "
+            "AUROC > 0.70 does NOT imply nominated candidates are antimicrobial. "
+            "Wet-lab validation remains mandatory."
+        ),
+    }
