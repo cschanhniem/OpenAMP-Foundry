@@ -24,7 +24,7 @@ HEMOLYSIS_CSV = "examples/validation/hemolysis_reference.csv"
 SCORE_COLS = [
     "ensemble", "expert_composite", "activity", "safety",
     "synthesis", "novelty", "boman_activity", "serum_stability",
-    "selectivity_proxy", "hinge_selectivity",
+    "selectivity_proxy", "hemolysis_risk", "hinge_selectivity",
 ]
 
 
@@ -49,11 +49,17 @@ class TestSelectivityBenchmark:
             assert 0.0 <= per_score[col]["hemolysis_detection_auroc"] <= 1.0
 
     def test_detection_auroc_is_complement(self, result):
-        """Detection AUROC = 1 - AUROC for every score."""
+        """Detection AUROC = 1 - AUROC for safety-direction scores; = AUROC for risk-direction scores."""
         for col, info in result["per_score_auroc"].items():
-            assert info["hemolysis_detection_auroc"] == pytest.approx(
-                1.0 - info["auroc"], abs=1e-4
-            )
+            if col == "hemolysis_risk":
+                # Risk score: higher = more risk. Detection AUROC = raw AUROC.
+                assert info["hemolysis_detection_auroc"] == pytest.approx(
+                    info["auroc"], abs=1e-4
+                )
+            else:
+                assert info["hemolysis_detection_auroc"] == pytest.approx(
+                    1.0 - info["auroc"], abs=1e-4
+                )
 
     def test_ci_bounds_are_ordered(self, result):
         for col, info in result["per_score_auroc"].items():
@@ -76,12 +82,28 @@ class TestSelectivityBenchmark:
         assert "expert" in result["expert_composite_verdict"].lower()
         assert "ensemble" in result["expert_composite_verdict"].lower()
 
+    def test_hemolysis_risk_verdict_present(self, result):
+        assert "hemolysis risk" in result["hemolysis_risk_verdict"].lower()
+
+    def test_hemolysis_risk_is_significant_detector(self, result):
+        """The dedicated hemolysis risk scorer should be a significant risk detector."""
+        assert "hemolysis_risk" in result["risk_detectors"]
+        assert result["per_score_auroc"]["hemolysis_risk"]["detection_ci95_lo"] > 0.5
+
+    def test_hemolysis_risk_scores_present(self, result):
+        """Per-peptide hemolysis risk scores should be available for inspection."""
+        scores = result["hemolysis_risk_scores"]
+        assert len(scores) == result["n_total"]
+        for s in scores:
+            assert 0.0 <= s["hemolysis_risk"] <= 1.0
+
     def test_blind_spots_listed(self, result):
         """All hemolytic AMPs with safety >= 0.8 should be listed as blind spots."""
         blind = result["blind_spots"]
         for bp in blind:
             assert bp["safety"] >= 0.8
             assert bp["hc50"] < 25
+            assert "hemolysis_risk" in bp
 
     def test_border_zone_present(self, result):
         """Border zone peptides (25 <= HC50 < 100) should be reported."""

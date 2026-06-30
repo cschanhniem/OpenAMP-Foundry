@@ -645,6 +645,7 @@ def run_expert_ablation_benchmark(
                     "selectivity_proxy": features.get("selectivity_proxy", 1.0),
                     "hinge_selectivity": exp.components["hinge_selectivity"],
                     "motif_novelty": exp.components["motif_novelty"],
+                    "hemolysis_safety": exp.components["hemolysis_safety"],
                 })
 
     pos = [r for r in rows if r["label"] == 1]
@@ -672,7 +673,7 @@ def run_expert_ablation_benchmark(
     component_cols = [
         "activity", "safety", "synthesis", "novelty",
         "boman_activity", "serum_stability", "selectivity_proxy",
-        "hinge_selectivity", "motif_novelty",
+        "hinge_selectivity", "motif_novelty", "hemolysis_safety",
     ]
     per_component = {}
     for col in component_cols:
@@ -813,6 +814,7 @@ def run_selectivity_benchmark(
     from openamp_foundry.scoring.ensemble import ensemble_score
     from openamp_foundry.scoring.expert import expert_score
     from openamp_foundry.scoring.novelty import novelty_score
+    from openamp_foundry.scoring.hemolysis import hemolysis_risk_score
     from openamp_foundry.scoring.safety import safety_score
     from openamp_foundry.scoring.stability import serum_stability_score
     from openamp_foundry.scoring.synthesis import synthesis_feasibility_score
@@ -836,6 +838,7 @@ def run_selectivity_benchmark(
             boman_act = boman_activity_score(seq)
             stability = serum_stability_score(features)
             sel_proxy = float(features.get("selectivity_proxy", 0.0))
+            hemo_risk = hemolysis_risk_score(features)
             raw = {
                 "activity": act, "safety": safe,
                 "synthesis": synth, "novelty": nov,
@@ -862,6 +865,7 @@ def run_selectivity_benchmark(
                 "boman_activity": boman_act,
                 "serum_stability": stability,
                 "selectivity_proxy": sel_proxy,
+                "hemolysis_risk": hemo_risk,
                 "hinge_selectivity": exp.components["hinge_selectivity"],
             })
 
@@ -878,7 +882,7 @@ def run_selectivity_benchmark(
     score_cols = [
         "ensemble", "expert_composite", "activity", "safety",
         "synthesis", "novelty", "boman_activity", "serum_stability",
-        "selectivity_proxy", "hinge_selectivity",
+        "selectivity_proxy", "hemolysis_risk", "hinge_selectivity",
     ]
 
     per_score: dict[str, dict] = {}
@@ -891,12 +895,20 @@ def run_selectivity_benchmark(
         # For safety/selectivity scorers, the CORRECT direction is:
         # hemolytic AMPs should score LOWER (less safe, less selective).
         # So the "hemolysis-detection AUROC" = 1 - raw AUROC for those axes.
+        # For risk-direction scorers (hemolysis_risk, synthesis), the CORRECT
+        # direction is: hemolytic AMPs should score HIGHER (more risk).
+        # So the "hemolysis-detection AUROC" = raw AUROC for those axes.
         # We report both and let the verdict interpret.
-        detection_auroc = round(1.0 - auroc, 4)
-        detection_ci = {
-            "ci_lo": round(1.0 - ci["ci_hi"], 4),
-            "ci_hi": round(1.0 - ci["ci_lo"], 4),
-        }
+        if col in ("hemolysis_risk",):
+            # Risk score: higher = more risk. Raw AUROC is already detection AUROC.
+            detection_auroc = auroc
+            detection_ci = {"ci_lo": ci["ci_lo"], "ci_hi": ci["ci_hi"]}
+        else:
+            detection_auroc = round(1.0 - auroc, 4)
+            detection_ci = {
+                "ci_lo": round(1.0 - ci["ci_hi"], 4),
+                "ci_hi": round(1.0 - ci["ci_lo"], 4),
+            }
 
         per_score[col] = {
             "auroc": auroc,
@@ -991,11 +1003,37 @@ def run_selectivity_benchmark(
             "The expert components degrade within-AMP selectivity on this reference set."
         )
 
+    # Hemolysis risk score assessment
+    hemo_risk_detection = per_score["hemolysis_risk"]["hemolysis_detection_auroc"]
+    hemo_risk_ci_lo = per_score["hemolysis_risk"]["detection_ci95_lo"]
+    hemo_risk_ci_hi = per_score["hemolysis_risk"]["detection_ci95_hi"]
+
+    if hemo_risk_detection > 0.5 and hemo_risk_ci_lo > 0.5:
+        hemo_risk_verdict = (
+            f"Dedicated hemolysis risk scorer detects hemolysis risk "
+            f"(detection AUROC={hemo_risk_detection:.4f}, CI=[{hemo_risk_ci_lo:.4f}, {hemo_risk_ci_hi:.4f}]). "
+            "This is the first pipeline score with a statistically significant hemolysis detection signal "
+            "on this reference set. It complements (not replaces) the safety scorer, which fails this task. "
+            "The safety scorer retains its role for AMP-vs-decoy discrimination; this score adds "
+            "within-AMP hemolysis risk triage."
+        )
+    elif hemo_risk_detection > 0.5:
+        hemo_risk_verdict = (
+            f"Dedicated hemolysis risk scorer shows trend (detection AUROC={hemo_risk_detection:.4f}, "
+            f"CI lo={hemo_risk_ci_lo:.4f}). Signal is present but not statistically significant."
+        )
+    else:
+        hemo_risk_verdict = (
+            f"Dedicated hemolysis risk scorer fails (detection AUROC={hemo_risk_detection:.4f}). "
+            "No pipeline score can distinguish hemolytic from selective AMPs."
+        )
+
     # Rank hemolytic AMPs by safety score to find blind spots
     hemolytic_by_safety = sorted(hemolytic, key=lambda r: r["safety"], reverse=True)
     blind_spots = [
         {"id": r["id"], "sequence": r["sequence"], "family": r["family"],
-         "hc50": r["hc50"], "safety": r["safety"], "selectivity_proxy": r["selectivity_proxy"]}
+         "hc50": r["hc50"], "safety": r["safety"], "selectivity_proxy": r["selectivity_proxy"],
+         "hemolysis_risk": r["hemolysis_risk"]}
         for r in hemolytic_by_safety if r["safety"] >= 0.8
     ]
 
@@ -1013,12 +1051,19 @@ def run_selectivity_benchmark(
         "safety_verdict": safety_verdict,
         "selectivity_proxy_verdict": sel_verdict,
         "expert_composite_verdict": expert_verdict,
+        "hemolysis_risk_verdict": hemo_risk_verdict,
         "blind_spots": blind_spots,
         "border_zone": [
             {"id": r["id"], "sequence": r["sequence"], "family": r["family"],
              "hc50": r["hc50"], "safety": r["safety"],
              "selectivity_proxy": r["selectivity_proxy"]}
             for r in sorted(border, key=lambda r: r["hc50"])
+        ],
+        "hemolysis_risk_scores": [
+            {"id": r["id"], "sequence": r["sequence"], "family": r["family"],
+             "hc50": r["hc50"], "hemolysis_class": r["hemolysis_class"],
+             "hemolysis_risk": r["hemolysis_risk"], "safety": r["safety"]}
+            for r in sorted(rows, key=lambda r: r["hemolysis_risk"], reverse=True)
         ],
         "design_note": (
             "Within-AMP selectivity benchmark: all sequences are confirmed AMPs. "
