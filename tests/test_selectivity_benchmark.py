@@ -105,12 +105,12 @@ class TestSelectivityBenchmark:
         assert info["mean_hemolytic"] is not None
         assert info["mean_selective"] is not None
         assert info["mean_hemolytic"] > info["mean_selective"], (
-            f"Hemolysis risk mean_hemolytic={info["mean_hemolytic"]} should exceed "
-            f"mean_selective={info["mean_selective"]} — direction must be correct"
+            f'Hemolysis risk mean_hemolytic={info["mean_hemolytic"]} should exceed '
+            f'mean_selective={info["mean_selective"]} - direction must be correct'
         )
         # Detection AUROC should be above 0.5 (direction correct)
         assert info["hemolysis_detection_auroc"] > 0.50, (
-            f"Detection AUROC={info["hemolysis_detection_auroc"]} should be > 0.50"
+            f'Detection AUROC={info["hemolysis_detection_auroc"]} should be > 0.50'
         )
 
     def test_hemolysis_risk_scores_present(self, result):
