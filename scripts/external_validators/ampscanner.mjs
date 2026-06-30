@@ -2,13 +2,13 @@
 import { chromium } from '@playwright/test';
 import fs from 'fs';
 
-const OUT = '/Volumes/SSD/openamp-foundry/outputs/external_validation/ampscanner_results.csv';
-const SHOT = '/Volumes/SSD/openamp-foundry/outputs/external_validation/screenshots/ampscanner.png';
+const OUT = process.env.OUT_CSV;
+const SHOT = process.env.SHOT_PATH || 'screenshot.png';
 
 const b = await chromium.launch({ headless: true });
 const p = await b.newPage();
 await p.goto('https://www.dveltri.com/ascan/v2/ascan.html', { timeout: 45000 });
-await p.setInputFiles('input[name="seqInputFile"]', '/tmp/pw-validate/candidates.fasta');
+await p.setInputFiles('input[name="seqInputFile"]', process.env.FASTA_PATH);
 await Promise.all([
   p.waitForLoadState('networkidle', { timeout: 180000 }).catch(() => {}),
   p.click('input[type=submit], button[type=submit]'),

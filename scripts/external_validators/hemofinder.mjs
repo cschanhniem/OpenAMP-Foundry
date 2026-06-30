@@ -2,9 +2,9 @@
 import { chromium } from '@playwright/test';
 import fs from 'fs';
 
-const FASTA = '/tmp/pw-validate/candidates.fasta';
-const OUT = '/Volumes/SSD/openamp-foundry/outputs/external_validation/hemofinder_results.csv';
-const SHOT = '/Volumes/SSD/openamp-foundry/outputs/external_validation/screenshots/hemofinder.png';
+const FASTA = process.env.FASTA_PATH;
+const OUT = process.env.OUT_CSV;
+const SHOT = process.env.SHOT_PATH || 'screenshot.png';
 const CHUNK = 100;
 
 function readFasta(p){const t=fs.readFileSync(p,'utf8').trim().split('\n');const o=[];for(let i=0;i<t.length;i+=2)o.push([t[i].slice(1),t[i+1]]);return o;}

@@ -2,9 +2,9 @@
 import { chromium } from '@playwright/test';
 import fs from 'fs';
 
-const FASTA = '/tmp/pw-validate/candidates.fasta';
-const OUT = '/Volumes/SSD/openamp-foundry/outputs/external_validation/anticp2_results.csv';
-const SHOT = '/Volumes/SSD/openamp-foundry/outputs/external_validation/screenshots/anticp2.png';
+const FASTA = process.env.FASTA_PATH;
+const OUT = process.env.OUT_CSV;
+const SHOT = process.env.SHOT_PATH || 'screenshot.png';
 const CHUNK = 150;
 
 function readFasta(path) {

@@ -12,22 +12,16 @@
 ## How to run (proven, 2026-06-30)
 
 ```bash
-# 1. Build a clean FASTA with short IDs (long score-laden headers confuse some forms):
-python3 -c "import csv;[print('>'+r['candidate_id']+'\n'+r['sequence']) for r in \
-  csv.DictReader(open('outputs/expert_1000_candidates.csv'))]" > /tmp/pw-validate/candidates.fasta
-
-# 2. Install Playwright (pin an established version; the latest may be blocked by a
-#    supply-chain age guard, and node avoids the Python-3.14 wheel problem):
-cd scripts/external_validators && npm install      # @playwright/test@1.55.0
-node node_modules/@playwright/test/cli.js install chromium
-
-# 3. Run each driver (browsers are cached under PLAYWRIGHT_BROWSERS_PATH):
-export PLAYWRIGHT_BROWSERS_PATH="$HOME/Library/Caches/ms-playwright"
-node anticp2.mjs && node camp.mjs && node ampscanner.mjs && node hemofinder.mjs
-
-# 4. Build the cross-tool consensus:
-python3 scripts/external_consensus.py
+# The CLI natively automates Playwright to submit candidates and parse results:
+openamp_foundry external-predict --pilot-csv outputs/wave1_final_panel.csv
 ```
+The CLI command automatically:
+1. Generates the required FASTA file.
+2. Checks for and installs Node.js/Playwright dependencies in `scripts/external_validators`.
+3. Runs the 4 headless Playwright predictors sequentially (AMPScanner, AntiCP2, CAMP-R4, HemoFinder).
+4. Drops results into `outputs/external_validation/`.
+5. Prompts you to run `openamp_foundry external-consensus` to compile the final cross-tool consensus matrix.
+
 
 ### Proven Playwright patterns (per tool)
 
