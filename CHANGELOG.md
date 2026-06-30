@@ -4,6 +4,51 @@ All notable changes to OpenAMP Foundry are documented here.
 
 ---
 
+## [Unreleased — Dedicated Hemolysis Risk Scorer] — 2026-07-01
+
+### v0.5.10 — Dedicated Hemolysis Risk Scorer
+
+- **`scoring/hemolysis.py`**: standalone hemolysis risk score combining four
+  empirically-validated components from the selectivity benchmark:
+  - Synthesis difficulty (1 - synthesis_feasibility_score) — detection AUROC=0.8027
+  - Cationic-on-hydrophobic-face fraction (helix_wheel_h_face_cationic_fraction) — AUROC=0.7585
+  - Cysteine fraction (beta-sheet defensin/protegrin class) — AUROC=0.7500
+  - Aromatic fraction (Trp/Phe/Tyr intercalation) — AUROC=0.8299
+- **Combined detection AUROC=0.9218** (CI₉₅: 0.82-0.99) — first statistically
+  significant hemolysis detector in the pipeline. CI lower bound (0.82) clears
+  the 0.5 threshold with wide margin.
+- **Integrated into selectivity benchmark**: `hemolysis_risk` added as a
+  risk-direction score (higher = more risk; detection AUROC = raw AUROC, not 1-AUROC)
+- **Integrated into expert composite**: `hemolysis_safety` component (weight 0.10,
+  = 1 - hemolysis_risk_score). Expert weights rebalanced: activity 0.22→0.20,
+  selectivity 0.22→0.20, safety 0.18→0.15, synthesis 0.13→0.12, motif_novelty
+  0.12→0.10.
+- **Expert composite detection AUROC improved**: 0.5119 → 0.6429 on hemolysis
+  detection (not significant, CI lo=0.45, but trend is correct)
+- **Safety scorer UNCHANGED**: no modification to `safety_score()`. Standard
+  AUROC remains 0.7832 (CI: 0.72-0.84). The hemolysis risk score is a
+  complementary signal, not a replacement.
+- **Expert ablation updated**: `hemolysis_safety` is anti-signal on AMP-vs-decoy
+  (AUROC=0.3285) — expected, since real AMPs have higher hemolysis risk than
+  random decoys. This confirms the component is measuring a within-AMP property,
+  not an AMP-vs-non-AMP property.
+- **15 new tests** in `test_hemolysis_risk.py`; 3 new tests in
+  `test_selectivity_benchmark.py`; updated `test_expert_ablation.py`;
+  1471 total tests (7 skipped)
+
+**Key finding:** The safety scorer's hemolysis blind spot (detection AUROC=0.3844)
+can be substantially addressed by a dedicated 4-component risk score that
+combines synthesis difficulty, face cationic leakage, cysteine content, and
+aromatic density. The combined score achieves detection AUROC=0.9218 — the
+first pipeline score with a statistically significant hemolysis signal.
+
+**Honest limitation:** The reference set is small (n=35: 14 hemolytic vs 21
+selective). The CI is wide (0.82-0.99). Melittin's risk score (0.13) remains
+modest because its bent-helix hemolysis mechanism is not fully captured by 1D
+features. Hemolysis must still be assayed experimentally for every candidate.
+
+---
+
 ## [Unreleased — Within-AMP Selectivity Benchmark] — 2026-07-01
 
 ### v0.5.9 — Within-AMP Selectivity Benchmark

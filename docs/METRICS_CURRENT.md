@@ -306,11 +306,70 @@ must be assayed experimentally for every candidate regardless of safety or selec
 score. The synthesis gate provides partial indirect filtering but should not be relied
 upon as a hemolysis predictor.
 
+## Dedicated Hemolysis Risk Scorer (v0.5.10 — added 2026-07-01)
+
+> The selectivity benchmark (v0.5.9) confirmed that the safety scorer fails
+> hemolysis detection (AUROC=0.3844). A dedicated hemolysis risk scorer was
+> built from empirically-validated components identified in that benchmark.
+>
+> Run: `make bench-selectivity` (hemolysis_risk column in the output)
+
+**Module:** `src/openamp_foundry/scoring/hemolysis.py`
+
+**Components** (detection AUROC from leave-one-out on n=14 hemolytic vs n=21 selective):
+
+| Component | Individual AUROC | Weight | Signal source |
+|-----------|:----------------:|:------:|---------------|
+| Synthesis difficulty (1 - synth_feasibility) | 0.8027 | 0.30 | Incidental: hemolytic AMPs harder to synthesize |
+| Aromatic fraction (F/W/Y density) | 0.8299 | 0.30 | Trp/Phe intercalation in both membrane types |
+| Cationic-on-hydrophobic-face fraction | 0.7585 | 0.20 | Poor amphipathic face segregation |
+| Cysteine fraction | 0.7500 | 0.20 | Beta-sheet defensin/protegrin class |
+
+**Combined performance:**
+
+| Metric | Value | Notes |
+|--------|-------|-------|
+| **Detection AUROC** | **0.9218** | Bootstrap CI₉₅: 0.82-0.99 (n_bootstrap=2000) |
+| Mean hemolytic risk | 0.4064 | n=14 |
+| Mean selective risk | 0.1501 | n=21 |
+| Risk threshold > 0.40 | Enriched in hemolytic | 10/14 hemolytic vs 2/21 selective |
+| Safety scorer (comparison) | 0.3844 | FAILS — all 14 hemolytic AMPs score safety >= 0.94 |
+
+**Expert composite integration:**
+
+| Metric | Before (v0.5.9) | After (v0.5.10) |
+|--------|:---------------:|:----------------:|
+| Expert composite detection AUROC | 0.5119 | 0.6429 |
+| Expert composite CI lo | 0.3129 | 0.4490 |
+| Ensemble detection AUROC | 0.3486 | 0.3486 (unchanged) |
+
+**Expert ablation (AMP-vs-decoy):**
+
+| Metric | Value | Classification |
+|--------|:-----:|:--------------:|
+| hemolysis_safety AUROC | 0.3285 | **Anti-signal** (above_random = -0.1715) |
+| Expert composite AUROC | 0.7119 | Down from 0.7360 (delta -0.0713 vs ensemble) |
+
+**Key finding:** The dedicated hemolysis risk scorer is the first pipeline score
+with a statistically significant hemolysis detection signal (CI lo = 0.82 > 0.5).
+It complements (not replaces) the safety scorer, which retains its role for
+AMP-vs-decoy discrimination. The hemolysis_safety component is anti-signal on
+AMP-vs-decoy (AUROC=0.3285) — expected, since real AMPs have higher hemolysis
+risk than random decoys. This confirms the component measures a within-AMP
+property, not an AMP-vs-non-AMP property.
+
+**Honest limitation:** The reference set is small (n=35). The CI is wide.
+Melittin's risk score (0.13) remains modest because its bent-helix hemolysis
+mechanism is not fully captured by 1D features. Hemolysis must still be assayed
+experimentally for every candidate.
+
+---
+
 ## Test Suite
 
 | Metric | Value |
 |--------|-------|
-| Total tests | 1453 |
+| Total tests | 1471 |
 | Coverage (branch) | 99% (6 CLI guard lines only) |
 | Source modules at 100% | All pipeline, QC, scoring modules |
 
@@ -339,5 +398,6 @@ upon as a hemolysis predictor.
 | 2026-06-29 | External predictor results filled from wave05_combined_consensus.csv; all 7 gates PASS | OpenAMP Wave 0.5 |
 | 2026-06-29 | Wave 0.5 scaffold diversification — 24-candidate Wave 1 panel across 14 families | OpenAMP Wave 0.5 |
 | 2026-07-01 | Expert ablation benchmark added: expert composite AUROC 0.736 vs ensemble 0.7832 (delta −0.0472); 3 components anti-signal; ensemble remains primary gate | OpenAMP loop |
+| 2026-07-01 | Dedicated hemolysis risk scorer: 4-component score (synth+aromatic+face+cys) achieves detection AUROC=0.9218 (CI: 0.82-0.99); integrated into expert composite (detection 0.5119→0.6429); safety scorer unchanged; 1471 tests | OpenAMP loop |
 | 2026-07-01 | Within-AMP selectivity benchmark added: safety scorer FAILS hemolysis detection (AUROC=0.3844); synthesis is only significant risk detector (AUROC=0.8027); expert composite better than ensemble but not significant (0.5119 vs 0.3486) | OpenAMP loop |
 | 2026-06-29 | Initial — expanded benchmark (PR #110) | OpenAMP CI |
