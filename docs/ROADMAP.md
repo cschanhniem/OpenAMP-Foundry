@@ -146,6 +146,16 @@ Implemented during the pre-wet-lab improvement loop (PRs #31–#54):
 - `make bench-cluster-split` Makefile target added (was missing despite CLI command existing)
 - 14 new tests in `test_expert_ablation.py`; 1435 total tests
 
+## v0.5.10 — Dedicated Hemolysis Risk Scorer ✓ (2026-07-01)
+
+- `scoring/hemolysis.py` — standalone 4-component hemolysis risk score (synth difficulty + aromatic density + face cationic leakage + cysteine content)
+- Combined detection AUROC=0.9218 (CI₉₅: 0.82-0.99) — first statistically significant hemolysis detector
+- Integrated into selectivity benchmark as risk-direction score; integrated into expert composite as `hemolysis_safety` (weight 0.10)
+- Expert composite hemolysis detection improved: 0.5119 → 0.6429 (not significant, but trend correct)
+- Safety scorer UNCHANGED — standard AUROC remains 0.7832; hemolysis risk is complementary, not replacement
+- Expert ablation: hemolysis_safety is anti-signal on AMP-vs-decoy (AUROC=0.3285) — confirms it measures within-AMP property
+- 15 new tests in `test_hemolysis_risk.py`; 3 new tests in `test_selectivity_benchmark.py`; 1471 total tests
+
 ## v0.5.9 — Within-AMP Selectivity Benchmark ✓ (2026-07-01)
 
 - `run_selectivity_benchmark()` in `benchmark/retrospective.py` — tests whether pipeline scorers can distinguish hemolytic AMPs (HC50 < 25 µg/mL) from selective AMPs (HC50 >= 100 µg/mL)
