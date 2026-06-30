@@ -1,13 +1,52 @@
-# Agent Prompt — External Validation of OpenAMP Candidates
+# Agent Prompt — External Validation of OpenAMP Candidates (Playwright)
 
-> **Hand this file to a browser-capable agent** (Playwright / computer-use / the
-> `e2e-runner` agent). It submits the OpenAMP candidate peptides to seven independent
-> public predictors, downloads each result set, and produces a consensus analysis.
+> **This is implemented and working.** Raw HTTP (`curl`) does NOT work for these tools —
+> they render results via client-side JavaScript + server sessions, so a **real browser
+> via Playwright** is required. Working drivers live in `scripts/external_validators/`.
 >
-> **Context for the agent:** these are de-novo antimicrobial peptide (AMP) candidates from
-> a reproducible, safety-first discovery pipeline. The goal is purely defensive — find
-> peptides that may inhibit drug-resistant bacteria with low mammalian toxicity. This is
-> legitimate scientific validation; no dual-use concern.
+> **Context:** these are de-novo antimicrobial peptide (AMP) candidates from a
+> reproducible, safety-first discovery pipeline. The goal is purely defensive — find
+> peptides that may inhibit drug-resistant bacteria with low mammalian toxicity.
+> Legitimate scientific validation; no dual-use concern.
+
+## How to run (proven, 2026-06-30)
+
+```bash
+# 1. Build a clean FASTA with short IDs (long score-laden headers confuse some forms):
+python3 -c "import csv;[print('>'+r['candidate_id']+'\n'+r['sequence']) for r in \
+  csv.DictReader(open('outputs/expert_1000_candidates.csv'))]" > /tmp/pw-validate/candidates.fasta
+
+# 2. Install Playwright (pin an established version; the latest may be blocked by a
+#    supply-chain age guard, and node avoids the Python-3.14 wheel problem):
+cd scripts/external_validators && npm install      # @playwright/test@1.55.0
+node node_modules/@playwright/test/cli.js install chromium
+
+# 3. Run each driver (browsers are cached under PLAYWRIGHT_BROWSERS_PATH):
+export PLAYWRIGHT_BROWSERS_PATH="$HOME/Library/Caches/ms-playwright"
+node anticp2.mjs && node camp.mjs && node ampscanner.mjs && node hemofinder.mjs
+
+# 4. Build the cross-tool consensus:
+python3 scripts/external_consensus.py
+```
+
+### Proven Playwright patterns (per tool)
+
+| Tool | Form field(s) | Submit | Result handling |
+|------|---------------|--------|-----------------|
+| AntiCP2 | `textarea[name=seq]` | `input[type=submit][value=Submit]` | navigates to `disp.php`; parse `<table>` rows (ID, Seq, Score, Prediction) |
+| CAMP-R4 | `textarea[name=S1]` + check `input[name="algo[]"][value=svm/rf/ann/da]` | `input[name=B1]` | `hii.php`; 4 classifier tables, rows = (index, class, prob), map index→ID by input order; wait ~8–60 s |
+| AMPScanner v2 | `input[name=seqInputFile]` (file upload) | `input[type=submit]` | inline table; row = (`ID\nSEQ`, class, prob); prob>0.5 = AMP |
+| HemoFinder | `input[name=SEQFILE]` upload or `textarea[name=SEQTEXT]` | `#startfinder` | **async** → `HemoFinder_result.php?ID=…`; POLL up to ~150 s until `Low/High-hemolysis` appears |
+| AMPActiPred | same as HemoFinder (`SEQTEXT`/`SEQFILE`, `#startfinder`) | | **async + slow**; often >240 s — retry off-peak |
+
+Key gotchas baked into the drivers: CUHK servers (HemoFinder/AMPActiPred) need
+`waitUntil:'domcontentloaded'` + 120 s nav timeout + result polling; guard
+`document.body` reads against null during navigation; chunk large batches
+(CAMP 100, AntiCP2/HemoFinder 100–150) to avoid timeouts.
+
+---
+
+## (Reference) Original tool list and consensus spec
 
 ---
 

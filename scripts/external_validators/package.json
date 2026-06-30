@@ -1,0 +1,7 @@
+{
+  "name": "openamp-external-validators",
+  "version": "1.0.0",
+  "description": "Playwright drivers that submit OpenAMP candidates to public AMP predictors",
+  "type": "module",
+  "dependencies": { "@playwright/test": "1.55.0" }
+}
