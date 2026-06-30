@@ -81,3 +81,39 @@ def _run_validate_scoring(args: argparse.Namespace) -> int:
     return 0
 
 
+
+
+def _run_cluster_split_bench(args: argparse.Namespace) -> int:
+    """Run cluster-split retrospective benchmark with honest CI."""
+    import json as _json
+    from openamp_foundry.benchmark.retrospective import run_cluster_split_benchmark
+    from openamp_foundry.utils.io import write_json
+
+    result = run_cluster_split_benchmark(
+        amp_csv=args.amp_csv,
+        decoy_csv=args.decoy_csv,
+        config_path=args.config,
+        similarity_threshold=args.threshold,
+        n_bootstrap=args.n_bootstrap,
+    )
+    if args.out:
+        write_json(args.out, result)
+    summary = {
+        "status": "ok",
+        "benchmark": "cluster_split_retrospective",
+        "n_positives": result["n_positives"],
+        "n_negatives": result["n_negatives"],
+        "n_clusters": result["n_clusters"],
+        "n_multi_member_clusters": result["n_multi_member_clusters"],
+        "n_amps_in_multi_member_clusters": result["n_amps_in_multi_member_clusters"],
+        "full_auroc": result["full_auroc"],
+        "standard_ci95": f"{result['standard_ci95_lo']}-{result['standard_ci95_hi']}",
+        "cluster_aware_ci95": f"{result['cluster_aware_ci95_lo']}-{result['cluster_aware_ci95_hi']}",
+        "representative_auroc": result["representative_auroc"],
+        "representative_ci95": f"{result['representative_ci95_lo']}-{result['representative_ci95_hi']}",
+        "held_out_auroc": result["held_out_auroc"],
+        "interpretation": result["interpretation"],
+        "out": args.out,
+    }
+    print(_json.dumps(summary, indent=2))
+    return 0

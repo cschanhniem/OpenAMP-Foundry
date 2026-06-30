@@ -20,6 +20,7 @@ Common artifacts:
 | Random baseline | Prove the pipeline is not noise |
 | Simple physicochemical baseline | Prove models beat charge/hydrophobicity alone |
 | Cluster split | Prevent near-duplicate leakage |
+| Cluster-aware CI | Honest bootstrap when positives contain near-duplicate families |
 | Time split | Test future generalization where metadata allows |
 | Hidden-positive recovery | Check whether known actives are ranked high |
 | Toxicity down-ranking | Ensure predicted risky candidates are penalized |
