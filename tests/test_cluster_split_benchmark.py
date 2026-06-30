@@ -15,8 +15,6 @@ All results are computational. No biological activity is implied.
 """
 from __future__ import annotations
 
-import csv
-import tempfile
 from pathlib import Path
 
 import pytest
