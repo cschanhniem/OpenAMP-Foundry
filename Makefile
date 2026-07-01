@@ -1,4 +1,4 @@
-.PHONY: help demo test lint ci clean bench-leakage bench-baseline bench-hidden-active bench-cluster-split bench-expert-ablation bench-selectivity generate phase3 pilot validate-scoring validate-scoring-phase3 validate-scoring-strict external-predict pilot-confident presynth-qc gold-standard diversity synthesis-order novelty-broad external-consensus questionnaire gate-check ip-report benchmark-card wave0-5-gate-check wave0-5-novelty-audit wave0-5-novelty-audit-v2 wave0-5-panel wave0-5-evidence wave0-5-fill-external wave0-5b-generate wave0-5b-filter
+.PHONY: help demo test lint ci clean bench-leakage bench-baseline bench-hidden-active bench-cluster-split bench-expert-ablation bench-selectivity bench-triage generate phase3 pilot validate-scoring validate-scoring-phase3 validate-scoring-strict external-predict pilot-confident presynth-qc gold-standard diversity synthesis-order novelty-broad external-consensus questionnaire gate-check ip-report benchmark-card wave0-5-gate-check wave0-5-novelty-audit wave0-5-novelty-audit-v2 wave0-5-panel wave0-5-evidence wave0-5-fill-external wave0-5b-generate wave0-5b-filter
 
 PYTHON := $(shell [ -f .venv/bin/python ] && echo .venv/bin/python || echo python3)
 PYTEST  := $(shell [ -f .venv/bin/pytest ] && echo .venv/bin/pytest || echo pytest)
@@ -31,6 +31,7 @@ help:
 	@echo "  make bench-cluster-split      Cluster-aware bootstrap CI (de-inflates near-duplicates)"
 	@echo "  make bench-expert-ablation    Expert composite vs ensemble ablation (honesty check)"
 	@echo "  make bench-selectivity        Within-AMP selectivity (hemolytic vs selective)"
+	@echo "  make bench-triage             Multi-class triage benchmark (selective/hemolytic/inactive/random)"
 	@echo "  make bench-hidden-active      Hidden-positive recovery on mixed benchmark set"
 	@echo ""
 	@echo "  make wave0-5-gate-check     Run Wave 0.5 gates W0.5-1 through W0.5-7"
@@ -40,7 +41,7 @@ help:
 	@echo "  make wave0-5-evidence       Re-generate evidence certificates"
 	@echo "  make wave0-5b-generate      Generate Wave 0.5b candidates (safety-optimized, no aromatics)"
 	@echo "  make wave0-5b-filter        Filter Wave 0.5b shortlist (depends on wave0-5b-generate)"
-	@echo "  make test               Run full test suite (1287 tests, ≥80% coverage)"
+	@echo "  make test               Run full test suite"
 	@echo "  make coverage           Test suite with per-module coverage report"
 	@echo "  make lint               Ruff lint check on src/ tests/ scripts/"
 	@echo "  make typecheck          mypy type check on src/"

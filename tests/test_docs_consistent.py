@@ -12,6 +12,8 @@ DOCS_DIR = REPO_ROOT / "docs"
 # Current authoritative benchmark values — single source of truth
 CURRENT_AUROC = "0.7832"
 CURRENT_PHASE3_AUROC = "0.7448"
+CURRENT_AUPRC = "0.8164"
+CURRENT_PHASE3_AUPRC = "0.7933"
 CURRENT_N_POSITIVES = 95
 CURRENT_N_NEGATIVES = 96
 CURRENT_N_TOTAL = 191
@@ -90,6 +92,37 @@ class TestDocsConsistent:
         assert str(CURRENT_N_TOTAL) in text, (
             f"METRICS_CURRENT.md missing n={CURRENT_N_TOTAL}"
         )
+
+    def test_doc_current_auprc_consistent_in_summary_docs(self):
+        """Summary docs must use the current expanded-benchmark AUPRC values."""
+        summary_docs = [
+            DOCS_DIR / "METRICS_CURRENT.md",
+            DOCS_DIR / "BENCHMARK_CARD.md",
+            DOCS_DIR / "ROADMAP.md",
+            DOCS_DIR / "EXPERT_REVIEW_PACK.md",
+            DOCS_DIR / "REVIEWER_SUMMARY.md",
+        ]
+        errors = []
+        for path in summary_docs:
+            if not path.exists():
+                continue
+            text = path.read_text(encoding="utf-8")
+            if "AUPRC" not in text:
+                continue
+            if CURRENT_AUPRC not in text:
+                errors.append(
+                    f"{path.relative_to(REPO_ROOT)}: missing current pipeline AUPRC {CURRENT_AUPRC}"
+                )
+            if path.name in {"METRICS_CURRENT.md", "BENCHMARK_CARD.md"} and CURRENT_PHASE3_AUPRC not in text:
+                errors.append(
+                    f"{path.relative_to(REPO_ROOT)}: missing phase3 AUPRC {CURRENT_PHASE3_AUPRC}"
+                )
+            stale_current = re.search(r"pipeline AUPRC\s*=\s*0\.8627", text, re.IGNORECASE)
+            if stale_current:
+                errors.append(
+                    f"{path.relative_to(REPO_ROOT)}: stale current pipeline AUPRC 0.8627"
+                )
+        assert not errors, "\n".join(errors)
 
     def test_doc_no_breaking_news_terminology(self):
         """'breaking news' must be replaced with 'high-impact scenario' in all docs."""
