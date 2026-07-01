@@ -113,6 +113,15 @@ python -m openamp_foundry.cli validate \
   --schema schemas/candidate.schema.json
 ```
 
+Turn qualified assay JSON files into a reproducible review artifact:
+
+```bash
+python -m openamp_foundry.cli lab-result-report \
+  --results-dir outputs/lab_results \
+  --out-json outputs/lab_result_report.json \
+  --out-md outputs/lab_result_report.md
+```
+
 ## Repository map
 
 ```text
@@ -131,6 +140,7 @@ openamp-foundry/
   docs/METRICS_CURRENT.md              # current benchmark summary
   docs/PLAN.md                         # detailed execution plan
   docs/ROADMAP.md                      # shipped milestones and next horizons
+  docs/WET_LAB_HANDOFF.md              # assay package and wet-lab review notes
   examples/                            # toy datasets only
   models/README.md                     # model-release rules; no weights shipped
   outputs/.gitkeep                     # generated files ignored by git

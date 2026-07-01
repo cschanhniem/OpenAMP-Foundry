@@ -239,6 +239,7 @@ Wet-lab hemolysis assay remains mandatory.
 
 - independently reviewed assay batch (expert_review.yml GitHub issue template);
 - lab results ingested via `schemas/lab_result.schema.json`;
+- reproducible wet-lab result report via `openamp_foundry lab-result-report` so raw assay JSON turns into a control-aware review artifact before recalibration;
 - negative results archived where safe;
 - active-learning batch 2 (D-amino variants, MDR strain panel);
 - public reproducibility report.

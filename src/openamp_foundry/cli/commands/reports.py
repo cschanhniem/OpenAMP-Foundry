@@ -6,6 +6,33 @@ from pathlib import Path
 from collections import defaultdict
 from datetime import datetime, timezone
 
+
+def _run_lab_result_report(args: argparse.Namespace) -> int:
+    from openamp_foundry.reports.lab_result_report import (
+        build_lab_result_report,
+        write_lab_result_json,
+        write_lab_result_markdown,
+    )
+
+    report = build_lab_result_report(args.results_dir)
+    write_lab_result_json(report, args.out_json)
+    if args.out_md:
+        write_lab_result_markdown(report, args.out_md)
+    print(
+        json.dumps(
+            {
+                "status": "ok",
+                "n_results": report["summary"].get("n_results", 0),
+                "n_candidates": report.get("n_candidates", 0),
+                "n_control_failures": len(report.get("control_failures", [])),
+                "out_json": args.out_json,
+                "out_md": args.out_md,
+            },
+            indent=2,
+        )
+    )
+    return 0
+
 def _run_reviewer_questionnaire(args: argparse.Namespace) -> int:
     import csv as _csv
     import json as _json
