@@ -209,6 +209,32 @@ Implemented during the pre-wet-lab improvement loop (PRs #31–#54):
 - Makefile: `make bench-triage`
 - 16 new tests (15 triage benchmark + 1 CLI integration); 1487 tests total.
 
+## v0.5.13 — Expert composite ranking integration ✓ (2026-07-01)
+
+The expert composite scorer (`scoring/expert.py`) was benchmarked but never connected
+to the pipeline. This integration makes it available as an optional ranking mode.
+
+Changes:
+- `score_candidates()` now computes `expert_composite` and `hemolysis_risk` for every
+  candidate (stored in `scores` dict alongside `ensemble`)
+- `rank_candidates()` accepts `ranking_mode="expert"` to rank by expert composite
+  instead of ensemble (default remains "ensemble")
+- `run_ranking_pipeline()` accepts `ranking_mode` parameter, recorded in batch report
+- CLI: `openamp-foundry rank --ranking-mode expert` flag added
+- `selection/pareto.py`: `select_top()` also accepts `ranking_mode`
+
+Why this matters:
+The triage benchmark (v0.5.12) showed the ensemble has an anti-selective bias
+(sel_vs_hem AUROC=0.466). The expert composite incorporates selectivity_proxy,
+hemolysis risk, helix-hinge analysis, and motif novelty — partially correcting
+this bias. Expert-ranked top-5 candidates have lower mean hemolysis_risk than
+ensemble-ranked top-5 on the mixed benchmark set (verified by test).
+
+Honest limitation: The expert composite's hemolysis components are not statistically
+significant detectors on the expanded n=179 benchmark (AUROC=0.565, CI 0.47-0.66).
+Expert ranking is a safety-aware alternative, not a validated safety guarantee.
+Wet-lab hemolysis assay remains mandatory.
+
 ## v1.0 — Validated dry-lab-to-wet-lab loop
 
 - independently reviewed assay batch (expert_review.yml GitHub issue template);

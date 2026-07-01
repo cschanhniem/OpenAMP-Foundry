@@ -37,9 +37,9 @@ The purpose of the added layers is not simulation theater. It is to improve whic
 | `openamp_foundry.data` | loading and normalizing candidate/reference data |
 | `openamp_foundry.features` | physicochemical feature extraction |
 | `openamp_foundry.scoring` | activity, safety, hemolysis risk, novelty, synthesis, ensemble, expert composite scoring |
-| `openamp_foundry.selection` | ranking and diversity selection |
+| `openamp_foundry.selection` | ranking (ensemble or expert composite) and diversity selection |
 | `openamp_foundry.evidence` | JSON certificate generation and validation |
-| `openamp_foundry.benchmark` | leakage checks, cluster-split benchmark, expert ablation benchmark, within-AMP selectivity benchmark, and evaluation scaffolding |
+| `openamp_foundry.benchmark` | leakage checks, cluster-split benchmark, expert ablation benchmark, within-AMP selectivity benchmark, triage benchmark, and evaluation scaffolding |
 | `openamp_foundry.generators` | safe, bounded toy candidate generation |
 | `openamp_foundry.simulation` | membrane/selectivity/stability proxy modeling (scaffolded) |
 
