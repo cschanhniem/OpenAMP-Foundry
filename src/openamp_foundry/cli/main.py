@@ -29,6 +29,17 @@ def build_parser() -> argparse.ArgumentParser:
     rank.add_argument("--cert-dir", required=False)
     rank.add_argument("--manifest", required=False)
     rank.add_argument("--config", default="configs/pipeline.yaml")
+    rank.add_argument(
+        "--ranking-mode",
+        choices=["ensemble", "expert"],
+        default="ensemble",
+        help=(
+            "Ranking mode: 'ensemble' (default, activity-weighted) or "
+            "'expert' (safety-aware expert composite with selectivity, "
+            "hemolysis risk, and helix-hinge analysis). Expert mode "
+            "partially corrects the ensemble's anti-selective bias."
+        ),
+    )
 
     validate = sub.add_parser("validate", help="Validate a candidate certificate against JSON schema.")
     validate.add_argument("--certificate", required=True)
@@ -628,6 +639,7 @@ def main(argv: list[str] | None = None) -> int:
             cert_dir=args.cert_dir,
             config_path=args.config,
             manifest_path=args.manifest,
+            ranking_mode=getattr(args, "ranking_mode", "ensemble"),
         )
         print(json.dumps({"status": "ok", "out": args.out, "report": args.report}, indent=2))
         return 0

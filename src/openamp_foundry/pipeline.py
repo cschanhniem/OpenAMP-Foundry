@@ -17,6 +17,7 @@ from openamp_foundry.scoring.novelty import novelty_score
 from openamp_foundry.scoring.safety import safety_score
 from openamp_foundry.scoring.stability import serum_stability_score
 from openamp_foundry.scoring.synthesis import synthesis_feasibility_score
+from openamp_foundry.scoring.hemolysis import hemolysis_risk_score
 from openamp_foundry.selection.diversity import greedy_diverse_select
 from openamp_foundry.selection.pareto import rank_candidates
 from openamp_foundry.types import ScoredCandidate
@@ -67,8 +68,16 @@ def score_candidates(
             # mammalian cytotoxicity. Computed from net charge and GRAVY in compute_features().
             # Stored in scores (not just features) so pilot_priority can use it for ranking.
             "selectivity_proxy": features.get("selectivity_proxy", 1.0),
+            "hemolysis_risk": hemolysis_risk_score(features) if valid else 1.0,
         }
         raw_scores["ensemble"] = ensemble_score(raw_scores, weights)
+        # Expert composite: safety-aware multi-component score that addresses
+        # the ensemble's anti-selective bias (triage benchmark: ensemble
+        # ranks hemolytic > selective; expert composite partially corrects).
+        # Not used for ranking by default — enabled via --ranking-mode expert.
+        from openamp_foundry.scoring.expert import expert_score
+        exp = expert_score(candidate.sequence, features=features)
+        raw_scores["expert_composite"] = exp.composite
         item = ScoredCandidate(
             candidate=candidate,
             features=features,
@@ -122,6 +131,7 @@ def run_ranking_pipeline(
     cert_dir: str | Path | None = None,
     config_path: str | Path = "configs/pipeline.yaml",
     manifest_path: str | Path | None = None,
+    ranking_mode: str = "ensemble",
 ) -> list[ScoredCandidate]:
     run_id = str(uuid.uuid4())
     generated_at = datetime.now(timezone.utc).isoformat()
@@ -132,7 +142,7 @@ def run_ranking_pipeline(
     max_safety_risk = float(selection_cfg.get("max_safety_risk", 1.0))
     max_disagreement = float(selection_cfg.get("max_disagreement", 1.0))
 
-    ranked = rank_candidates(scored)
+    ranked = rank_candidates(scored, ranking_mode=ranking_mode)
     top_n = int(selection_cfg.get("top_n", len(ranked)))
 
     eligible = [
@@ -171,7 +181,7 @@ def run_ranking_pipeline(
 
     if report_path:
         write_report(report_path, ranked, selected)
-        batch_report = build_batch_report(ranked, selected, generated_at)
+        batch_report = build_batch_report(ranked, selected, generated_at, ranking_mode=ranking_mode)
         report_json = Path(report_path).with_suffix(".json")
         write_json(report_json, batch_report)
 
@@ -204,6 +214,7 @@ def build_batch_report(
     ranked: list[ScoredCandidate],
     selected: list[ScoredCandidate],
     generated_at: str,
+    ranking_mode: str = "ensemble",
 ) -> dict[str, Any]:
     """Build a machine-readable batch report validatable against batch_report.schema.json."""
     selected_ids = {item.candidate.candidate_id for item in selected}
@@ -232,6 +243,7 @@ def build_batch_report(
             ) if ranked else 0.0,
         },
         "selected_ids": sorted(selected_ids),
+        "ranking_mode": ranking_mode,
     }
 
 
