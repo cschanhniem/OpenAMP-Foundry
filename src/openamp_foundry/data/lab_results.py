@@ -104,3 +104,42 @@ def candidate_result_map(results: list[dict[str, Any]]) -> dict[str, list[dict[s
         cid = r["candidate_id"]
         mapping.setdefault(cid, []).append(r)
     return mapping
+
+def summarise_candidate_outcomes(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Build one row per candidate for decision-grade wet-lab review.
+
+    The output stays descriptive. It does not convert assay readouts into
+    claims of efficacy or safety.
+    """
+    rows: list[dict[str, Any]] = []
+    for candidate_id, candidate_results in sorted(candidate_result_map(results).items()):
+        assay_types = sorted({r.get("assay_type", "other") for r in candidate_results})
+        organisms = sorted({r.get("organism_or_cell_line", "unknown") for r in candidate_results})
+        qualitative = [r.get("result_qualitative") or "unclassified" for r in candidate_results]
+        controls_failed = [
+            r["result_id"]
+            for r in candidate_results
+            if not (r.get("positive_control_passed") and r.get("negative_control_passed"))
+        ]
+        numeric_results = [r for r in candidate_results if r.get("result_value") is not None]
+        dates = sorted(r.get("assay_date", "") for r in candidate_results)
+
+        rows.append(
+            {
+                "candidate_id": candidate_id,
+                "n_results": len(candidate_results),
+                "assay_types": assay_types,
+                "organisms_or_cells": organisms,
+                "qualitative_results": qualitative,
+                "has_any_active": "active" in qualitative,
+                "has_any_toxic": "toxic" in qualitative,
+                "has_any_inconclusive": "inconclusive" in qualitative,
+                "all_controls_passed": len(controls_failed) == 0,
+                "control_fail_result_ids": controls_failed,
+                "max_replicate_count": max(r.get("replicate_count", 0) for r in candidate_results),
+                "first_assay_date": dates[0] if dates else None,
+                "last_assay_date": dates[-1] if dates else None,
+                "n_numeric_results": len(numeric_results),
+            }
+        )
+    return rows

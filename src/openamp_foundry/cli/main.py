@@ -5,7 +5,7 @@ from openamp_foundry.cli.commands.benchmark import _run_bench, _run_validate_sco
 from openamp_foundry.cli.commands.selection import _run_pilot_panel, _run_pilot_confident, _run_diversity_check
 from openamp_foundry.cli.commands.external import _run_external_predict, _run_external_consensus
 from openamp_foundry.cli.commands.qc import _run_synthesis_order, _run_presynth_qc
-from openamp_foundry.cli.commands.reports import _run_reviewer_questionnaire, _run_ip_report, _run_batch_pack, _run_gold_standard, _run_novelty_check_broad
+from openamp_foundry.cli.commands.reports import _run_reviewer_questionnaire, _run_ip_report, _run_batch_pack, _run_gold_standard, _run_novelty_check_broad, _run_lab_result_report
 from openamp_foundry.cli.commands.gates import _run_gate_check
 
 import argparse
@@ -615,6 +615,29 @@ def build_parser() -> argparse.ArgumentParser:
         help="Similarity threshold for diversity clustering (default: 0.80)",
     )
 
+    lab_result_report = sub.add_parser(
+        "lab-result-report",
+        help=(
+            "Build a reproducible summary report from validated wet-lab result JSON files. "
+            "This is a review artifact only, not a biological claim engine."
+        ),
+    )
+    lab_result_report.add_argument(
+        "--results-dir",
+        required=True,
+        help="Directory containing lab result JSON files matching schemas/lab_result.schema.json.",
+    )
+    lab_result_report.add_argument(
+        "--out-json",
+        required=True,
+        help="Output path for machine-readable report JSON.",
+    )
+    lab_result_report.add_argument(
+        "--out-md",
+        required=False,
+        help="Optional output path for markdown review report.",
+    )
+
     novelty_broad = sub.add_parser(
         "novelty-check-broad",
         help=(
@@ -722,6 +745,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "batch-pack":
         return _run_batch_pack(args)
 
+    if args.command == "lab-result-report":
+        return _run_lab_result_report(args)
+
     if args.command == "synthesis-order":
         return _run_synthesis_order(args)
 
@@ -743,4 +769,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -18,6 +18,7 @@ from openamp_foundry.data.lab_results import (
     candidate_result_map,
     load_lab_result,
     load_lab_results_dir,
+    summarise_candidate_outcomes,
     summarise_lab_results,
 )
 
@@ -175,6 +176,29 @@ class TestCandidateResultMap:
 
     def test_empty_results_gives_empty_map(self):
         assert candidate_result_map([]) == {}
+
+
+class TestSummariseCandidateOutcomes:
+    def test_rolls_up_candidate_status(self):
+        results = [
+            _valid_result(result_id="R1", candidate_id="CAND-001", result_qualitative="active"),
+            _valid_result(
+                result_id="R2",
+                candidate_id="CAND-001",
+                assay_type="hemolysis_RBC",
+                result_qualitative="toxic",
+                positive_control_passed=False,
+            ),
+            _valid_result(result_id="R3", candidate_id="CAND-002", result_qualitative="inactive"),
+        ]
+        rows = summarise_candidate_outcomes(results)
+        by_id = {row["candidate_id"]: row for row in rows}
+        assert by_id["CAND-001"]["n_results"] == 2
+        assert by_id["CAND-001"]["has_any_active"] is True
+        assert by_id["CAND-001"]["has_any_toxic"] is True
+        assert by_id["CAND-001"]["all_controls_passed"] is False
+        assert by_id["CAND-001"]["control_fail_result_ids"] == ["R2"]
+        assert by_id["CAND-002"]["all_controls_passed"] is True
 
 
 class TestLoadLabResultsDir:

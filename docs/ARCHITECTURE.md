@@ -39,6 +39,7 @@ The purpose of the added layers is not simulation theater. It is to improve whic
 | `openamp_foundry.scoring` | activity, safety, hemolysis risk, novelty, synthesis, ensemble, expert composite scoring |
 | `openamp_foundry.selection` | ranking (ensemble or expert composite) and diversity selection |
 | `openamp_foundry.evidence` | JSON certificate generation and validation |
+| `openamp_foundry.reports` | human-readable and machine-readable batch, calibration, and wet-lab review reports |
 | `openamp_foundry.benchmark` | leakage checks, cluster-split benchmark, expert ablation benchmark, within-AMP selectivity benchmark, triage benchmark, and evaluation scaffolding |
 | `openamp_foundry.generators` | safe, bounded toy candidate generation |
 | `openamp_foundry.simulation` | membrane/selectivity/stability proxy modeling (scaffolded) |
@@ -88,8 +89,9 @@ When the project is mature enough, the extended loop should look like:
 4. Estimate uncertainty and identify where the model is likely wrong.
 5. Select a very small assay batch that balances likely winners with high-information probes.
 6. Ingest qualified wet-lab outcomes through versioned schemas.
-7. Recalibrate decision rules without rewriting success definitions after the fact.
-8. Measure whether the added modeling layer actually reduced wasted experiments.
+7. Convert raw result JSON into a control-aware review artifact before any recalibration decision.
+8. Recalibrate decision rules without rewriting success definitions after the fact.
+9. Measure whether the added modeling layer actually reduced wasted experiments.
 
 ## Extension points
 

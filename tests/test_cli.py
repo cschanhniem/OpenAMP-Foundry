@@ -555,6 +555,72 @@ def test_batch_pack_creates_json_output(tmp_path, capsys):
     assert (tmp_path / "batch.md").exists()
 
 
+def test_lab_result_report_creates_outputs(tmp_path, capsys):
+    results_dir = tmp_path / "lab_results"
+    results_dir.mkdir()
+    base = {
+        "assay_type": "MIC",
+        "organism_or_cell_line": "E. coli ATCC 25922",
+        "result_value": 4.0,
+        "result_unit": "µg/mL",
+        "positive_control_id": "ciprofloxacin 0.25 µg/mL",
+        "negative_control_id": "PBS",
+        "assay_date": "2026-07-01",
+        "replicate_count": 3,
+        "performed_by_lab": "University Test Lab",
+        "raw_data_sha256": None,
+        "computational_candidate_certificate_hash": "abc123def456",
+        "notes": None,
+        "disclaimer": (
+            "This is an experimental result on a computationally nominated candidate. "
+            "It does not constitute a drug or clinical claim."
+        ),
+    }
+    good = {
+        **base,
+        "result_id": "RES-001",
+        "candidate_id": "CAND-001",
+        "result_qualitative": "active",
+        "positive_control_passed": True,
+        "negative_control_passed": True,
+    }
+    failed_control = {
+        **base,
+        "result_id": "RES-002",
+        "candidate_id": "CAND-001",
+        "assay_type": "hemolysis_RBC",
+        "result_value": 18.0,
+        "result_unit": "%",
+        "result_qualitative": "toxic",
+        "positive_control_passed": False,
+        "negative_control_passed": True,
+    }
+    (results_dir / "res1.json").write_text(json.dumps(good), encoding="utf-8")
+    (results_dir / "res2.json").write_text(json.dumps(failed_control), encoding="utf-8")
+
+    out_json = tmp_path / "lab_report.json"
+    out_md = tmp_path / "lab_report.md"
+    rc = main([
+        "lab-result-report",
+        "--results-dir", str(results_dir),
+        "--out-json", str(out_json),
+        "--out-md", str(out_md),
+    ])
+    assert rc == 0
+    captured = json.loads(capsys.readouterr().out)
+    assert captured["status"] == "ok"
+    assert captured["n_results"] == 2
+    assert captured["n_control_failures"] == 1
+    report = json.loads(out_json.read_text(encoding="utf-8"))
+    assert report["summary"]["n_results"] == 2
+    assert report["n_candidates"] == 1
+    assert len(report["control_failures"]) == 1
+    text = out_md.read_text(encoding="utf-8")
+    assert "Wet-Lab Result Report" in text
+    assert "CAND-001" in text
+    assert "RES-002" in text
+
+
 class TestNoveltyCheckBroad:
     def test_novelty_check_broad_returns_zero(self, tmp_path, capsys):
         panel_csv = _write_panel(tmp_path)
