@@ -443,7 +443,7 @@ The MODERATE class (HC50 25-100, n=68) is excluded from the binary task.
 
 | Metric | Value |
 |--------|-------|
-| Total tests | 1471+ |
+| Total tests | 1487 (7 skipped) |
 | Coverage (branch) | 99% (6 CLI guard lines only) |
 | Source modules at 100% | All pipeline, QC, scoring modules |
 
@@ -475,4 +475,6 @@ The MODERATE class (HC50 25-100, n=68) is excluded from the binary task.
 | 2026-07-01 | **Hemolysis benchmark expanded:** 42 -> 238 peptides using DBAASP human erythrocyte data (54 hemolytic vs 125 selective, n=179 binary). Hemolysis risk scorer detection AUROC drops 0.9218 -> 0.5650 (CI 0.47-0.66) — original performance was small-sample inflation. Direction correct, not significant. Safety scorer detection improves 0.3844 -> 0.5116 (still not significant). 196 new peptides from DBAASP v3. | OpenAMP loop |
 | 2026-07-01 | Dedicated hemolysis risk scorer: 4-component score (synth+aromatic+face+cys) achieves detection AUROC=0.9218 (CI: 0.82-0.99); integrated into expert composite (detection 0.5119→0.6429); safety scorer unchanged; 1471 tests | OpenAMP loop |
 | 2026-07-01 | Within-AMP selectivity benchmark added: safety scorer FAILS hemolysis detection (AUROC=0.3844); synthesis is only significant risk detector (AUROC=0.8027); expert composite better than ensemble but not significant (0.5119 vs 0.3486) | OpenAMP loop |
+| 2026-07-01 | **Multi-class triage benchmark added**: can pipeline rank selective > hemolytic > decoy? Result: ensemble FAILS (selective_vs_hemolytic AUROC=0.43, anti-signal). Selectivity proxy is the only scorer that triages correctly (AUROC=0.61). Triage score (activity * (1-hemolysis_risk)) is direction correct but not significant. Known limitation: pipeline cannot yet replace a hemolysis assay. | OpenAMP loop |
+| 2026-07-01 | **Cluster-split benchmark added**: cluster-aware bootstrap CI (0.7061-0.8526) wider than standard CI (0.717-0.8423); representative-only AUROC=0.7607 (CI lo=0.6854) confirms signal survives near-duplicate de-inflation. Held-out near-dup AUROC=0.8734. | OpenAMP loop |
 | 2026-06-29 | Initial — expanded benchmark (PR #110) | OpenAMP CI |
