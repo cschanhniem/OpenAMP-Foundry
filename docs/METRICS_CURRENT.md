@@ -478,4 +478,5 @@ The MODERATE class (HC50 25-100, n=68) is excluded from the binary task.
 | 2026-07-01 | Dedicated hemolysis risk scorer: 4-component score (synth+aromatic+face+cys) achieves detection AUROC=0.9218 (CI: 0.82-0.99); integrated into expert composite (detection 0.5119→0.6429); safety scorer unchanged; 1471 tests | OpenAMP loop |
 | 2026-07-01 | Within-AMP selectivity benchmark added: safety scorer FAILS hemolysis detection (AUROC=0.3844); synthesis is only significant risk detector (AUROC=0.8027); expert composite better than ensemble but not significant (0.5119 vs 0.3486) | OpenAMP loop |
 | 2026-07-01 | Expert composite ranking integration: `score_candidates()` now computes `expert_composite` and `hemolysis_risk`; `--ranking-mode expert` CLI flag; expert-ranked top-5 have lower mean hemolysis_risk than ensemble | OpenAMP loop |
+| 2026-07-02 | Ranking policy contract added: machine-readable recommendation now states `ensemble` remains default broad synthesis gate, `expert` is narrower safety-aware alternative only | OpenAMP loop |
 | 2026-06-29 | Initial — expanded benchmark (PR #110) | OpenAMP CI |
