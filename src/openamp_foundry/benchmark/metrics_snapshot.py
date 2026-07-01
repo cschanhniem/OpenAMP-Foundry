@@ -11,6 +11,7 @@ from openamp_foundry.benchmark.retrospective import (
     run_selectivity_benchmark,
 )
 from openamp_foundry.benchmark.triage import run_triage_benchmark
+from openamp_foundry.selection.ranking_policy import ranking_policy_payload
 
 
 def build_metrics_snapshot(
@@ -149,5 +150,9 @@ def build_metrics_snapshot(
                 }
                 for scorer, info in triage["per_scorer"].items()
             },
+        },
+        "ranking_policy": {
+            "default": ranking_policy_payload("ensemble"),
+            "alternative": ranking_policy_payload("expert"),
         },
     }

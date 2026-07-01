@@ -233,6 +233,19 @@ ensemble-ranked top-5 on the mixed benchmark set (verified by test).
 Honest limitation: The expert composite's hemolysis components are not statistically
 significant detectors on the expanded n=179 benchmark (AUROC=0.565, CI 0.47-0.66).
 Expert ranking is a safety-aware alternative, not a validated safety guarantee.
+
+## v0.5.14 — Ranking policy contract ✓ (2026-07-02)
+
+- Added `selection/ranking_policy.py` — explicit machine-readable policy for when
+  `ensemble` vs `expert` ranking is justified by current benchmark evidence.
+- `rank` CLI now prints the selected ranking policy alongside `ranking_mode`, so
+  automation can see caution text instead of assuming all ranking modes are equally supported.
+- Batch report schema expanded: `report.json` now records `ranking_policy` with
+  evidence basis, caution, and non-claim language.
+- `metrics_snapshot.json` now carries the current default-vs-alternative ranking
+  recommendation, making benchmark truth easier to consume without re-reading narrative docs.
+- Purpose: stop quiet score-shopping. Ensemble remains the broad synthesis gate;
+  expert mode is a narrower safety-aware alternative that still lacks validated hemolysis prediction.
 Wet-lab hemolysis assay remains mandatory.
 
 ## v1.0 — Validated dry-lab-to-wet-lab loop
