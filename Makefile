@@ -1,4 +1,4 @@
-.PHONY: help demo test lint ci clean bench-leakage bench-baseline bench-hidden-active generate phase3 pilot validate-scoring validate-scoring-phase3 validate-scoring-strict external-predict pilot-confident presynth-qc gold-standard diversity synthesis-order novelty-broad external-consensus questionnaire gate-check ip-report benchmark-card wave0-5-gate-check wave0-5-novelty-audit wave0-5-novelty-audit-v2 wave0-5-panel wave0-5-evidence wave0-5-fill-external wave0-5b-generate wave0-5b-filter
+.PHONY: help demo test lint ci clean bench-leakage bench-baseline bench-hidden-active generate phase3 pilot validate-scoring validate-scoring-phase3 validate-scoring-strict validate-selectivity external-predict pilot-confident presynth-qc gold-standard diversity synthesis-order novelty-broad external-consensus questionnaire gate-check ip-report benchmark-card wave0-5-gate-check wave0-5-novelty-audit wave0-5-novelty-audit-v2 wave0-5-panel wave0-5-evidence wave0-5-fill-external wave0-5b-generate wave0-5b-filter
 
 PYTHON := $(shell [ -f .venv/bin/python ] && echo .venv/bin/python || echo python3)
 PYTEST  := $(shell [ -f .venv/bin/pytest ] && echo .venv/bin/pytest || echo pytest)
@@ -26,6 +26,7 @@ help:
 	@echo "  make validate-scoring         AUROC on 95 AMP + 96 decoy (pipeline config)"
 	@echo "  make validate-scoring-phase3  AUROC with phase3.yaml config"
 	@echo "  make validate-scoring-strict  AUROC with scrambled-decoy strict benchmark"
+	@echo "  make validate-selectivity    Selectivity benchmark: safety vs hemolytic AMPs"
 	@echo "  make bench-leakage            Check for near-duplicates between candidates and refs"
 	@echo "  make bench-baseline           Hidden-positive recovery benchmark (demo set)"
 	@echo "  make bench-hidden-active      Hidden-positive recovery on mixed benchmark set"
@@ -140,6 +141,9 @@ validate-scoring-strict:
 		--decoy-csv examples/validation/scrambled_decoys.csv \
 		--benchmark-type strict \
 		--out outputs/validate_scoring_strict_report.json
+
+validate-selectivity:
+	PYTHONPATH=src $(PYTHON) -c "from openamp_foundry.cli import main; main(['validate-selectivity', '--out', 'outputs/selectivity_report.json'])"
 
 external-predict: pilot
 	PYTHONPATH=src $(PYTHON) -m openamp_foundry.cli external-predict \

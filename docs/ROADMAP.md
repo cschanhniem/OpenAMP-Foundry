@@ -148,8 +148,20 @@ Implemented during the pre-wet-lab improvement loop (PRs #31–#54):
 
 - ~~write the first explicit simulator scope document: what OpenAMP will model and what it will not;~~
 - ~~add membrane/selectivity/stability proxy interfaces with uncertainty fields;~~
-- benchmark candidate triage against a reference panel that includes selective AMPs, hemolytic positives, inactive peptides, and random controls;
+- ~~benchmark candidate triage against a reference panel that includes selective AMPs, hemolytic positives, inactive peptides, and random controls;~~ **Done (2026-07-01):** `benchmark/selectivity.py` + `examples/validation/selectivity_panel.csv` — 10 selective + 8 hemolytic AMPs. Key finding: safety_score AUROC=0.54 (FAILED), hydrophobic_fraction AUROC=0.81 (best baseline). 5 blind spots identified.
 - require every proxy module to justify itself against cheap heuristic baselines before it affects selection.
+
+## v1.1.x — Safety score improvement (identified by selectivity benchmark)
+
+The selectivity benchmark revealed that safety_score does not discriminate selective from
+hemolytic AMPs (AUROC=0.54, near random). Improvement targets:
+
+- Lower hydrophobic_fraction threshold in safety_score from 0.65 to ~0.50 (captures the
+  selective/hemolytic boundary at hydrophobic_fraction ~0.45-0.55)
+- Add a multi-residue hydrophobic face coverage metric (current μH threshold misses
+  short helical peptides where hemolysis arises from oligomeric pore formation)
+- Re-run selectivity benchmark after any safety_score change to verify improvement
+- Target: safety_score AUROC >= 0.70 on the selectivity panel
 
 ## v2.x — Wet-lab compression engine
 

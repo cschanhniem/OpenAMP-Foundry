@@ -3,7 +3,7 @@
 > **Purpose:** One authoritative table of current pipeline metrics. If any doc disagrees
 > with this file, this file wins. Updated whenever benchmark/benchmark config changes.
 >
-> **Last updated:** 2026-06-29 (PR #110 expanded benchmark)
+> **Last updated:** 2026-07-01 (selectivity benchmark added)
 > **Pipeline version:** v0.5.x
 > **Branch:** main
 
@@ -26,6 +26,43 @@
 | Recall@20 | 0.2105 | 20/95 positives in top 20 |
 | Recall@43 | 0.4211 | 40/95 positives in top 43 |
 | Interpretation | **STRONG** | AUROC > 0.70 gate passed |
+
+## Selectivity Benchmark Metrics
+
+> Tests whether pipeline safety features can distinguish selective AMPs (low hemolysis)
+> from hemolytic AMPs. Reference panel: 10 selective + 8 hemolytic AMPs with literature
+> hemolysis classifications. See `examples/validation/selectivity_panel.csv`.
+> Run: `make validate-selectivity`
+
+| Feature | AUROC | Direction | Notes |
+|---------|-------|-----------|-------|
+| **safety_score** | **0.5437** | Higher = safer | **FAILED** — near random; does not discriminate selective from hemolytic |
+| selectivity_proxy | 0.6125 | Higher = more selective | Weak signal above random |
+| hydrophobic_fraction | 0.8063 | Higher = more hemolytic | **Best discriminator** — naive baseline outperforms designed safety score |
+| hydrophobic_moment (μH) | 0.6125 | Higher = more hemolytic | Weak signal |
+| charge_density_ph74 | 0.5437 | Higher = more hemolytic | Near random |
+| GRAVY | 0.7625 | Higher = more hemolytic | Strong naive baseline |
+
+### Key findings
+
+1. **safety_score does NOT discriminate selective from hemolytic AMPs (AUROC=0.54, near random).**
+   Five of eight hemolytic AMPs receive safety_score=1.0 (maximum safety), including melittin
+   (HC50 ~ 5 ug/mL). The safety filter's thresholds for hydrophobic moment, charge density, and
+   hydrophobic fraction are too permissive for short helical peptides.
+
+2. **hydrophobic_fraction is the strongest single discriminator (AUROC=0.81).** Hemolytic AMPs
+   have higher hydrophobic fraction (mean 0.55 vs 0.35 for selective). The safety_score's
+   threshold (> 0.65) is set too high to catch this difference.
+
+3. **5 known blind spots identified:** melittin, mastoparan-X, PMAP-23, bombolitin-II,
+   polybia-MP1 all score safety=1.0 despite being literature-hemolytic. These are short
+   helical peptides where the hemolytic mechanism (oligomeric pore formation, toroidal
+   insertion) is not captured by 1D hydrophobic moment analysis.
+
+4. **Implication for candidate selection:** The current safety filter should NOT be trusted
+   as a hemolysis proxy. Wet-lab hemolysis assay remains mandatory for all candidates.
+   Improvement target: incorporate hydrophobic_fraction threshold lowering or add a
+   multi-residue hydrophobic face analysis to the safety score.
 
 ### Historical baselines
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from openamp_foundry.cli.commands.core import _run_generate_batch
-from openamp_foundry.cli.commands.benchmark import _run_bench, _run_validate_scoring
+from openamp_foundry.cli.commands.benchmark import _run_bench, _run_validate_scoring, _run_validate_selectivity
 from openamp_foundry.cli.commands.selection import _run_pilot_panel, _run_pilot_confident, _run_diversity_check
 from openamp_foundry.cli.commands.external import _run_external_predict, _run_external_consensus
 from openamp_foundry.cli.commands.qc import _run_synthesis_order, _run_presynth_qc
@@ -186,6 +186,26 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_scoring.add_argument("--config", default="configs/pipeline.yaml")
     validate_scoring.add_argument(
+        "--out",
+        required=False,
+        help="Optional JSON output path.",
+    )
+
+    validate_selectivity = sub.add_parser(
+        "validate-selectivity",
+        help=(
+            "Selectivity benchmark: can the pipeline distinguish selective AMPs "
+            "(low hemolysis) from hemolytic AMPs? Tests safety_score, selectivity_proxy, "
+            "and naive baselines against a literature-curated reference panel. "
+            "AUROC > 0.65 = safety filter has useful selectivity signal."
+        ),
+    )
+    validate_selectivity.add_argument(
+        "--panel-csv",
+        default="examples/validation/selectivity_panel.csv",
+        help="CSV of selective/hemolytic AMPs with 'hemolysis_class' column.",
+    )
+    validate_selectivity.add_argument(
         "--out",
         required=False,
         help="Optional JSON output path.",
@@ -517,6 +537,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "validate-scoring":
         return _run_validate_scoring(args)
+
+    if args.command == "validate-selectivity":
+        return _run_validate_selectivity(args)
 
     if args.command == "external-predict":
         return _run_external_predict(args)

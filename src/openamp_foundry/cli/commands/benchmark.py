@@ -81,3 +81,29 @@ def _run_validate_scoring(args: argparse.Namespace) -> int:
     return 0
 
 
+
+
+def _run_validate_selectivity(args: argparse.Namespace) -> int:
+    import json as _json
+    from openamp_foundry.benchmark.selectivity import run_selectivity_benchmark
+    from openamp_foundry.utils.io import write_json
+
+    result = run_selectivity_benchmark(panel_csv=args.panel_csv)
+    d = result.to_dict()
+    if args.out:
+        write_json(args.out, d)
+    summary = {
+        "status": "ok",
+        "n_selective": result.n_selective,
+        "n_hemolytic": result.n_hemolytic,
+        "safety_auroc": result.safety_auroc,
+        "selectivity_proxy_auroc": result.selectivity_proxy_auroc,
+        "hydrophobic_fraction_auroc": result.hydrophobic_fraction_auroc,
+        "hydrophobic_moment_auroc": result.hydrophobic_moment_auroc,
+        "charge_density_auroc": result.charge_density_auroc,
+        "gravy_auroc": result.gravy_auroc,
+        "verdict": result.verdict,
+        "blind_spots": result.blind_spots,
+    }
+    print(_json.dumps(summary, indent=2))
+    return 0
