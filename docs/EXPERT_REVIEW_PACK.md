@@ -269,9 +269,13 @@ Before any candidate proceeds to synthesis or assay:
 2. **Pre-registration lock**: PI signs `docs/ASSAY_PREREGISTRATION.md` before ordering synthesis.
 3. **Broad novelty acknowledgement**: File `docs/NOVELTY_BROAD_CHECK.md` with the pre-registration.
    SEED-003 and SEED-001 candidates are near-known AMPs; novelty claims must be appropriately limited.
-4. **External predictor check** (prior to synthesis): Submit `outputs/pilot_panel.fasta` to CAMPR4,
-   AMPScanner v2, dbAMP, AntiCP2, Macrel web server. Fill checklist `outputs/external_predict_checklist.md`.
-   Require ≥3/5 agreement before synthesis order.
+4. **External predictor check** (prior to synthesis): For a new generic pilot panel,
+   submit `outputs/pilot_panel.fasta` to CAMPR4, AMPScanner v2, dbAMP, AntiCP2, and the
+   Macrel web server, then fill `outputs/external_predict_results.csv`. Require ≥3/5
+   agreement before synthesis order. For the Wave 0.5 panel, use the completed
+   current-state summary in `docs/METRICS_CURRENT.md`: CAMPR4 was excluded, so activity
+   consensus is based on three submitted activity predictors plus separate HemoFinder
+   and AntiCP annotations.
 5. **Serum stability first**: Triage all 20 candidates in 50% human serum (0/30/60/120 min) before
    committing to full MIC panel. Pass criterion: >50% intact at 60 min (HPLC/MS primary readout).
 6. **Synthesis order**: After serum stability triage, `make synthesis-order` generates vendor-ready CSV.

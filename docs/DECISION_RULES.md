@@ -57,8 +57,13 @@
 |-------|-------|
 | Threshold | ≥3/5 external tools positive |
 | Measure | Manual web submission results |
-| Status | PENDING (see `outputs/external_predict_checklist.md`) |
+| Status | PENDING for any new generic pilot panel until a filled `outputs/external_predict_results.csv` and generated report exist |
 | Action | If FAIL: Expert reviewer override required |
+
+**Scope note:** This generic Gate 6 is not the same as the completed Wave 0.5 external
+screen. Wave 0.5 used three submitted activity predictors with CAMPR4 excluded and
+separate HemoFinder/AntiCP safety annotations; see W0.5-3 and W0.5-4 below plus
+`docs/METRICS_CURRENT.md`.
 
 ## Gate 7 — Human Expert Review
 
