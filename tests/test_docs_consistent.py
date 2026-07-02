@@ -181,3 +181,27 @@ class TestDocsConsistent:
         assert "Historical placeholder; external predictor review later completed" in prereg_text
         assert "The external predictor portion has since been completed" in checklist_text
         assert "External predictor review for Wave 0.5 was completed after this panel recommendation was first drafted." in wave1_text
+
+    def test_doc_external_predictor_gate_distinguishes_generic_from_wave05(self):
+        """Live docs must not imply the completed Wave 0.5 screen is still wholly pending."""
+        consensus_text = (DOCS_DIR / "EXTERNAL_PREDICTOR_CONSENSUS.md").read_text(
+            encoding="utf-8"
+        )
+        decision_text = (DOCS_DIR / "DECISION_RULES.md").read_text(encoding="utf-8")
+        reviewer_text = (DOCS_DIR / "REVIEWER_SUMMARY.md").read_text(encoding="utf-8")
+        roadmap_text = (DOCS_DIR / "ROADMAP.md").read_text(encoding="utf-8")
+        expert_text = (DOCS_DIR / "EXPERT_REVIEW_PACK.md").read_text(encoding="utf-8")
+
+        assert "generic pilot-panel consensus workflow" in consensus_text
+        assert "Wave 0.5 activity consensus" in consensus_text
+        assert "three activity predictors" in consensus_text
+        assert "generic 5-tool" in consensus_text
+        assert "Wave 0.5 remains wholly pending" in consensus_text
+        assert "PENDING (see `outputs/external_predict_checklist.md`)" not in decision_text
+        assert "generic Gate 6" in decision_text
+        assert "completed Wave 0.5 external" in decision_text
+        assert "No external predictor ensemble yet" not in reviewer_text
+        assert "Wave 0.5 external screen is complete" in reviewer_text
+        assert "web submissions pending" not in roadmap_text
+        assert "Wave 0.5 complete; generic future-panel Gate 6 remains panel-specific" in roadmap_text
+        assert "CAMPR4 was excluded" in expert_text

@@ -26,7 +26,16 @@ classified as **CONFIDENT** and recommended for synthesis.
 
 ## Current Status
 
-**PENDING** — Results require manual web submission for all 5 tools.
+This document describes the **generic pilot-panel consensus workflow**. It remains
+unresolved for any future panel until that panel has a filled
+`outputs/external_predict_results.csv` and a generated consensus report.
+
+Current Wave 0.5 status is different: the completed Wave 0.5 screen is summarized in
+`docs/METRICS_CURRENT.md`. CAMPR4 was not submitted, so Wave 0.5 activity consensus is
+based on three activity predictors (AMPScanner v2, AMPActiPred, Macrel web server) plus
+separate HemoFinder and AntiCP 2.0 safety annotations. Do not treat this generic 5-tool
+template as evidence that Wave 0.5 remains wholly pending.
+
 Macrel v1.6.0 CLI has a known ONNX bug (all candidates classified NAMP — see PR #77);
 use the web server at `big-data-biology.org/software/macrel` instead.
 

@@ -423,6 +423,15 @@ Human review is required before:
 * making external scientific claims;
 * submitting a paper or press release.
 
+## 9. Keep panel-specific evidence separate
+
+Do not collapse external-predictor evidence across panels. The generic Gate 6
+workflow remains pending for any future pilot panel until that panel has filled
+results and a generated report. Wave 0.5 is separate: its completed external
+screen used three submitted activity predictors with CAMPR4 excluded, plus
+separate HemoFinder and AntiCP annotations. When docs disagree, treat
+`docs/METRICS_CURRENT.md` as the current-state source of truth.
+
 ---
 
 # Agent Task Priorities

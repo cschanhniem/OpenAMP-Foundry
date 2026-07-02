@@ -78,7 +78,7 @@ assay is mandatory for all candidates.
 | No 3D structure or docking | Helical assumption may misclassify non-helical mechanisms |
 | Near-seed generation only | Novel sequence space not explored by de novo generation |
 | Melittin safety blind spot | Hemolysis must be assayed — confirmed quantitatively: safety scorer detection AUROC=0.3844 on 14 hemolytic vs 21 selective AMPs (v0.5.9 selectivity benchmark) |
-| No external predictor ensemble yet | CAMPR4/AMPScanner/dbAMP/AntiCP2/Macrel web submission checklist exists at `outputs/external_predict_checklist.md` but results not yet obtained |
+| External predictor evidence is panel-specific | Wave 0.5 external screen is complete for AMPScanner v2, AMPActiPred, Macrel web, HemoFinder, and AntiCP 2.0 with CAMPR4 excluded; a future generic pilot panel still needs its own filled `outputs/external_predict_results.csv` before Gate 6 can pass |
 | Probability table uncalibrated | All "P(≥1 active) ≈ 92–97%" statements are upper bounds; honest estimate 55–80% for any hit, 35–60% for novel family |
 
 ---
